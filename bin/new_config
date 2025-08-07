@@ -1,0 +1,152 @@
+#!/usr/bin/env perl
+
+package Trog::Provisioner::Config::Generator;
+
+use strict;
+use warnings;
+
+use FindBin;
+use FindBin::libs;
+
+use YAML;
+use File::Slurper;
+use Config::Simple;
+use Cwd();
+
+#TODO chdir to bin loc/ ..
+
+my $cfile = 'ipmap.cfg';
+sub get_config {
+    die "No ipmap available..." unless -f $cfile;
+    my $c = Config::Simple->new( $cfile );
+
+    my $global_conf = $c->param(-block => 'global');
+    my $ip_conf     = $c->param(-block => 'ips');
+    return ($global_conf, $ip_conf);
+}
+
+
+
+my $pfile = 'recipes.yaml';
+sub get_recipe_config {
+    return {} unless $pfile;
+    my $c = YAML::Load( File::Slurper::read_text($pfile) );
+    return $c;
+}
+
+
+sub main {
+    my @args = @_;
+
+    # Only positional arg
+    my $domain = shift @args;
+
+    die "Must pass domain" unless $domain;
+
+    my ($global_conf, $ip_conf) = get_config();
+
+    my $basedir = $global_conf->{basedir};
+    die "Must have basedir defined in global section of $cfile" unless $basedir;
+
+    my $admin_user = $global_conf->{admin_user};
+    die "Must set admin_user in global section of $cfile" unless $admin_user;
+    
+    my $admin_key = $global_conf->{admin_key};
+    die "Must set admin_key in global section of $cfile" unless $admin_key;
+
+    my $admin_gecos = $global_conf->{admin_gecos};
+    die "Must set admin_gecos in global section of $cfile" unless $admin_gecos;
+
+    my $admin_email = $global_conf->{admin_email};
+    die "Must set admin_email in global section of $cfile" unless $admin_email;
+
+    my $static_ip = $ip_conf->{$domain};
+    die "Must set ip for $domain in ips section of $cfile" unless $static_ip;
+
+    my $tld = $global_conf->{tld};
+    die "Must set tld for $domain in global section of $cfile" unless $tld;
+
+    my $fqdn = "$domain.$tld";
+
+    my $cfg_dir = "$basedir/$fqdn";
+    mkdir $cfg_dir;
+
+    # Build a users.yaml
+    my $user_conf =  {
+        users => [
+            {
+                gecos => $admin_gecos,
+                name  => $admin_user,
+                shell => '/bin/bash',
+                sudo => 'ALL=(ALL) NOPASSWD:ALL',
+                ssh_import_id => [ $admin_key ],
+            }
+        ],
+    };
+
+    File::Slurper::write_binary("$cfg_dir/users.yaml", YAML::Dump($user_conf));
+
+    my $rconf = get_recipe_config();
+    my %fragments;
+
+    my $provisioner_dir = Cwd::abs_path($FindBin::Bin."/../");
+    my $root_scripts    = '/root/bin';
+    my $hv_internal_ip  = get_hv_internal_ip();
+    
+
+    # TODO stop hardcoding some things
+    my %provisioner_opts = (
+        target_packager => 'deb',
+        hv_internal_ip  => $hv_internal_ip,
+        provisioner_dir => $provisioner_dir,
+        script_loc      => $root_scripts,
+    );
+
+    my @pkgs;
+    # Build a makefile based on our configured recipes
+    foreach my $module (keys(%{$rconf->{$domain}})) {
+        require "Provisioner/Recipe/$module.pm" or die "Could not load provisioner recipe $module";
+        my $builder = "Provisioner::Recipe::$module"->new(%provisioner_opts);
+        my $pconf = $rconf->{$domain}{$module};
+        $fragments{$module} = $builder->render(%$pconf, domain => $fqdn );
+        push(@pkgs, ($builder->deps()));
+    }
+    
+    my $tt = Text::Xslate->new({
+        path     => "templates/",
+        syntax   => 'TTerse',
+        function => {
+            tabinate => sub {
+                my $input = shift;
+                $input =~ s/^\s*/\t/mg;
+                return $input;
+            },
+        },
+    }) || die "Could not initialize template dir";
+
+    my $makefile = $tt->render('makefile.tt', { fragments => \%fragments });
+    File::Slurper::write_binary("$cfg_dir/Makefile", $makefile);
+
+    my $extra_packages = join(' ', @pkgs);
+    # Build a provision.conf
+    my $pconf = qq(
+        image=https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+        size=42949672960
+        packages=openssh-server $extra_packages
+        contact_email=$admin_email
+        ips=$static_ip
+        pre_make_script=mkdir -p $root_scripts; rsync -av $hv_internal_ip:$provisioner_dir/scripts/* $root_scripts
+    );
+    File::Slurper::write_binary("$cfg_dir/provision.conf", $pconf);
+
+    # Gzip the Makefile
+    system(qw{tar -cz -C}, $cfg_dir, '-f', "$cfg_dir/data.tar.gz", "./Makefile");
+}
+
+sub get_hv_internal_ip {
+    my $ip = qx{ip addr show dev virbr0 | grep inet | head -n1 | awk '{print \$2}' | sed -E 's#/[0-9]+\$##'};
+    chomp $ip;
+    return $ip;
+}
+
+main(@ARGV) unless caller;

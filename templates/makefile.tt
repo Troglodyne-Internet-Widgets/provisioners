@@ -1,0 +1,10 @@
+.PHONY: all
+all:[% FOR module IN fragments.keys() %] [% module %][% END %]
+	touch /root/install_complete
+	reboot now
+
+[%- FOR module IN fragments.keys() -%]
+.PHONY: [% module %]
+[% module %]:
+[% fragments.$module | mark_raw | tabinate %]
+[%- END -%]
