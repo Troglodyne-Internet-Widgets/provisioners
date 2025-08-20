@@ -25,7 +25,7 @@ sub get_config {
 
     my $global_conf = $c->param(-block => 'global');
     my $ip_conf     = $c->param(-block => 'ips');
-	my $alias_conf  = $c->param(-block => 'aliases');
+    my $alias_conf  = $c->param(-block => 'aliases');
     return ($global_conf, $ip_conf, $alias_conf);
 }
 
@@ -120,42 +120,43 @@ sub main {
 
     # There will always be some global config for a domain which ought be made available to the various modules
     my $global_config = delete $rconf->{$domain}{_global} // {};
-	$global_config->{hv_ip}         = $hv_internal_ip;
+    $global_config->{hv_ip}         = $hv_internal_ip;
 
-	# There will always be data config
-	my $data_config = delete $rconf->{$domain}{data};
-	die "Must provide data configuation for $fqdn" unless $data_config;
+    # There will always be data config
+    my $data_config = delete $rconf->{$domain}{data};
+    die "Must provide data configuation for $fqdn" unless $data_config;
 
-	require Provisioner::Recipe::data;
-	my $do = Provisioner::Recipe::data->new(%provisioner_opts);
-	my $data_fragment = $do->render(%$global_config, %$data_config, domain => $fqdn, admin_user => $admin_user );
+    require Provisioner::Recipe::data;
+    my $do = Provisioner::Recipe::data->new(%provisioner_opts);
+    my $data_fragment = $do->render(%$global_config, %$data_config, domain => $fqdn, admin_user => $admin_user );
 
-	# set the install_dir for configs to use from here
-	$global_config->{install_dir}   = $data_config->{to};
-	$global_config->{script_dir}    = $root_scripts;
+    # set the install_dir for configs to use from here
+    $global_config->{install_dir}   = $data_config->{to};
+    $global_config->{script_dir}    = $root_scripts;
 
-    my @pkgs;
+    my (@pkgs, @generated);
     # Build a makefile based on our configured recipes
     foreach my $module (keys(%{$rconf->{$domain}})) {
         require "Provisioner/Recipe/$module.pm" or die "Could not load provisioner recipe $module";
         my $builder = "Provisioner::Recipe::$module"->new(%provisioner_opts);
         my $pconf = $rconf->{$domain}{$module};
-		my $aliases = _coerce_arrayref($alias_conf->{$domain});
+        my $aliases = _coerce_arrayref($alias_conf->{$domain});
         $fragments{$module} = $builder->render(%$global_config, %$pconf, aliases => $aliases, domain => $fqdn, admin_user => $admin_user );
         push(@pkgs, ($builder->deps()));
 
-		# Now build the various templates for the recipes
-		my %tf = $builder->template_files();
-		foreach my $template (keys(%tf)) {
-			my $destination = "$cfg_dir/$tf{$template}";
-			my $rendered = $tt->render("files/$template", { %$global_config, %$pconf, aliases => $aliases, domain => $fqdn, admin_user => $admin_user });
-			print "Writing $template as $destination\n";
-			File::Slurper::write_binary( $destination, $rendered );
-		}
+        # Now build the various templates for the recipes
+        my %tf = $builder->template_files();
+        foreach my $template (keys(%tf)) {
+            my $destination = "$cfg_dir/$tf{$template}";
+            my $rendered = $tt->render("files/$template", { %$global_config, %$pconf, aliases => $aliases, domain => $fqdn, admin_user => $admin_user });
+            print "Writing $template as $destination\n";
+            File::Slurper::write_binary( $destination, $rendered );
+            push(@generated, $tf{$template});
+        }
     }
 
     my $makefile = $tt->render('makefile.tt', { %$global_config, data_fragment => $data_fragment, fragments => \%fragments, domain => $fqdn, admin_user => $admin_user });
-	print "Writing Makefile to $cfg_dir\n";
+    print "Writing Makefile to $cfg_dir\n";
     File::Slurper::write_binary("$cfg_dir/Makefile", $makefile);
 
     my $extra_packages = join(' ', uniq @pkgs);
@@ -170,8 +171,11 @@ sub main {
     );
     File::Slurper::write_binary("$cfg_dir/provision.conf", $pconf);
 
-    # Gzip the Makefile
-    system(qw{tar -cz -C}, $cfg_dir, '-f', "$cfg_dir/data.tar.gz", "./Makefile");
+    # Gzip the Makefile & generated configs
+    print "Tarring up Makefile and generated configuration\n";
+    system(qw{tar -cz -C}, $cfg_dir, '-f', "$cfg_dir/data.tar.gz", "./Makefile", @generated);
+    print "Done.\n";
+    return 0;
 }
 
 sub get_hv_internal_ip {
@@ -181,9 +185,9 @@ sub get_hv_internal_ip {
 }
 
 sub _coerce_arrayref {
-	my ($input) = @_;
-	return [] unless $input;
-	return ref $input eq 'ARRAY' ? $input : [$input];
+    my ($input) = @_;
+    return [] unless $input;
+    return ref $input eq 'ARRAY' ? $input : [$input];
 }
 
 main(@ARGV) unless caller;
