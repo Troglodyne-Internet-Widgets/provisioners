@@ -1,0 +1,2 @@
+# Oh how we love packagers that ship things broken out of the box
+server_names_hash_bucket_size 64;

@@ -25,6 +25,8 @@ admin_email=test@test.test
 [ips]
 tickle=192.168.1.1
 hug=...
+[aliases]
+tickle=chase.test.test, kiss.test.test
 ```
 
 Suppose we execute `bin/new_config tickle`.
@@ -33,19 +35,29 @@ The above would produce a VM config for tickle.test.test at 192.168.1.1, and pla
 
 It would populate the default users.yaml to make the 'test' user, give them admin rights and ssh-import-id their github key.
 
+It would also set up vhost aliases & CNAMEs for the aliases.
+
 TODO: support raw keys.
 
 ## recipes.yaml
 
-These will have sections describing user-configuration for the various recipes:
+These will have sections describing user-configuration for the various recipes used by the subdomains defined in the IP map.
+Here's an example setting up a tPSGI host:
 
 ```
 ---
 tickle:
+    _global:
+        user: my_service_user
+        homepath: /opt/domains
+    data:
+        from: /opt/client-data
+        to:   /opt/domains
     perl:
-        user: test
-    nginx:
-        socket: /var/run/testApp.sock
+    nginxproxy:
+        proxy_uri: http://localhost:5000
+    tpsgi:
+
 hug:
 ...
 ```
@@ -60,7 +72,36 @@ These are makefile fragments with no leading tab (we add this for you).
 All recipe fragments must be re-entrant so we can run `make -j $whatever`.
 This means you have to provide a list of deps up-front which can be run before everything else.
 
+## Global Data
+
+Variables in the \_global section for a domain are available to all modules' templates.
+
+The 'user' variable is special in that it is setup as a nologin service user for your app to do its operations with.
+All modules should setup ownership of files & dirs to be 0750 user:admin\_user where applicable.
+
+The idea in general is that all relevant files for your app should live within the to/ dir (for ease of backup/restore).
+Modules MUST symlink to somewhere within when placing configs for various software about.
+Anytime a filepath is specified in module makefile templates be sure to prepend the `install_dir` as that is where it will live.
+
+## Domain specific data
+
+The `data` module will make available all the contents of the `from` directory subdir named with the relevant domain on the Hypervisor running `trog-provisioner` into the newly created guest's `to` folder as a subdir named with the relevant domain.
+The place these files live is made available to templates as the `data_dir` directory.
+
+In the example above, that would mean /opt/client-data/tickle.test.test on the HV would be rsync'd to the guest at /opt/domains/tickle.test.test.
+
+## Module specific information
+
+See the README.MD or the perldoc for the various modules themselves on usage.
+
+# Writing Modules
+
 ## scripts/
 
 To simplify matters, we SCP over the scripts/ directory, which you should shove any complicated scripting into.
 Be that used for recipes, or what have you.
+
+# Generated files
+
+When your recipe generates things like configs, stick the templates in templates/files.
+Then identify them by name in the template\_files() method.

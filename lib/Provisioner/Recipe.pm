@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Text::Xslate;
-use Config::Simple;
 
 # Base class for provisioner recipes
 # We build a big makefile for running on the guest via these templated makefile fragments.
@@ -38,6 +37,18 @@ sub validate {
     return @_;
 }
 
+# Return a HASH of template => filename within the make tarball
+sub template_files {
+	return ();
+}
+
+# Global parameter validation
+my $validate = sub {
+    my %params = @_;
+    die "Must set service user" unless $params{user};
+    return %params;
+};
+
 sub render {
     my $self = shift;
     my %vars = $self->validate(
@@ -46,6 +57,7 @@ sub render {
         # Config overrides
         @_,
     );
+    %vars = $validate->(%vars);
     return $self->{tt}->render($self->{template}, \%vars);
 }
 

@@ -1,10 +1,20 @@
 .PHONY: all
-all:[% FOR module IN fragments.keys() %] [% module %][% END %]
+all: service_user data [% FOR module IN fragments.keys().sort() %] [% module %][% END %]
 	touch /root/install_complete
 	reboot now
 
-[%- FOR module IN fragments.keys() -%]
+.PHONY: service_user
+service_user:
+	useradd -s /usr/sbin/nologin -d [% homepath %]/[% domain %] [% user %]
+	mkdir -p [% homepath %]/[% domain %]; /bin/true
+	chown [% user %]:[% admin_user %] [% homepath %]/[% domain %]
+
+.PHONY: data
+data:
+[% data_fragment | tabinate %]
+
+[%- FOR module IN fragments.keys().sort() -%]
 .PHONY: [% module %]
 [% module %]:
-[% fragments.$module | mark_raw | tabinate %]
+[% fragments.$module | tabinate %]
 [%- END -%]

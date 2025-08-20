@@ -13,6 +13,9 @@ use File::Slurper;
 use Config::Simple;
 use Cwd();
 
+use Text::Xslate;
+use List::Util qw{uniq};
+
 #TODO chdir to bin loc/ ..
 
 my $cfile = 'ipmap.cfg';
@@ -22,7 +25,8 @@ sub get_config {
 
     my $global_conf = $c->param(-block => 'global');
     my $ip_conf     = $c->param(-block => 'ips');
-    return ($global_conf, $ip_conf);
+	my $alias_conf  = $c->param(-block => 'aliases');
+    return ($global_conf, $ip_conf, $alias_conf);
 }
 
 
@@ -43,7 +47,7 @@ sub main {
 
     die "Must pass domain" unless $domain;
 
-    my ($global_conf, $ip_conf) = get_config();
+    my ($global_conf, $ip_conf, $alias_conf) = get_config();
 
     my $basedir = $global_conf->{basedir};
     die "Must have basedir defined in global section of $cfile" unless $basedir;
@@ -92,6 +96,18 @@ sub main {
     my $provisioner_dir = Cwd::abs_path($FindBin::Bin."/../");
     my $root_scripts    = '/root/bin';
     my $hv_internal_ip  = get_hv_internal_ip();
+
+    my $tt = Text::Xslate->new({
+        path     => "templates/",
+        syntax   => 'TTerse',
+        function => {
+            tabinate => Text::Xslate::html_builder(sub {
+                my $input = shift;
+                $input =~ s/^\s*/\t/mg;
+                return $input;
+            }),
+        },
+    }) || die "Could not initialize template dir";
     
 
     # TODO stop hardcoding some things
@@ -102,37 +118,52 @@ sub main {
         script_loc      => $root_scripts,
     );
 
+    # There will always be some global config for a domain which ought be made available to the various modules
+    my $global_config = delete $rconf->{$domain}{_global} // {};
+	$global_config->{hv_ip}         = $hv_internal_ip;
+
+	# There will always be data config
+	my $data_config = delete $rconf->{$domain}{data};
+	die "Must provide data configuation for $fqdn" unless $data_config;
+
+	require Provisioner::Recipe::data;
+	my $do = Provisioner::Recipe::data->new(%provisioner_opts);
+	my $data_fragment = $do->render(%$global_config, %$data_config, domain => $fqdn, admin_user => $admin_user );
+
+	# set the install_dir for configs to use from here
+	$global_config->{install_dir}   = $data_config->{to};
+	$global_config->{script_dir}    = $root_scripts;
+
     my @pkgs;
     # Build a makefile based on our configured recipes
     foreach my $module (keys(%{$rconf->{$domain}})) {
         require "Provisioner/Recipe/$module.pm" or die "Could not load provisioner recipe $module";
         my $builder = "Provisioner::Recipe::$module"->new(%provisioner_opts);
         my $pconf = $rconf->{$domain}{$module};
-        $fragments{$module} = $builder->render(%$pconf, domain => $fqdn );
+		my $aliases = _coerce_arrayref($alias_conf->{$domain});
+        $fragments{$module} = $builder->render(%$global_config, %$pconf, aliases => $aliases, domain => $fqdn, admin_user => $admin_user );
         push(@pkgs, ($builder->deps()));
-    }
-    
-    my $tt = Text::Xslate->new({
-        path     => "templates/",
-        syntax   => 'TTerse',
-        function => {
-            tabinate => sub {
-                my $input = shift;
-                $input =~ s/^\s*/\t/mg;
-                return $input;
-            },
-        },
-    }) || die "Could not initialize template dir";
 
-    my $makefile = $tt->render('makefile.tt', { fragments => \%fragments });
+		# Now build the various templates for the recipes
+		my %tf = $builder->template_files();
+		foreach my $template (keys(%tf)) {
+			my $destination = "$cfg_dir/$tf{$template}";
+			my $rendered = $tt->render("files/$template", { %$global_config, %$pconf, aliases => $aliases, domain => $fqdn, admin_user => $admin_user });
+			print "Writing $template as $destination\n";
+			File::Slurper::write_binary( $destination, $rendered );
+		}
+    }
+
+    my $makefile = $tt->render('makefile.tt', { %$global_config, data_fragment => $data_fragment, fragments => \%fragments, domain => $fqdn, admin_user => $admin_user });
+	print "Writing Makefile to $cfg_dir\n";
     File::Slurper::write_binary("$cfg_dir/Makefile", $makefile);
 
-    my $extra_packages = join(' ', @pkgs);
+    my $extra_packages = join(' ', uniq @pkgs);
     # Build a provision.conf
     my $pconf = qq(
         image=https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
         size=42949672960
-        packages=openssh-server $extra_packages
+        packages=openssh-server openssh-client rsync $extra_packages
         contact_email=$admin_email
         ips=$static_ip
         pre_make_script=mkdir -p $root_scripts; rsync -av $hv_internal_ip:$provisioner_dir/scripts/* $root_scripts
@@ -147,6 +178,12 @@ sub get_hv_internal_ip {
     my $ip = qx{ip addr show dev virbr0 | grep inet | head -n1 | awk '{print \$2}' | sed -E 's#/[0-9]+\$##'};
     chomp $ip;
     return $ip;
+}
+
+sub _coerce_arrayref {
+	my ($input) = @_;
+	return [] unless $input;
+	return ref $input eq 'ARRAY' ? $input : [$input];
 }
 
 main(@ARGV) unless caller;

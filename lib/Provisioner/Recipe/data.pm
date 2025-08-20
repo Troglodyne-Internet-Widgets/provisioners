@@ -1,4 +1,4 @@
-package Provisioner::Recipe::perl;
+package Provisioner::Recipe::data;
 
 use strict;
 use warnings;
@@ -8,15 +8,15 @@ use parent qw{Provisioner::Recipe};
 sub deps {
 	my ($self) = @_;
 	if ($self->{target_packager} eq 'deb') {
-		return qw{perlbrew libcarp-always-perl};
+		return qw{openssh-server openssh-client rsync};
 	}
 	die "Unsupported packager";
 }
 
 sub validate {
 	my ($self, %opts) = @_;
-	my $user = $opts{user};
-	die "Must set user in [perl] section of recipes.yaml" unless $user;
+	my $dir = $opts{from};
+	die "Must set from in [data] section of recipes.yaml" unless $dir;
 
 	return %opts;
 }

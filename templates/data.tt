@@ -1,0 +1,4 @@
+mkdir -p /opt/domains/[% domain %]
+rsync -av [% hv_ip %]:[% from %]/[% domain %]/* [% to %]/[% domain %]/
+chown -R [% user %]:[% admin_user %] [% to %]/[% domain %]
+chmod -R 0750 [% to %]/[% domain %]

@@ -1,0 +1,17 @@
+# Setup global configuration
+mv nginx.global.conf /etc/nginx/conf.d/global.conf
+systemctl restart nginx
+# Setup the domain and its aliases
+mv nginx.domain.conf /etc/nginx/sites-enabled/[% domain %].conf
+# Make a self-signed cert FIRST, because certbot has a chicken/egg problem
+mkdir -p '/etc/letsencrypt/live/[% domain %]'
+openssl req -x509 -config /holophrastic/utils/openssl.conf -nodes -newkey rsa:4096 -subj '/CN=[% domain %]' -addext 'subjectAltName=DNS:www.[% domain %],DNS:mail.[% domain %][% aliases.join(',DNS:') %]' -keyout '/etc/letsencrypt/live/[% domain %]/privkey.pem' -out '/etc/letsencrypt/live/[% domain %]/fullchain.pem' -days 365
+# Setup the link to LE certs
+ln -s /etc/letsencrypt/live/[% domain %]/fullchain.pem /etc/ssl/certs/[% domain %].fullchain.pem
+ln -s /etc/letsencrypt/live/[% domain %]/privkey.pem /etc/ssl/certs/[% domain %].privkey.pem
+systemctl reload nginx
+# System should be 'up' enough to actually get LE now, or at least configure it to try
+rm -rf '/etc/letsencrypt/live/[% domain %]'
+certbot certonly --webroot -w '[% install_dir %]/[% domain %]/' -d '[% domain %]' -d 'www.[% domain %]' [% IF aliases.size() %]-d[% END %] [% aliases.join(' -d ') %] -w '/var/www/mail.[% domain %]' -d 'mail.[% domain %]'
+#XXX a reload ain't enough
+systemctl restart nginx
