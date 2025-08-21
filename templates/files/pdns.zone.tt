@@ -1,0 +1,43 @@
+$ORIGIN [% tld %].
+$TTL    300
+
+@       IN      SOA     [% soa %]. [% admin_email | email_for_dns %]. (
+                        [% serial %]      ; Serial (unix timestamp)
+                        300               ; Refresh
+                        300               ; Retry
+                        1209600           ; Expire
+                        10800 )           ; Minimum
+
+[% FOREACH ns IN nameservers.values().sort() %]
+@        300      IN NS   [% ns %].
+[% END %]
+
+@    IN A [% tld_ip %]
+mail IN A [% tld_ip %]
+@ IN MX 10 mail
+
+[% FOREACH subdo IN ipmap.keys().sort() %]
+[% subdo %]       IN A    [% ipmap.$subdo %]
+[% ipmap.$subdo | reverse_ip %] IN PTR  [% ipmap.subdo %]
+mail.[% subdo %]  IN A    [% ipmap.$subdo %]
+[% subdo %]       IN MX 10 mail.[% subdo %]
+[% END %]
+
+[% FOREACH sub IN aliases.keys().sort() %]
+[% FOREACH alias IN aliases.$sub.sort() %]
+[% alias %] IN CNAME [% sub %]
+[% END %]
+[% END %]
+
+_domainkey         IN TXT  "o=-"
+_dmarc             IN TXT  "v=DMARC1; p=none"
+@                  IN TXT  "v=spf1 +a +mx -all"
+;_acme-challenge    IN TXT  "[% acme_challenge | mark_raw %]"
+_imaps._tcp        IN SRV 0 0 993 [% domain %].
+_pop3s._tcp        IN SRV 0 0 995 [% domain %].
+_smtps._tcp        IN SRV 0 0 465 [% domain %].
+
+; Include your DKIM key record below, ACME/CAA & GSV et cetera
+[% IF extra_records %]
+[% extra_records | mark_raw %]
+[% END %]

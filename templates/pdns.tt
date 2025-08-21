@@ -1,0 +1,32 @@
+# Configure the zone to be loaded into pdns
+mv pdns-domain.conf /etc/powerdns/pdns.d/[% tld %].conf
+# Build the zone database
+mkdir -p [% install_dir %]/[% domain %]/dns/; /bin/true
+sqlite3 [% install_dir %]/[% domain %]/dns/zones.db < /usr/share/pdns-backend-sqlite3/schema/schema.sqlite3.sql
+zone2sql --gsqlite --zone=zonefile --zone-name=[% tld %] > [% install_dir %]/[% domain %]/dns/zone.sql
+sqlite3 [% install_dir %]/[% domain %]/dns/zones.db < [% install_dir %]/[% domain %]/dns/zone.sql
+chown -R pdns:[% user %] [% install_dir %]/[% domain %]/dns/
+chmod -R 0770 [% install_dir %]/[% domain %]/dns/
+# Bind mount our dns/ folder so that pdns can see it in chroot
+mkdir /var/spool/powerdns/[% tld %]; /bin/true
+chown pdns:pdns /var/spool/powerdns/[% tld %]; /bin/true
+cp /etc/fstab /tmp/fstab.new
+echo "[% install_dir %]/[% domain %]/dns/ /var/spool/powerdns/[% tld %] none defaults,bind 0 0" >> /tmp/fstab.new
+sort < /tmp/fstab.new | uniq | grep -o '^[^#]*' > /tmp/fstab.newer
+chown root:root /tmp/fstab.newer
+mv /etc/fstab /etc/fstab.bak
+mv /tmp/fstab.newer /etc/fstab
+mount /var/spool/powerdns/[% tld %]
+# Don't need no bind
+[[ -e /etc/powerdns/pdns.d/bind.conf ]] && rm /etc/powerdns/pdns.d/bind.conf; /bin/true
+# Fix broken service configuration
+[% script_dir %]/configure_pdns
+chown [% user %]:pdns [% install_dir %]/[% domain %]/dns/
+chown [% user %]:pdns [% install_dir %]/[% domain %]/dns/zones.db
+mkdir -p /var/spool/powerdns/run/pdns/; /bin/true
+chown -R pdns:pdns /var/spool/powerdns/run
+mv 10-powerdns.conf /etc/rsyslog.d/10-powerdns.conf
+systemctl daemon-reload
+systemctl restart rsyslog
+systemctl enable pdns
+systemctl start pdns

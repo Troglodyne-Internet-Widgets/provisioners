@@ -26,7 +26,10 @@ admin_email=test@test.test
 tickle=192.168.1.1
 hug=...
 [aliases]
-tickle=chase.test.test, kiss.test.test
+tickle=chase, kiss
+[nameservers]
+ns1=ns1.test.test
+ns2=ns2.test.test
 ```
 
 Suppose we execute `bin/new_config tickle`.

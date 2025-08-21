@@ -19,9 +19,15 @@ sub new {
     $opts{tt} = Text::Xslate->new({
         path   => "templates/",
         syntax => 'TTerse',
+		function => {$class->formatters()},
     }) || die "Could not initialize template dir";
 
     return bless(\%opts, $class);
+}
+
+# STATIC METHOD
+sub formatters {
+	return ();
 }
 
 sub vars {
@@ -45,12 +51,16 @@ sub template_files {
 # Global parameter validation
 my $validate = sub {
     my %params = @_;
-    die "Must set service user" unless $params{user};
     return %params;
 };
 
 sub render {
-    my $self = shift;
+    my ($self) = shift;
+	return $self->render_file($self->{template}, @_);
+}
+
+sub render_file {
+    my ($self, $file) = (shift, shift);
     my %vars = $self->validate(
         # Sane defaults
         $self->vars(),
@@ -58,7 +68,8 @@ sub render {
         @_,
     );
     %vars = $validate->(%vars);
-    return $self->{tt}->render($self->{template}, \%vars);
+    return $self->{tt}->render($file, \%vars);
 }
+
 
 1;
