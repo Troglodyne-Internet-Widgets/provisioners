@@ -1,0 +1,3 @@
+mv global.rules /etc/audit/rules.d/global.rules
+mv domain.rules /etc/audit/rules.d/[% domain %].rules
+augenrules --load

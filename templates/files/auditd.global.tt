@@ -1,0 +1,6 @@
+-w /root -p wa -k rootwatch
+-w /home/[% admin_user %] -p wa -k adminwatch
+-w /etc -p wa -k configwatch
+-w /var -p wa -k varwatch
+-w /bin -w /usr/bin -w /usr/local/bin -w /usr/local/sbin -w /usr/sbin -p wa -k binwatch
+-w /lib -w /usr/lib -w /usr/local/lib -p wa -k libwatch
