@@ -120,12 +120,13 @@ sub main {
     }) || die "Could not initialize template dir";
     
 
-    # TODO stop hardcoding some things
+    # TODO stop hardcoding some things, and document this in P::R
     my %provisioner_opts = (
         target_packager => 'deb',
         hv_internal_ip  => $hv_internal_ip,
         provisioner_dir => $provisioner_dir,
         script_loc      => $root_scripts,
+        output_dir      => $cfg_dir,
     );
 
     foreach my $subdomain (keys(%$alias_conf)) {
@@ -156,7 +157,8 @@ sub main {
 
     my (@pkgs, @generated);
     # Build a makefile based on our configured recipes
-    foreach my $module (sort keys(%{$rconf->{$domain}})) {
+    my @modules = sort keys(%{$rconf->{$domain}});
+    foreach my $module (@modules) {
         require "Provisioner/Recipe/$module.pm" or die "Could not load provisioner recipe $module";
         my $builder = "Provisioner::Recipe::$module"->new(%provisioner_opts);
         my $pconf = $rconf->{$domain}{$module};
@@ -166,7 +168,7 @@ sub main {
         push(@pkgs, ($builder->deps()));
 
         # Now build the various templates for the recipes
-        my %tf = $builder->template_files();
+        my %tf = $builder->template_files(@modules);
         foreach my $template (sort keys(%tf)) {
             my $destination = "$cfg_dir/$tf{$template}";
             my $rendered = $builder->render_file("files/$template", %$global_config, %$pconf, full_aliases => $full_aliases);

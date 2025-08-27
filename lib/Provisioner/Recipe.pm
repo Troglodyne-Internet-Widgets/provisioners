@@ -44,7 +44,9 @@ sub validate {
 }
 
 # Return a HASH of template => filename within the make tarball
+# Optionally making templates based on what other recipes you use
 sub template_files {
+    my ($self, @recipes) = @_;
 	return ();
 }
 
