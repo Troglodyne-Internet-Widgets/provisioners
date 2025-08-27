@@ -14,7 +14,9 @@ data:
 [% data_fragment | tabinate %]
 
 [%- FOR module IN fragments.keys().sort() -%]
+
 .PHONY: [% module %]
 [% module %]:
 [% fragments.$module | tabinate %]
+
 [%- END -%]

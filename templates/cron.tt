@@ -1,0 +1,2 @@
+crontab -u root root.crontab
+crontab -u [% user %] user.crontab

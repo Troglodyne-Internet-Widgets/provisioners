@@ -1,0 +1,6 @@
+PATH="[% install_dir %]/[% domain %]/bin:$PATH"
+HOME="[% install_dir %]/[% domain %]"
+
+[% FOREACH s IN user_scripts %]
+[% s.interval %] [% s.cmd %]
+[% END %]

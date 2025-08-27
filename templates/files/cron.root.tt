@@ -1,0 +1,19 @@
+PATH="[% script_dir %]/:$PATH"
+
+# Server administration
+MAILTO="[% admin_email %]"
+
+# SAR
+0,10,20,30,40,50 * * * * gather_sar.sh
+
+# Security scans
+0    0 * * *  rkhunter --update &>/dev/null
+5    0 * * *  rkhunter --rwo --nomow -l /root/rkhunter.log --check
+*/5  * * * *  segfaults.sh
+*/5  * * * *  escalations.sh [% admin_user %]
+*/5  * * * *  oomdetect.sh
+*/5  * * * *  newusers.sh
+*/5  * * * *  logdrops.sh
+*/30 * * * *  changes_in_packaged_files.sh
+
+
