@@ -1,0 +1,46 @@
+mail_home = /mail/%Ld/%Ln
+mail_location = maildir:/mail/%Ld/%Ln/Maildir:UTF-8
+
+# Enable Maildir++ quota support.
+mail_plugins = $mail_plugins quota
+
+# Take quota limits from maildirsize file. If it doesn't exist, don't enforce.
+plugin {
+  quota = maildir:User quota
+  quota_grace = 0
+}
+
+plugin {
+    quota_warning  = storage=95%% quota-warning %u
+}
+
+service quota-warning {
+    executable = script /mail/scripts/dovecot_overquota
+    user = popuser
+    unix_listener quota-warning {
+        user = popuser
+    }
+}
+
+# User / PW db
+passdb {
+	driver = passwd-file
+	args=/mail/%d/passwd
+}
+
+# Whole server SSL
+ssl_cert = </etc/ssl/certs/[% domain %].pem
+ssl_key =  </etc/ssl/private/[% domain %].pem
+
+# SNI
+local_name [% domain %] {
+  ssl_cert = </etc/ssl/certs/[% domain %].pem
+  ssl_key = </etc/ssl/private/[% domain %].pem
+}
+
+[% FOREACH alias IN aliases.keys().sort() %]
+local_name [% alias %] {
+  ssl_cert = </etc/ssl/certs/[% domain %].pem
+  ssl_key = </etc/ssl/private/[% domain %].pem
+}
+[% END %]

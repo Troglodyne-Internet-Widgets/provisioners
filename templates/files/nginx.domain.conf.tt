@@ -5,7 +5,7 @@ server {
     server_name [% domain %] www.[% domain %] [% full_aliases.join(', ') %];
 
     ssl_certificate     /etc/ssl/certs/[% domain %].fullchain.pem;
-    ssl_certificate_key /etc/ssl/certs/[% domain %].privkey.pem;
+    ssl_certificate_key /etc/ssl/private/[% domain %].pem;
 
     location / {
         root [% install_dir %]/[% domain %]/;
@@ -48,7 +48,7 @@ server {
     server_name mail.[% domain %];
 
     ssl_certificate     /etc/ssl/certs/[% domain %].fullchain.pem;
-    ssl_certificate_key /etc/ssl/certs/[% domain %].privkey.pem;
+    ssl_certificate_key /etc/ssl/private/[% domain %].pem;
 
     location / {
         root [% install_dir %]/mail.[% domain %]/;

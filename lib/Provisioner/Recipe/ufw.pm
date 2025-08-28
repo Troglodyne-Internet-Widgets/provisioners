@@ -7,8 +7,6 @@ use parent qw{Provisioner::Recipe};
 
 use File::Path qw{rmtree};
 
-# XXX this is pretty much tPSGI specific
-
 sub deps {
 	my ($self) = @_;
 	if ($self->{target_packager} eq 'deb') {

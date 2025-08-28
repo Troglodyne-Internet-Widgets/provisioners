@@ -7,8 +7,8 @@ mv nginx.domain.conf /etc/nginx/sites-enabled/[% domain %].conf
 mkdir -p '/etc/letsencrypt/live/[% domain %]'
 openssl req -x509 -config /holophrastic/utils/openssl.conf -nodes -newkey rsa:4096 -subj '/CN=[% domain %]' -addext 'subjectAltName=DNS:www.[% domain %],DNS:mail.[% domain %][% full_aliases.join(',DNS:') %]' -keyout '/etc/letsencrypt/live/[% domain %]/privkey.pem' -out '/etc/letsencrypt/live/[% domain %]/fullchain.pem' -days 365
 # Setup the link to LE certs
-ln -s /etc/letsencrypt/live/[% domain %]/fullchain.pem /etc/ssl/certs/[% domain %].fullchain.pem
-ln -s /etc/letsencrypt/live/[% domain %]/privkey.pem /etc/ssl/certs/[% domain %].privkey.pem
+ln -s /etc/letsencrypt/live/[% domain %]/fullchain.pem /etc/ssl/certs/[% domain %].pem
+ln -s /etc/letsencrypt/live/[% domain %]/privkey.pem /etc/ssl/private/[% domain %].pem
 systemctl reload nginx
 # System should be 'up' enough to actually get LE now, or at least configure it to try
 rm -rf '/etc/letsencrypt/live/[% domain %]'

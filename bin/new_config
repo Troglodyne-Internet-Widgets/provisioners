@@ -146,6 +146,7 @@ sub main {
     $global_config->{subdomain}     = $domain;
     $global_config->{aliases}       = $alias_conf;
     $global_config->{nameservers}   = $ns_conf;
+    $global_config->{main_ip}       = $static_ip;
 
     require Provisioner::Recipe::data;
     my $do = Provisioner::Recipe::data->new(%provisioner_opts);
