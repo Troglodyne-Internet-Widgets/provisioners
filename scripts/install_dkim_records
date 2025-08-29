@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Build a dkim record for a domain and install it into the pdns server for that domain.
+
+# Don't do anything if we don't have pdns installed.
+[[ ! -f /var/spool/powerdns/$1/zones.db ]] && exit 0;
+
+# Don't do anything if the dkim key isn't in the right place.
+[[ ! -f /mail/$1/default.private ]] && exit 0;
+
+# OK, let's install the record.
+DKIM_RECORD="v=DKIM1; h=sha256; k=rsa; t=y; $(cat /mail/$1/default.private)"
+
+SQL="insert into records (domain_id, name, type,content,ttl,prio,disabled) select id , 'default._domainkey.$1', 'TXT', '$DKIM_RECORD', 300, 0, 0 from domains where name='$1'"
+echo $SQL | sqlite3 /var/spool/powerdns/$1/zones.db

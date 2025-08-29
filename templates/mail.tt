@@ -20,7 +20,6 @@ chown opendkim:opendkim /etc/opendmarc.conf
 systemctl restart opendmarc
 # update DNS records IFF we have a dns server locally
 [% script_dir %]/queue_postrun_task [% script_dir %]/install_dkim_records [% domain %] /mail/[% domain %]/default.private
-[% script_dir %]/queue_postrun_task [% script_dir %]/install_dmarc_records [% domain %]
 # dovecot
 mv dovecot.conf /etc/dovecot/conf.d/[% domain %].conf
 mv mailpasswd /mail/[% domain %]/passwd
