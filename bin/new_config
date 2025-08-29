@@ -183,12 +183,12 @@ sub main {
     print "Writing Makefile to $cfg_dir\n";
     File::Slurper::write_binary("$cfg_dir/Makefile", $makefile);
 
-    my $extra_packages = join(' ', uniq @pkgs);
+    my $extra_packages = join(', ', uniq @pkgs);
     # Build a provision.conf
     my $pconf = qq(
         image=https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
         size=42949672960
-        packages=openssh-server openssh-client rsync $extra_packages
+        packages=openssh-server, openssh-client, rsync, $extra_packages
         contact_email=$admin_email
         ips=$static_ip
         pre_make_script=mkdir -p $root_scripts; rsync -av $hv_internal_ip:$provisioner_dir/scripts/* $root_scripts

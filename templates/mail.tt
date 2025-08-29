@@ -1,3 +1,9 @@
+# Housekeeping
+mkdir -p /mail/scripts
+mkdir -p /mail/[% domain %]
+cp [% script_dir %]/dovecot_overquota /mail/scripts
+chown -R popuser:dovecot /mail
+chmod -R 0775 /mail
 # opendkim
 mkdir -p /etc/opendkim/
 mv TrustedHosts /etc/opendkim
@@ -27,11 +33,6 @@ systemctl restart dovecot
 # postfix
 mv aliases /etc/aliases
 newaliases
-mkdir -p /mail/scripts
-mkdir -p /mail/[% domain %]
-cp [% script_dir %]/dovecot_overquota /mail/scripts
-chown -R popuser:dovecot /mail
-chmod -R 0775 /mail
 mkdir -p /etc/postfix/header_checks
 mkdir -p /etc/postfix/virtual
 mv header_checks /etc/postfix/header_checks/[% domain %]
