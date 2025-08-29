@@ -48,12 +48,19 @@ sub template_files {
 	my ($self, @recipes) = @_;
 
     return (
-        'mail.aliases.tt'         => 'aliases',
-        'mail.header_checks.tt'   => 'header_checks',
-        'mail.virtual_maps.tt'    => 'virtual_maps',
-        'mail.virtual_aliases.tt' => 'virtual_aliases',
-        'mail.dovecot.tt'         => 'dovecot.conf',
-        'mail.passwd.tt'          => 'mailpasswd',
+        'mail.aliases.tt'                => 'aliases',
+        'mail.header_checks.tt'          => 'header_checks',
+        'mail.virtual_maps.tt'           => 'virtual_maps',
+        'mail.virtual_aliases.tt'        => 'virtual_aliases',
+        'mail.dovecot.tt'                => 'dovecot.conf',
+        'mail.passwd.tt'                 => 'mailpasswd',
+        'mail.opendkim.tt'               => 'opendkim.conf',
+        'mail.opendkim-trustedhosts.tt'  => 'TrustedHosts',
+        'mail.opendkim-signingtable.tt'  => 'SigningTable',
+        'mail.opendkim-keytable.tt'      => 'KeyTable',
+        'mail.opendkim-internalhosts.tt' => 'InternalHosts',
+        'mail.opendmarc.tt'              => 'opendmarc.conf',
+        'mail.opendmarc-ignorehosts.tt'  => 'ignore.hosts',
     );
 }
 

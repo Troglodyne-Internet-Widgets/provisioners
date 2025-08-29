@@ -26,6 +26,7 @@ sub template_files {
 	return (
 		'nginx.global.conf.tt' => 'nginx.global.conf',
 		'nginx.domain.conf.tt' => 'nginx.domain.conf',
+        'openssl.tt'           => 'openssl.conf',
 	);
 }
 

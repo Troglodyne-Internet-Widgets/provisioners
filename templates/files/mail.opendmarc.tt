@@ -1,0 +1,23 @@
+# OpenDMARC configuration
+AuthservID mail.[% domain %]
+TrustedAuthservIDs mail.[% domain %]
+
+UMask 002
+UserID opendmarc:opendmarc
+PidFile /run/opendmarc/opendmarc.pid
+Socket local:/run/opendmarc/opendmarc.sock
+AutoRestart true
+
+RejectFailures true
+FailureReports true
+Syslog true
+SyslogFacility mail
+HistoryFile /var/log/opendmarc.log
+
+FailureReportsSentBy postmaster@[% domain %]
+FailureReportsBcc postmaster@[% domain %]
+
+IgnoreHosts /etc/opendmarc/ignore.hosts
+TemporaryDirectory /tmp
+
+PublicSuffixList /usr/share/publicsuffix/effective_tld_names.dat

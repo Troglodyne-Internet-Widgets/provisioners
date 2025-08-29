@@ -1,7 +1,7 @@
 .PHONY: all
 all: service_user data [% FOR module IN fragments.keys().sort() %] [% module %][% END %]
 	touch /root/install_complete
-	reboot now
+	at now -f /root/post_install.sh; /bin/true
 
 .PHONY: service_user
 service_user:

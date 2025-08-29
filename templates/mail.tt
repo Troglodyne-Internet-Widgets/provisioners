@@ -1,3 +1,31 @@
+# opendkim
+mkdir -p /etc/opendkim/
+mv TrustedHosts /etc/opendkim
+mv SigningTable /etc/opendkim
+mv KeyTable /etc/opendkim
+mv InternalHosts /etc/opendkim
+mv /etc/opendkim.conf /etc/opendkim.conf.orig
+mv opendkim.conf /etc/opendkim.conf
+chown -R opendkim:opendkim /etc/opendkim/
+chown opendkim:opendkim /etc/opendkim.conf
+opendkim-genkey -D /mail/[% domain %] -d [% domain %] -s default
+systemctl restart opendkim
+# opendmarc
+mkdir -p /etc/opendmarc
+mv /etc/opendmarc.conf /etc/opendmarc.conf.orig
+mv opendmarc.conf /etc/opendmarc.conf
+mv ignore.hosts /etc/opendmarc
+chown -R opendkim:opendkim /etc/opendmarc/
+chown opendkim:opendkim /etc/opendmarc.conf
+systemctl restart opendmarc
+# update DNS records IFF we have a dns server locally
+[% script_dir %]/queue_postrun_task [% script_dir %]/install_dkim_records [% domain %] /mail/[% domain %]/default.private
+[% script_dir %]/queue_postrun_task [% script_dir %]/install_dmarc_records [% domain %]
+# dovecot
+mv dovecot.conf /etc/dovecot/conf.d/[% domain %].conf
+mv mailpasswd /mail/[% domain %]/passwd
+systemctl restart dovecot
+# postfix
 mv aliases /etc/aliases
 newaliases
 mkdir -p /mail/scripts
@@ -15,13 +43,13 @@ mv virtual_aliases /etc/postfix/virtual/aliases && postmap /etc/postfix/virtual/
 postconf -e -- "mydomain=[% domain %]"
 postconf -e -- "myhostname=mail.[% domain %]"
 postconf -e -- "myorigin=\$mydomain"
-postconf -e -- "mydestination=\$myhostname, \$mydomain, localhost, [% FOREACH alias IN aliases.keys().sort() %][% alias %], [% END %]"
+postconf -e -- "mydestination=\$myhostname, \$mydomain, localhost, [% FOREACH alias IN full_aliases.sort() %][% alias %], [% END %]"
 # Don't get put on RBLs for sending from multiple IPs
-postconf -e -- "masquerade_domains=[% domain %][% FOREACH alias IN aliases.keys().sort() %] [% alias %] [% END %]"
+postconf -e -- "masquerade_domains=[% domain %][% FOREACH alias IN full_aliases.sort() %] [% alias %] [% END %]"
 postconf -e -- "smtp_bind_address=[% main_ip %]"
 # vmailboxen
 postconf -e -- "virtual_mailbox_base=/mail
-postconf -e -- "virtual_mailbox_domains=[% domain %][% FOREACH alias IN aliases.keys().sort() %] [% alias %] [% END %]"
+postconf -e -- "virtual_mailbox_domains=[% domain %][% FOREACH alias IN full_aliases.sort() %] [% alias %] [% END %]"
 postconf -e -- "virtual_mailbox_maps=hash:/etc/postfix/virtual/maps"
 postconf -e -- "virtual_alias_maps=hash:/etc/postfix/virtual/aliases"
 postconf -e -- "virtual_uid_maps=static:$(id -u popuser)"
@@ -45,9 +73,4 @@ postconf -e -- "milter_protocol=2"
 postconf -e -- "smtpd_milters=local:opendkim/opendkim.sock,local:opendmarc/opendmarc.sock"
 postconf -e -- "non_smtpd_milters=\$smtpd_milters"
 # TODO master.cf shenanigans
-systemctl reload postfix
-# Now for dovecot
-mv dovecot.conf /etc/dovecot/conf.d/[% domain %].conf
-mv mailpasswd /mail/[% domain %]/passwd
-# Now for postgrey, sieve, opendmarc and opendkim
-
+systemctl restart postfix
