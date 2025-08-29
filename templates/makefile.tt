@@ -1,5 +1,5 @@
 .PHONY: all
-all: service_user data [% FOR module IN fragments.keys().sort() %] [% module %][% END %]
+all: scripts service_user data [% FOR module IN fragments.keys().sort() %] [% module %][% END %]
 	touch /root/install_complete
 	at now -f /root/post_install.sh; /bin/true
 
@@ -8,6 +8,10 @@ service_user:
 	useradd -s /usr/sbin/nologin -d [% homepath %]/[% domain %] [% user %]
 	mkdir -p [% homepath %]/[% domain %]; /bin/true
 	chown [% user %]:[% admin_user %] [% homepath %]/[% domain %]
+
+.PHONY: scripts
+scripts:
+	mkdir -p [% script_dir %]; rsync -av [% hv_ip %]:[% provisioner_dir %]/scripts/* [% script_dir %]
 
 .PHONY: data
 data:
