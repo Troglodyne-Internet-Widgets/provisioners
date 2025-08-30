@@ -2,7 +2,7 @@
 mkdir -p /mail/scripts
 mkdir -p /mail/[% domain %]
 cp [% script_dir %]/dovecot_overquota /mail/scripts
-chown -R popuser:dovecot /mail
+chown -R dovecot:dovecot /mail
 chmod -R 0775 /mail
 # opendkim
 mkdir -p /etc/opendkim/
@@ -52,8 +52,8 @@ postconf -e -- "virtual_mailbox_base=/mail
 postconf -e -- "virtual_mailbox_domains=[% domain %][% FOREACH alias IN full_aliases.sort() %] [% alias %] [% END %]"
 postconf -e -- "virtual_mailbox_maps=hash:/etc/postfix/virtual/maps"
 postconf -e -- "virtual_alias_maps=hash:/etc/postfix/virtual/aliases"
-postconf -e -- "virtual_uid_maps=static:$(id -u popuser)"
-postconf -e -- "virtual_gid_maps=static:$(id -u popuser)"
+postconf -e -- "virtual_uid_maps=static:$(id -u dovecot)"
+postconf -e -- "virtual_gid_maps=static:$(id -u dovecot)"
 # Header checks
 postconf -e -- "header_checks=regexp:/etc/postfix/header_checks/[% domain %]"
 # Mail forwarding

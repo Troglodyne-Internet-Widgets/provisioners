@@ -16,9 +16,9 @@ plugin {
 
 service quota-warning {
     executable = script /mail/scripts/dovecot_overquota
-    user = popuser
+    user = dovecot
     unix_listener quota-warning {
-        user = popuser
+        user = dovecot
     }
 }
 
