@@ -18,6 +18,5 @@ FailureReportsSentBy postmaster@[% domain %]
 FailureReportsBcc postmaster@[% domain %]
 
 IgnoreHosts /etc/opendmarc/ignore.hosts
-TemporaryDirectory /tmp
 
 PublicSuffixList /usr/share/publicsuffix/effective_tld_names.dat

@@ -1,5 +1,5 @@
 .PHONY: all
-all: scripts service_user data [% FOR module IN fragments.keys().sort() %] [% module %][% END %]
+all: scripts service_user data ssl [% FOR module IN fragments.keys().sort() %] [% module %][% END %]
 	touch /root/install_complete
 	at now -f /root/post_install.sh; /bin/true
 
@@ -12,6 +12,15 @@ service_user:
 .PHONY: scripts
 scripts:
 	mkdir -p [% script_dir %]; rsync -av [% hv_ip %]:[% provisioner_dir %]/scripts/* [% script_dir %]
+
+# Make a self-signed cert FIRST, because everybody and their mama needs a damn cert
+.PHONY: ssl
+ssl:
+	mkdir -p '/etc/letsencrypt/live/[% domain %]'
+	openssl req -x509 -config openssl.conf -nodes -newkey rsa:4096 -subj '/CN=[% domain %]' -addext 'subjectAltName=DNS:www.[% domain %],DNS:mail.[% domain %][% full_aliases.join(',DNS:') %]' -keyout '/etc/letsencrypt/live/[% domain %]/privkey.pem' -out '/etc/letsencrypt/live/[% domain %]/fullchain.pem' -days 365
+	# Setup the link to LE certs
+	ln -s /etc/letsencrypt/live/[% domain %]/fullchain.pem /etc/ssl/certs/[% domain %].pem
+	ln -s /etc/letsencrypt/live/[% domain %]/privkey.pem /etc/ssl/private/[% domain %].pem
 
 .PHONY: data
 data:

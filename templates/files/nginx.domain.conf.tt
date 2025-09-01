@@ -4,7 +4,7 @@ server {
 
     server_name [% domain %] www.[% domain %] [% full_aliases.join(', ') %];
 
-    ssl_certificate     /etc/ssl/certs/[% domain %].fullchain.pem;
+    ssl_certificate     /etc/ssl/certs/[% domain %].pem;
     ssl_certificate_key /etc/ssl/private/[% domain %].pem;
 
     location / {
@@ -39,29 +39,4 @@ server {
         proxy_set_header X-Forwarded-For $remote_addr;
     }
 
-}
-
-server {
-    listen 443 ssl;
-    listen [::]:443 ssl;
-
-    server_name mail.[% domain %];
-
-    ssl_certificate     /etc/ssl/certs/[% domain %].fullchain.pem;
-    ssl_certificate_key /etc/ssl/private/[% domain %].pem;
-
-    location / {
-        root [% install_dir %]/mail.[% domain %]/;
-    }
-}
-
-server {
-    listen 80;
-    listen [::]:80;
-
-    server_name mail.[% domain %];
-
-    location / {
-        root [% install_dir %]/mail.[% domain %]/;
-    }
 }
