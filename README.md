@@ -3,6 +3,7 @@
 Configuration file generator to provision VMs w/ trog-provisioner
 
 A 'pick what you want' recipe based approach
+
 The idea is with a couple of config files you can deploy all your clients' easily
 and burn it down / restore from backup ez.
 
