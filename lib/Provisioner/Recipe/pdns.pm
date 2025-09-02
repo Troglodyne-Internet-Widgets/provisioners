@@ -12,7 +12,7 @@ use File::Slurper;
 sub deps {
 	my ($self) = @_;
 	if ($self->{target_packager} eq 'deb') {
-		return qw{pdns-server pdns-tools pdns-backend-sqlite3 libconfig-simple-perl};
+		return qw{pdns-server pdns-tools pdns-backend-sqlite3 sqlite3 libconfig-simple-perl};
 	}
 	die "Unsupported packager";
 }
