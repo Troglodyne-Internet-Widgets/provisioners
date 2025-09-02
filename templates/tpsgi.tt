@@ -1,7 +1,9 @@
 mkdir -p '[% install_dir %]/[% domain %]/www';  /bin/true
 mkdir -p '[% install_dir %]/[% domain %]/run';  /bin/true
 mkdir -p '[% install_dir %]/mail.[% domain %]'; /bin/true
-cd '[% install_dir %]/[% domain %]' && git clone --no-checkout https://github.com/Troglodyne-Internet-Widgets/tPSGI.git repo && mv repo/.git .git && rmdir repo && git reset --hard HEAD
+cd '[% install_dir %]/[% domain %]' && git clone --no-checkout https://github.com/Troglodyne-Internet-Widgets/tPSGI.git repo && mv repo/.git .git && rmdir repo
+git config --global --add safe.directory '[% install_dir %]/[% domain %]'
+cd '[% install_dir %]/[% domain %]' && git reset --hard HEAD
 chown -R [% user %]:www-data '[% install_dir %]/[% domain %]/www'
 chown -R [% user %]:www-data '[% install_dir %]/[% domain %]/run'
 chown -R [% user %]:dovecot  '[% install_dir %]/mail.[% domain %]'

@@ -1,8 +1,10 @@
 # Provisioners
 
-Configuration files to provision troglodyne VMs
+Configuration file generator to provision VMs w/ trog-provisioner
 
-Also a framework for making new provision confs, with recipes etc
+A 'pick what you want' recipe based approach
+The idea is with a couple of config files you can deploy all your clients' easily
+and burn it down / restore from backup ez.
 
 ```
 bin/new_config test.somedomain
@@ -38,13 +40,16 @@ The above would produce a VM config for tickle.test.test at 192.168.1.1, and pla
 
 It would populate the default users.yaml to make the 'test' user, give them admin rights and ssh-import-id their github key.
 
-It would also set up vhost aliases & CNAMEs for the aliases.
+It would also set up vhost aliases & CNAMEs for the aliases, should you pick the relevant recipes.
 
 TODO: support raw keys.
 
 ## recipes.yaml
 
 These will have sections describing user-configuration for the various recipes used by the subdomains defined in the IP map.
+This file is gitignored in this repo, as it is necessarily super-secret information.
+TODO: support fetching this via non plaintext means, e.g. vault or keepass.
+
 Here's an example setting up a tPSGI host:
 
 ```
@@ -56,12 +61,41 @@ tickle:
     data:
         from: /opt/client-data
         to:   /opt/domains
+    adminconfig:
+        pkgs:
+            - vim
+            - tig
+            - tmux
+            - plocate
+        skel: "/opt/dotfiles/test"
+    nosnap:
+    nostubresolver:
+    perl:
+    tpsgi:
+    fail2ban:
+    auditd:
+    ufw:
+        port_forwards:
+            - from: 25
+              to: 2500
+    cron:
+        user_scripts:
+            - cmd: "do_some_thing_in_PATH.sh"
+              interval: "*/5 * * * *"
     perl:
     nginxproxy:
         proxy_uri: http://localhost:5000
-    tpsgi:
-
-hug:
+    pdns:
+        soa: "ns1.test.test"
+        extra_records: "/opt/data/tickle.test.test/dns/zonefile"
+    mail:
+        names:
+            test:
+                gecos: "Testy Testerson"
+                password: "@Test_123!"
+        mail_aliases:
+            - from: "test"
+              to: "testy"
 ...
 ```
 

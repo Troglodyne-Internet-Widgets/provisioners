@@ -18,7 +18,8 @@ mv /etc/fstab /etc/fstab.bak
 mv /tmp/fstab.newer /etc/fstab
 mount /var/spool/powerdns/[% tld %]
 # Don't need no bind
-[[ -e /etc/powerdns/pdns.d/bind.conf ]] && rm /etc/powerdns/pdns.d/bind.conf; /bin/true
+mkdir -p /etc/powerdns/config-available
+mv /etc/powerdns/pdns.d/bind.conf /etc/powerdns/pdns.d/config-available
 # Fix broken service configuration
 [% script_dir %]/configure_pdns
 chown [% user %]:pdns [% install_dir %]/[% domain %]/dns/

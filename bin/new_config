@@ -167,7 +167,7 @@ sub main {
         my $aliases = $alias_conf->{$domain};
         my $full_aliases = [map { "$_.$tld" } @$aliases];
         $fragments{$module} = $builder->render(%$global_config, %$pconf, full_aliases => $full_aliases );
-        push(@pkgs, ($builder->deps()));
+        push(@pkgs, ($builder->deps(%$pconf)));
 
         # Now build the various templates for the recipes
         my %tf = $builder->template_files(@modules);
