@@ -78,9 +78,13 @@ postconf -e -- "content_filter = smtp-amavis:[127.0.0.1]:10024"
 postconf -e -- "milter_default_action=accept"
 postconf -e -- "milter_protocol=2"
 postconf -e -- "smtpd_milters=local:/run/opendkim/opendkim.sock,local:/run/opendmarc/opendmarc.sock"
-postconf -e -- "non_smtpd_milters=$$smtpd_milters"
+postconf -e -- 'non_smtpd_milters=$$smtpd_milters'
 # master.cf shenanigans
 mv /etc/postfix/master.cf /etc/postfix/master.cf.orig
 mv master.cf /etc/postfix
 # Restart
 systemctl restart postfix
+# Fix postfix's dumbass resolver copy grabbing a broken out of the box config (thank you systemd-resolved)
+[% script_dir %]/queue_postrun_task cat /etc/resolv.conf > /var/spool/postfix/resolv.conf
+[% script_dir %]/queue_postrun_task systemctl restart postfix
+
