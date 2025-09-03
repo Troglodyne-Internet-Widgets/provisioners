@@ -30,7 +30,8 @@ sub validate {
 }
 
 my %template2rule = (
-    'ufw.pdns.tt' => 'ufw/pdns',
+    'ufw.pdns.tt'   => 'ufw/pdns',
+    'ufw.amavis.tt' => 'ufw/amavis',
 );
 
 sub template_files {

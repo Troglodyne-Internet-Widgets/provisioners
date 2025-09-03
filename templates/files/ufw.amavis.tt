@@ -1,0 +1,4 @@
+[amavis]
+title=Amavis
+description=Amavis virus scanning service
+ports=10024

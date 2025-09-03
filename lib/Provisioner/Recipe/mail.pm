@@ -12,7 +12,7 @@ use Crypt::Digest::SHA512 qw{sha512};
 sub deps {
 	my ($self) = @_;
 	if ($self->{target_packager} eq 'deb') {
-		return qw{postfix dovecot-imapd dovecot-pop3d dovecot-antispam dovecot-sieve postgrey opendmarc opendkim spamassassin clamav amavisd-new};
+		return qw{postfix dovecot-imapd dovecot-pop3d dovecot-antispam dovecot-sieve postgrey opendmarc opendkim spamassassin clamav amavisd-new rpm2cpio 7zip bzip2};
 	}
 	die "Unsupported packager";
 }
@@ -61,6 +61,8 @@ sub template_files {
         'mail.opendkim-internalhosts.tt' => 'InternalHosts',
         'mail.opendmarc.tt'              => 'opendmarc.conf',
         'mail.opendmarc-ignorehosts.tt'  => 'ignore.hosts',
+        'mail.postfix.master.tt'         => 'master.cf',
+        'mail.amavis.tt'                 => '50-user',
     );
 }
 

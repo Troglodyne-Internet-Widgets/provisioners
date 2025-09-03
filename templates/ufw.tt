@@ -1,4 +1,5 @@
 mv ufw/* /etc/ufw/applications.d/
+chmod 0644 /etc/ufw/applications.d/*
 systemctl restart ufw
 [% script_dir %]/setup-ufw-rules
 [% script_dir %]/setup-port-forwards [% FOR f IN port_forwards %] '[% f.from %]=[% f.to %]' [% END %]

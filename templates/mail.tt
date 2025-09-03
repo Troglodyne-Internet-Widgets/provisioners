@@ -30,6 +30,10 @@ systemctl restart opendmarc
 mv dovecot.conf /etc/dovecot/conf.d/[% domain %].conf
 mv mailpasswd /mail/[% domain %]/passwd
 systemctl restart dovecot
+# amvavisd-new
+mv 50-user /etc/amavis/conf.d/
+chown root:root /etc/amavis/conf.d/50-user
+systemctl restart amavis
 # postfix
 mv aliases /etc/aliases
 chown postfix:postfix /etc/aliases.db
@@ -45,8 +49,8 @@ mv virtual_aliases /etc/postfix/virtual/aliases && sudo -u postfix postmap /etc/
 # basic stuff
 postconf -e -- "mydomain=[% domain %]"
 postconf -e -- "myhostname=mail.[% domain %]"
-postconf -e -- "myorigin=\$mydomain"
-postconf -e -- "mydestination=\$myhostname, \$mydomain, localhost, [% FOREACH alias IN full_aliases.sort() %][% alias %], [% END %]"
+postconf -e -- 'myorigin=$$mydomain'
+postconf -e -- 'mydestination=$$myhostname, $$mydomain, localhost, [% FOREACH alias IN full_aliases.sort() %][% alias %], [% END %]'
 # Don't get put on RBLs for sending from multiple IPs
 postconf -e -- "masquerade_domains=[% domain %][% FOREACH alias IN full_aliases.sort() %] [% alias %] [% END %]"
 postconf -e -- "smtp_bind_address=[% main_ip %]"
@@ -73,7 +77,10 @@ postconf -e -- "mailbox_transport = lmtp:unix:private/dovecot-lmtp"
 postconf -e -- "content_filter = smtp-amavis:[127.0.0.1]:10024"
 postconf -e -- "milter_default_action=accept"
 postconf -e -- "milter_protocol=2"
-postconf -e -- "smtpd_milters=local:opendkim/opendkim.sock,local:opendmarc/opendmarc.sock"
-postconf -e -- "non_smtpd_milters=\$smtpd_milters"
-# TODO master.cf shenanigans
+postconf -e -- "smtpd_milters=local:/run/opendkim/opendkim.sock,local:/run/opendmarc/opendmarc.sock"
+postconf -e -- "non_smtpd_milters=$$smtpd_milters"
+# master.cf shenanigans
+mv /etc/postfix/master.cf /etc/postfix/master.cf.orig
+mv master.cf /etc/postfix
+# Restart
 systemctl restart postfix
