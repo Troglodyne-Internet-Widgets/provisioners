@@ -23,9 +23,16 @@ service quota-warning {
 }
 
 # User / PW db
+# XXX NEVER EVER USE VARIABLE EXPANSIONS LIKE %d IN DOVECOT AUTH, THEY DO NOT WORK
+# XXX HARDCODE EVERYTHING
+userdb {
+	driver = prefetch
+    result_failure = continue
+    result_internalfail = continue
+}
 passdb {
 	driver = passwd-file
-	args=/mail/%d/passwd
+	args=/mail/[% domain %]/passwd
 }
 
 # Whole server SSL

@@ -27,6 +27,9 @@ systemctl restart opendmarc
 # update DNS records IFF we have a dns server locally
 [% script_dir %]/queue_postrun_task [% script_dir %]/install_dkim_records [% domain %] /mail/[% domain %]/default.private
 # dovecot
+# First, remove all the worse-than-useless foo in conf.d
+mv /etc/dovecot/conf.d /etc/dovecot/conf-available
+mkdir -p /etc/dovecot/conf.d
 mv dovecot.conf /etc/dovecot/conf.d/[% domain %].conf
 mv mailpasswd /mail/[% domain %]/passwd
 systemctl restart dovecot
