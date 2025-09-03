@@ -3,7 +3,7 @@ AuthservID mail.[% domain %]
 TrustedAuthservIDs mail.[% domain %]
 
 UMask 002
-UserID opendmarc:opendmarc
+UserID opendmarc:postfix
 PidFile /run/opendmarc/opendmarc.pid
 Socket local:/run/opendmarc/opendmarc.sock
 AutoRestart true
