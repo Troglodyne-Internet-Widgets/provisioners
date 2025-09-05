@@ -30,7 +30,9 @@ systemctl restart opendmarc
 # First, remove all the worse-than-useless foo in conf.d
 mv /etc/dovecot/conf.d /etc/dovecot/conf-available
 mkdir -p /etc/dovecot/conf.d
-mv dovecot.conf /etc/dovecot/conf.d/[% domain %].conf
+mv dovecot.conf /etc/dovecot/conf.d/00-dovecot.conf
+mv dovecot.domain.conf /etc/dovecot/conf.d/10-[% domain %].conf
+sed -i "s/%REPLACEME%/$(id -u dovecot)/gm" mailpasswd
 mv mailpasswd /mail/[% domain %]/passwd
 systemctl restart dovecot
 # amvavisd-new

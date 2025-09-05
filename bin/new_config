@@ -71,6 +71,10 @@ sub main {
     my $tld = $global_conf->{tld};
     die "Must set tld for $domain in global section of $cfile" unless $tld;
 
+    my $tld_ip = $global_conf->{ip};
+    die "Must set ip for $domain in global section of $cfile" unless $tld;
+
+
     my $fqdn = "$domain.$tld";
 
     my $cfg_dir = "$basedir/$fqdn";
@@ -129,7 +133,7 @@ sub main {
         output_dir      => $cfg_dir,
     );
 
-    foreach my $subdomain (keys(%$alias_conf)) {
+    foreach my $subdomain (keys(%$ip_conf)) {
         $alias_conf->{$subdomain} = _coerce_arrayref($alias_conf->{$subdomain});
 
         # Basically every single web host is gonna need its own mail/www cnames
@@ -148,6 +152,7 @@ sub main {
     $global_config->{aliases}       = $alias_conf;
     $global_config->{nameservers}   = $ns_conf;
     $global_config->{main_ip}       = $static_ip;
+    $global_config->{tld_ip}        = $tld_ip;
 
     require Provisioner::Recipe::data;
     my $do = Provisioner::Recipe::data->new(%provisioner_opts);

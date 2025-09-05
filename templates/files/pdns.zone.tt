@@ -18,18 +18,18 @@ mail IN A [% tld_ip %]
 
 [% FOREACH subdo IN ipmap.keys().sort() %]
 [% subdo %]        IN A    [% ipmap.$subdo %]
-[% ipmap.$subdo | reverse_ip %] IN PTR  [% ipmap.subdo %]
-mail.[% subdo %]   IN A    [% ipmap.$subdo %]
+;[% ipmap.$subdo | reverse_ip %] IN PTR  [% subdo %]
 [% subdo %]        IN MX 10 mail.[% subdo %]
 _dmarc.[% subdo %] IN TXT "v=DMARC1; p=none"
 [% subdo %]		   IN TXT "v=spf1 +a +mx -all"
 [% END %]
 
-[% FOREACH sub IN aliases.keys().sort() %]
-[% FOREACH alias IN aliases.$sub.sort() %]
+[%- FOREACH sub IN aliases.keys().sort() -%]
+[%- FOREACH alias IN aliases.$sub.sort() -%]
 [% alias %] IN CNAME [% sub %]
-[% END %]
-[% END %]
+
+[%- END -%]
+[%- END -%]
 
 ; Basically bogus records for the TLD which we don't control really
 default._domainkey IN TXT  "o=-"

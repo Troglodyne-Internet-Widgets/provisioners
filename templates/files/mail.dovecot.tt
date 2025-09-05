@@ -1,5 +1,9 @@
 mail_home = /mail/%Ld/%Ln
 mail_location = maildir:/mail/%Ld/%Ln/Maildir:UTF-8
+postmaster_address = postmaster@mail.[% domain %]
+
+first_valid_uid=1
+first_valid_gid=1
 
 # Enable Maildir++ quota support.
 mail_plugins = $mail_plugins quota
@@ -22,35 +26,19 @@ service quota-warning {
     }
 }
 
-# User / PW db
-# XXX NEVER EVER USE VARIABLE EXPANSIONS LIKE %d IN DOVECOT AUTH, THEY DO NOT WORK
-# XXX HARDCODE EVERYTHING
-userdb {
-	driver = prefetch
-    result_failure = continue
-    result_internalfail = continue
+# Sieve
+protocol lda {
+  mail_plugins = $mail_plugins sieve
 }
-passdb {
-	driver = passwd-file
-	args=/mail/[% domain %]/passwd
+protocol lmtp {
+  mail_plugins = $mail_plugins sieve
 }
 
 # Whole server SSL
 ssl_cert = </etc/ssl/certs/[% domain %].pem
 ssl_key =  </etc/ssl/private/[% domain %].pem
-
-# SNI
-local_name [% domain %] {
-  ssl_cert = </etc/ssl/certs/[% domain %].pem
-  ssl_key = </etc/ssl/private/[% domain %].pem
-}
-
-[% FOREACH alias IN full_aliases.sort() %]
-local_name [% alias %] {
-  ssl_cert = </etc/ssl/certs/[% domain %].pem
-  ssl_key = </etc/ssl/private/[% domain %].pem
-}
-[% END %]
+ssl = required
+disable_plaintext_auth = yes
 
 # LMTPD
 service lmtp {

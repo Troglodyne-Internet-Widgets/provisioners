@@ -1,8 +1,6 @@
 # Mail passwd for [% domain %]
 
-[%- i=0 -%]
 [%- FOR user IN names.keys().sort() -%]
-[%- i=i+1 -%]
-[% user %]:[% names.$user.password | salted_sha_256 %]:[% i %]:[% i %]:[% names.$user.gecos %]:/mail/[% domain %]/[% user %]:/usr/sbin/noshell:
+[% user %]@[% domain %]:[% names.$user.password | salted_sha_512 %]:%REPLACEME%:%REPLACEME%:[% names.$user.gecos %]:/mail/[% domain %]/[% user %]:/usr/sbin/noshell
 
 [%- END -%]

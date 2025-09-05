@@ -53,6 +53,7 @@ sub template_files {
         'mail.virtual_maps.tt'           => 'virtual_maps',
         'mail.virtual_aliases.tt'        => 'virtual_aliases',
         'mail.dovecot.tt'                => 'dovecot.conf',
+        'mail.dovecot.domain.tt'         => 'dovecot.domain.conf',
         'mail.passwd.tt'                 => 'mailpasswd',
         'mail.opendkim.tt'               => 'opendkim.conf',
         'mail.opendkim-trustedhosts.tt'  => 'TrustedHosts',
@@ -69,12 +70,11 @@ sub template_files {
 sub formatters {
     my ($class) = shift;
     return (
-        salted_sha_256 => Text::Xslate::html_builder(sub {
+        salted_sha_512 => Text::Xslate::html_builder(sub {
             my $pw = shift;
             my $salt = uuid();
-            # XXX dovecot documentation is unclear whether I need to separate these via a \$ or what.
             # https://doc.dovecot.org/2.3/configuration_manual/authentication/password_schemes/#salting
-            my $raw = encode_base64(sha512("$pw$salt") . "$salt" );
+            my $raw = encode_base64( sha512("$pw$salt") . $salt );
             $raw =~ s/\n//g;
             return "{SSHA512}$raw";
         }),
