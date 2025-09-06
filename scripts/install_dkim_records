@@ -13,3 +13,4 @@ DKIM_RECORD="v=DKIM1; h=sha256; k=rsa; t=y; $(cat /mail/$1/default.private)"
 
 SQL="insert into records (domain_id, name, type,content,ttl,prio,disabled) select id , 'default._domainkey.$1', 'TXT', '$DKIM_RECORD', 300, 0, 0 from domains where name='$1'"
 echo $SQL | sqlite3 /var/spool/powerdns/$1/zones.db
+systemctl restart pdns
