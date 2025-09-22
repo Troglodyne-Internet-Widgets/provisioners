@@ -1,3 +1,8 @@
+MAILTO="[% admin_email %]"
+[% IF from %]
+MAILFROM="[% from %]@[% domain %]"
+[% END %]
+
 PATH="[% install_dir %]/[% domain %]/bin:$PATH"
 HOME="[% install_dir %]/[% domain %]"
 
