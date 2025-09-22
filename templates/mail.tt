@@ -66,14 +66,33 @@ postconf -e -- "virtual_mailbox_maps=hash:/etc/postfix/virtual/maps"
 postconf -e -- "virtual_alias_maps=hash:/etc/postfix/virtual/aliases"
 postconf -e -- "virtual_uid_maps=static:$(id -u dovecot)"
 postconf -e -- "virtual_gid_maps=static:$(id -u dovecot)"
+# Recipient access checks
+mv recipient_access_pcre /etc/postfix/recipient_access_pcre
 # Header checks
 postconf -e -- "header_checks=regexp:/etc/postfix/header_checks/[% domain %]"
-# Mail forwarding
-[%- IF forwarders -%]
-postconf -e -- "mynetworks=127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128 [% FOR forwarder IN forwarders %][% forwarder %] [% END %]"
-[%- END -%]
-# RBLs, bozofilter etc
-postconf -e -- "smtpd_recipient_restrictions=permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination, reject_unauth_pipelining, reject_unknown_reverse_client_hostname, reject_invalid_helo_hostname, reject_non_fqdn_helo_hostname, reject_non_fqdn_sender, reject_non_fqdn_recipient, reject_unknown_sender_domain, reject_unknown_recipient_domain, reject_invalid_hostname, reject_rbl_client zen.spamhaus.org, reject_rbl_client bl.spamcop.net, permit"
+# We are not a relay
+postconf -e -- "mynetworks=127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128"
+# In case we use a relay
+postconf -e -- "sender_dependent_relayhost_maps=hash:/etc/postfix/sdd_relay_maps"
+mv sdd_relay_maps /etc/postfix
+chown postfix:postfix /etc/postfix/sdd_relay_maps
+sudo -u postfix postmap /etc/postfix/sdd_relay_maps
+postconf -e -- "transport_maps=hash:/etc/postfix/transport_maps"
+mv transport_maps /etc/postfix/transport_maps
+chown postfix:postfix /etc/postfix/transport_maps
+sudo -u postfix postmap /etc/postfix/transport_maps
+# Prevent SMTP smuggling
+postconf -e -- "smtpd_forbid_bare_newline=normalize"
+# Don't even talk to people we can't resolve or that are on RBLs
+postconf -e -- "smtp_client_restrictions=permit_mynetworks, reject_unknown_reverse_client_hostname, reject_unknown_client_hostname, reject_rbl_client zen.spamhaus.org, reject_rbl_client bl.spamcop.net, permit"
+# Prevent abusive behavior w/data
+postconf -e -- "smtp_data_restrictions=reject_unauth_pipelining, permit"
+# Reject bad HELO
+postconf -e -- "smtp_helo_restrictions=permit_mynetworks, reject_invalid_helo_hostname, reject_non_fqdn_helo_hostname, permit"
+# Don't accept mail that is FROM obviously bogus addrs when incoming.
+postconf -e -- "smtpd_sender_restrictions=permit_mynetworks, permit_sasl_authenticated, reject_non_fqdn_sender, reject_unknown_sender_domain, reject_invalid_hostname, reject_unknown_reverse_client_hostname, permit"
+# Don't accept mail which is TO things that are either bogus or not on here when incoming.
+postconf -e -- "smtpd_recipient_restrictions=permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination, reject_non_fqdn_recipient, reject_unknown_recipient_domain, check_recipient_access pcre:/etc/postfix/recipient_access_pcre, permit"
 # SSL
 postconf -e -- "smtpd_tls_cert_file=/etc/ssl/certs/[% domain %].pem"
 postconf -e -- "smtpd_tls_key_file=/etc/ssl/private/[% domain %].pem"

@@ -12,7 +12,7 @@ use Crypt::Digest::SHA512 qw{sha512};
 sub deps {
 	my ($self) = @_;
 	if ($self->{target_packager} eq 'deb') {
-		return qw{postfix dovecot-imapd dovecot-pop3d dovecot-antispam dovecot-sieve dovecot-lmtpd postgrey opendmarc opendkim spamassassin clamav amavisd-new rpm2cpio 7zip bzip2};
+		return qw{postfix postfix-pcre dovecot-imapd dovecot-pop3d dovecot-antispam dovecot-sieve dovecot-lmtpd postgrey opendmarc opendkim spamassassin clamav amavisd-new rpm2cpio 7zip bzip2};
 	}
 	die "Unsupported packager";
 }
@@ -52,6 +52,9 @@ sub template_files {
         'mail.header_checks.tt'          => 'header_checks',
         'mail.virtual_maps.tt'           => 'virtual_maps',
         'mail.virtual_aliases.tt'        => 'virtual_aliases',
+        'mail.transport_maps.tt'         => 'transport_maps',
+        'mail.sdd_relay_maps.tt'         => 'sdd_relay_maps',
+        'mail.recipient_access_pcre.tt'  => 'recipient_access_pcre',
         'mail.dovecot.tt'                => 'dovecot.conf',
         'mail.dovecot.domain.tt'         => 'dovecot.domain.conf',
         'mail.passwd.tt'                 => 'mailpasswd',
