@@ -31,7 +31,7 @@ sub validate {
 
 my %template2rule = (
     'ufw.pdns.tt'   => 'ufw/pdns',
-    'ufw.amavis.tt' => 'ufw/amavis',
+    'ufw.mail.tt'   => 'ufw/mail',
 );
 
 sub template_files {
