@@ -12,8 +12,8 @@ export PROVIDER_UPDATE_DELAY=${PROVIDER_UPDATE_DELAY:-"30"}
 export PROVIDER="[% registrar.type %]"
 # For testing
 #export LEXICON_[% registrar.type.upper() %]_API_ENDPOINT="sandbox.rest.easydns.com"
-export LEXICON_[% registrar.type.upper() %]_AUTH_USERNAME="[% registrar.username %]"
-export LEXICON_[% registrar.type.upper() %]_AUTH_TOKEN="[% registrar.token %]"
+export LEXICON_[% registrar.type.upper() %]_AUTH_USERNAME="[% registrar.user %]"
+export LEXICON_[% registrar.type.upper() %]_AUTH_TOKEN="[% registrar.key %]"
 
 function deploy_challenge {
     local chain=($@)
