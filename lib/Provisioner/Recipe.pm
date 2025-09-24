@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Text::Xslate;
+use Text::Xslate::Bridge::TT2;
 
 # Base class for provisioner recipes
 # We build a big makefile for running on the guest via these templated makefile fragments.
@@ -19,6 +20,7 @@ sub new {
     $opts{tt} = Text::Xslate->new({
         path   => "templates/",
         syntax => 'TTerse',
+		module   => [qw{Text::Xslate::Bridge::TT2}],
 		function => {$class->formatters()},
     }) || die "Could not initialize template dir";
 

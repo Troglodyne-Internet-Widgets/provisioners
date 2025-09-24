@@ -1,0 +1,3 @@
+CONFIG_D=/etc/dehydrated/config.d
+DOMAINS_D=/etc/dehydrated/domains.d
+DOMAINS_TXT=/etc/dehydrated/domains.txt

@@ -8,7 +8,7 @@ use parent qw{Provisioner::Recipe};
 sub deps {
 	my ($self) = @_;
 	if ($self->{target_packager} eq 'deb') {
-		return qw{nginx-full openssl certbot};
+		return qw{nginx-full};
 	}
 	die "Unsupported packager";
 }

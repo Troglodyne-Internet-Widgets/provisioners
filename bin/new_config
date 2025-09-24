@@ -163,6 +163,10 @@ sub main {
     $global_config->{script_dir}    = $root_scripts;
 
     my (@pkgs, @generated);
+
+	#XXX because everything needs openssl, we explicitly generate a self-signed FIRST.
+	push(@pkgs, 'openssl');
+
     # Build a makefile based on our configured recipes
     my @modules = sort keys(%{$rconf->{$domain}});
     foreach my $module (@modules) {
@@ -171,14 +175,14 @@ sub main {
         my $pconf = $rconf->{$domain}{$module};
         my $aliases = $alias_conf->{$domain};
         my $full_aliases = [map { "$_.$tld" } @$aliases];
-        $fragments{$module} = $builder->render(%$global_config, %$pconf, full_aliases => $full_aliases );
+        $fragments{$module} = $builder->render(%$global_config, %$pconf, full_aliases => $full_aliases, modules => \@modules );
         push(@pkgs, ($builder->deps(%$pconf)));
 
         # Now build the various templates for the recipes
         my %tf = $builder->template_files(@modules);
         foreach my $template (sort keys(%tf)) {
             my $destination = "$cfg_dir/$tf{$template}";
-            my $rendered = $builder->render_file("files/$template", %$global_config, %$pconf, full_aliases => $full_aliases);
+            my $rendered = $builder->render_file("files/$template", %$global_config, %$pconf, full_aliases => $full_aliases, modules => \@modules );
             print "Writing $template as $destination\n";
             File::Slurper::write_binary( $destination, $rendered );
             push(@generated, $tf{$template});

@@ -1,0 +1,5 @@
+CA="letsencrypt"
+CHALLENGETYPE="dns-01"
+HOOK=/etc/letsencrypt/hooks/[% domain %].sh
+WELLKNOWN=[% install_dir %]/[% domain %]/www
+BASEDIR=/var/lib/dehydrated 

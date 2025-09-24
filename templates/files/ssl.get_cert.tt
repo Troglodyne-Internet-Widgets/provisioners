@@ -1,0 +1,3 @@
+#!/bin/bash
+#rm -rf '/etc/letsencrypt/live/[% domain %]'
+PROVIDER='[% registrar.type %]' dehydrated --cron

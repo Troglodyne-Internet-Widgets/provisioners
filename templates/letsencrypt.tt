@@ -1,0 +1,29 @@
+# Configure dehydrated
+mkdir -p /etc/dehydrated/domains.d; /bin/true
+mkdir -p /etc/dehydrated/conf.d; /bin/true
+mkdir -p /etc/dehydrated/hooks; /bin/true
+mv dehydrated.conf /etc/dehydrated/
+mv dehydrated.domain /etc/dehydrated/domains.d/[% domain %].conf
+mv domains.txt /etc/dehydrated/
+mv domain.hook /etc/dehydrated/hooks/[% domain %].sh
+chown root:root /etc/dehydrated/dehydrated.conf
+chown root:root /etc/dehydrated/domains.d/[% domain %].conf
+chown root:root /etc/dehydrated/domains.txt
+chown root:root /etc/dehydrated/hooks/[% domain %].sh
+# This contains actual secret information which will need to remain, so must be protected!
+# TODO: watch this file for all accesses via auditd
+chmod 0700 /etc/dehydrated/hooks/[% domain %].sh
+# Place a script to actually get the cert, and then queue it to go post-run
+mkdir -p /etc/letsencrypt/fetchers/
+mv get_cert /etc/letsencrypt/fetchers/[% domain %]
+chown root:root /etc/letsencrypt/fetchers/[% domain %]
+chmod +x /etc/letsencrypt/fetchers/[% domain %]
+[% script_dir %]/queue_postrun_task /etc/letsencrypt/fetchers/[% domain %]
+# Restart everything that needs restarting
+[% IF modules.grep('nginxproxy') %]
+[% script_dir %]/queue_postrun_task systemctl restart nginx
+[% END -%]
+[% IF modules.grep('mail') %]
+[% script_dir %]/queue_postrun_task systemctl restart postfix
+[% script_dir %]/queue_postrun_task systemctl restart dovecot
+[% END %]

@@ -1,0 +1,1 @@
+[% domain %] [% FOR alias IN full_aliases %] [% alias %][% END %]

@@ -10,4 +10,3 @@ chown -R [% user %]:dovecot  '[% install_dir %]/mail.[% domain %]'
 chmod -R 0770 '[% install_dir %]/[% domain %]/www'
 chmod -R 0770 '[% install_dir %]/[% domain %]/run'
 chmod -R 0770 '[% install_dir %]/mail.[% domain %]'
-

@@ -18,4 +18,7 @@ MAILFROM="[% from %]@[% domain %]"
 */5  * * * *  logdrops.sh
 */30 * * * *  changes_in_packaged_files.sh
 
-
+[% IF modules.grep('letsencrypt') %]
+# SSL
+0 * * * * dehydrated --cron
+[% END %]
