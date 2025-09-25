@@ -116,5 +116,5 @@ mv master.cf /etc/postfix
 # Restart
 systemctl restart postfix
 # Fix postfix's dumbass resolver copy grabbing a broken out of the box config (thank you systemd-resolved)
-[% script_dir %]/queue_postrun_task cat /etc/resolv.conf > /var/spool/postfix/resolv.conf
+[% script_dir %]/queue_postrun_task "cat /etc/resolv.conf > /var/spool/postfix/resolv.conf"
 [% script_dir %]/queue_postrun_task systemctl restart postfix

@@ -1,7 +1,7 @@
 .PHONY: all
 all: scripts service_user data ssl [% FOR module IN fragments.keys().sort() %] [% module %][% END %]
 	touch /root/install_complete
-	at now -f /root/post_install.sh; /bin/true
+	at now -f [% script_dir %]/post_install; /bin/true
 
 .PHONY: service_user
 service_user:
