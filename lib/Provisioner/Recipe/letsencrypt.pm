@@ -22,6 +22,7 @@ sub template_files {
         'ssl.dehydrated.domain.tt' => 'dehydrated.domain',
         'ssl.dehydrated.hook.tt'   => 'domain.hook',
         'ssl.domains.tt'           => 'domains.txt',
+        'ssl.lexicon.sh.tt'        => 'lexicon.sh',
 	);
 }
 

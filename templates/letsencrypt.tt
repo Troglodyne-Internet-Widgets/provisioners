@@ -13,6 +13,11 @@ chown root:root /etc/dehydrated/hooks/[% domain %].sh
 # This contains actual secret information which will need to remain, so must be protected!
 # TODO: watch this file for all accesses via auditd
 chmod 0700 /etc/dehydrated/hooks/[% domain %].sh
+# Slap in a utility to do dns mongling for the domain
+mkdir -p /opt/lexicon
+mv lexicon.sh /opt/lexicon/[% domain %]
+chmod 0700 /opt/lexicon/[% domain %]
+chown root:root /opt/lexicon/[% domain %]
 # Place a script to actually get the cert, and then queue it to go post-run
 mkdir -p /etc/letsencrypt/fetchers/
 mv get_cert /etc/letsencrypt/fetchers/[% domain %]
