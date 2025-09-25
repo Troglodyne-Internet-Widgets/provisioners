@@ -5,6 +5,25 @@ use warnings;
 
 use parent qw{Provisioner::Recipe};
 
+=head1 Provisioner::Recipe::letsencrypt
+
+=head2 SYNOPSIS
+
+    somedomain:
+        letsencrypt:
+
+=head2 DESCRIPTION
+
+Configures lexicon to be able to update TXT records for your domain with your registrar so you can do DNS DCV.
+
+Configures dehydrated to use lexicon to do DNS DCV w/ lexicon.
+
+Sets up convenience scripts in /opt/lexicon per domain to run lexicon manually:
+
+    /opt/lexicon/my.domain.name list TXT
+
+=cut
+
 sub deps {
 	my ($self) = @_;
 	if ($self->{target_packager} eq 'deb') {

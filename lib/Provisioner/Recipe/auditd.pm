@@ -5,7 +5,29 @@ use warnings;
 
 use parent qw{Provisioner::Recipe};
 
-# XXX this is pretty much tPSGI specific
+=head1 Provisioner::Recipe::auditd
+
+=head2 SYNOPSIS
+
+In recipes.yaml:
+
+    somedomain:
+        auditd:
+
+=head2 DESCRIPTION
+
+Set up auditd to monitor various goings-on in the system.
+
+In particular we set up rules to watch:
+
+    * Every single binary on the system
+    * Root and admin user homes
+    * /etc and /var
+    * TODO: watch dirs important to the various targets
+
+TODO integrate this into some manner of IDS mechanism.
+
+=cut
 
 sub deps {
 	my ($self) = @_;

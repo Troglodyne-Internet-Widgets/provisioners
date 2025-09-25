@@ -5,6 +5,29 @@ use warnings;
 
 use parent qw{Provisioner::Recipe};
 
+=head1 Provisioner::Recipe::adminconfig
+
+=head2 SYNOPSIS
+
+In recipes.yaml:
+
+    somedomain:
+        adminconfig:
+            pkgs:
+                - vim
+                - tig
+                - tmux
+                - plocate
+            skel: "/opt/dotfiles/foobar"
+
+=head2 DESCRIPTION
+
+Set up the skel for the admin user specified in ipmap.cfg.
+
+Optionally add in packages for the administrator to use on the provisioned host.
+
+=cut
+
 sub deps {
 	my ($self, %opts) = @_;
 	if ($self->{target_packager} eq 'deb') {

@@ -5,6 +5,24 @@ use warnings;
 
 use parent qw{Provisioner::Recipe};
 
+=head1 Provisioner::Recipe::ufw
+
+=head2 SYNOPSIS
+
+    somedomain:
+        ufw:
+            port_forwards:
+                - from: 25
+                  to: 2500
+
+=head2 DESCRIPTION
+
+Sets up application rules for all your enabled recipes (and whatever else is installed on the system).
+
+Optionally set up port forwarding.
+
+=cut
+
 use File::Path qw{rmtree};
 
 sub deps {

@@ -5,6 +5,37 @@ use warnings;
 
 use parent qw{Provisioner::Recipe};
 
+=head1 Provisioner::Recipe::cron
+
+=head2 SYNOPSIS
+
+In recipes.yaml:
+
+    somedomain:
+        cron:
+            from: foo@bar.baz
+            user_scripts:
+                - some_script.sh
+                - other_script.sh
+
+=head2 DESCRIPTION
+
+Sets up some root crons, and a cron for the service user.
+
+Optionally set MAILFROM as the 'from' parameter.
+
+Root Crons:
+
+    * SAR gathering
+    * rkhunter
+    * Various log watchers (OOMs, SEGVs, root logins, new users, rsyslog drops)
+    * scan for writes to packaged files
+    * running dehydrated if using the letsencrypt target
+
+Also runs all the configured user_scripts present in the service install dir's bin/ directory.
+
+=cut
+
 sub deps {
 	my ($self) = @_;
 	if ($self->{target_packager} eq 'deb') {

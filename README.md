@@ -59,6 +59,10 @@ tickle:
     _global:
         user: my_service_user
         homepath: /opt/domains
+        registrar:
+            type: "cloudflare"
+            user: "someGuy"
+            key:  "FooBarBaz1"
     data:
         from: /opt/client-data
         to:   /opt/domains
@@ -75,6 +79,7 @@ tickle:
     tpsgi:
     fail2ban:
     auditd:
+    letsencrypt:
     ufw:
         port_forwards:
             - from: 25
@@ -103,6 +108,8 @@ tickle:
 These are powered by subclasses of `Provisioner::Recipe`, say `Provisioner::Recipe::perl`.
 All these subclasses MUST be lowercase on their least component.
 This is so we can have special uppercase targets in the makefile you can't overwrite.
+
+Feel free to check out their respective POD to understand how to configure them and what they do.
 
 These modules render the appropriately named template in templates, e.g. `templates/perl.tt`.
 These are makefile fragments with no leading tab (we add this for you).

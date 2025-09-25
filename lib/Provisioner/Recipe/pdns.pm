@@ -5,6 +5,29 @@ use warnings;
 
 use parent qw{Provisioner::Recipe};
 
+=head1 Provisioner::Recipe::pdns
+
+=head2 SYNOPSIS
+
+    somedomain:
+        pdns:
+            soa: ns1.somedomain.test
+            extra_records: /opt/domains/dns/sub.somedomain/zonefile_fragment
+
+=head2 DESCRIPTION
+
+Set up powerdns resolver, and install a sensible set of records for your chosen recipe(s).
+
+See templates/files/pdns.zone.tt for what is set up.
+
+The idea here is to allow simple DNS delegation of subdomains to provisioned machines.
+
+Uses the sqlite backend.
+
+Appends arbitrary records specified as extra_records.
+
+=cut
+
 use Text::Xslate;
 use Net::IP;
 use File::Slurper;

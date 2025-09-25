@@ -5,6 +5,41 @@ use warnings;
 
 use parent qw{Provisioner::Recipe};
 
+=head1 Provisioner::Recipe::mail
+
+=head2 SYNOPSIS
+
+    somedomain:
+        mail:
+            relay:
+                host: "mail.somerelay.net"
+                port: 25025
+                to:
+                    - "somesite.net"
+            names:
+                me:
+                    gecos: "Me"
+                    password: "@Test_123!"
+                you:
+                    gecos: "You"
+                    password: "@Test_123!"
+            mail_aliases:
+                - Me: you
+                - You: me
+
+=head2 DESCRIPTION
+
+Setup and configure a mailserver (postfix MUA, dovecot LDA, amavis + opendmarc + opendkim)
+
+Supports SMTP relaying to other hosts, and in general chooses sane defaults.
+Optionally restrict what hosts you use the relay for sending to.
+
+Sets up the virtual users you specify with the provided passwords.
+
+TODO: gather this data from something secure, such as keepass or vault.
+
+=cut
+
 use UUID qw{uuid};
 use MIME::Base64 qw{encode_base64};
 use Crypt::Digest::SHA512 qw{sha512};
