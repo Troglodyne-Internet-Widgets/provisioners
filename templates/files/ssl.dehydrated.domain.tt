@@ -1,5 +1,8 @@
+CONFIG_D=/etc/dehydrated/conf.d
+DOMAINS_D=/etc/dehydrated/domains.d
+DOMAINS_TXT=/etc/dehydrated/domains.txt
 CA="letsencrypt"
 CHALLENGETYPE="dns-01"
-HOOK=/etc/letsencrypt/hooks/[% domain %].sh
+HOOK=/etc/dehydrated/hooks/[% domain %].sh
 WELLKNOWN=[% install_dir %]/[% domain %]/www
 BASEDIR=/var/lib/dehydrated 

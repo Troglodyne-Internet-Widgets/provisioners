@@ -45,6 +45,19 @@ sub validate {
     return @_;
 }
 
+# Return array of dirs to make within the DATADIR.
+# This way you can shove stuff in from remote_files where you want.
+sub datadirs {
+	return ();
+}
+
+# Return a HASH of thing_to_fetch => where_to_store
+# So that we can grab artifacts from a prior deploy and shove them in the DATA dir.
+# NOTE: this will only happen if the admin user's authorized keys has the key of the person running the deploys.
+sub remote_files {
+	return ();
+}
+
 # Return a HASH of template => filename within the make tarball
 # Optionally making templates based on what other recipes you use
 sub template_files {

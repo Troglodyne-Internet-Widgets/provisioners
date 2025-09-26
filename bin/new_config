@@ -15,6 +15,8 @@ use Cwd();
 
 use Text::Xslate;
 use List::Util qw{uniq};
+use Net::SFTP::Foreign;
+use File::Path qw{make_path remove_tree};
 
 #TODO chdir to bin loc/ ..
 
@@ -167,6 +169,11 @@ sub main {
 	#XXX because everything needs openssl, we explicitly generate a self-signed FIRST.
 	push(@pkgs, 'openssl');
 
+	# Figure out whether the remote host is actually up
+	my $target_is_up = 1;
+	my $ssh = Net::SFTP::Foreign->new( host => $static_ip, user => $admin_user );
+	$ssh->error and $target_is_up=0;
+
     # Build a makefile based on our configured recipes
     my @modules = sort keys(%{$rconf->{$domain}});
     foreach my $module (@modules) {
@@ -177,6 +184,31 @@ sub main {
         my $full_aliases = [map { "$_.$tld" } @$aliases];
         $fragments{$module} = $builder->render(%$global_config, %$pconf, full_aliases => $full_aliases, modules => \@modules );
         push(@pkgs, ($builder->deps(%$pconf)));
+
+		# Make dirs in the DATADIR needed by ssh
+		foreach my $d ($builder->datadirs()) {
+			#XXX regrettably, Net::SFTP::Foreign has a hideous bug where if the destdir exists, it barfs. dumb.
+			#remove_tree("$data_config->{from}/$fqdn/$d", { safe => 1 });
+			make_path("$data_config->{from}/$fqdn/$d") unless -d $d;
+		}
+
+		# Schlep over stuff from existing deployments
+		if ( $target_is_up ) {
+			my %tg = $builder->remote_files();
+			foreach my $to_fetch (sort keys(%tg)) {
+				print "Writing remote file $to_fetch as $data_config->{from}/$fqdn/$tg{$to_fetch}\n";
+				my $num_copied = $ssh->rget(
+					$to_fetch,
+					"$data_config->{from}/$fqdn/$tg{$to_fetch}",
+					wanted => sub { 1 },
+					#XXX most of the 'errors' here are literally normal operation, so who cares lol
+					on_error => sub { print $ssh->error()."\n" },
+					overwrite => 1,
+					newer_only => 1,
+				);
+				print "Wrote $num_copied files.\n"
+			}
+		}
 
         # Now build the various templates for the recipes
         my %tf = $builder->template_files(@modules);

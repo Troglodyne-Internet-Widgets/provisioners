@@ -22,6 +22,9 @@ Sets up convenience scripts in /opt/lexicon per domain to run lexicon manually:
 
     /opt/lexicon/my.domain.name list TXT
 
+Also stashes a local copy of any provisioned certs so you don't violate ToS or get rate-limited from repeated redeploys of systems.
+Requires that the user running new_config has a key authorized as the admin user on the remote host.
+
 =cut
 
 sub deps {
@@ -43,6 +46,18 @@ sub template_files {
         'ssl.domains.tt'           => 'domains.txt',
         'ssl.lexicon.sh.tt'        => 'lexicon.sh',
 	);
+}
+
+sub datadirs {
+    return ('.letsencrypt');
+}
+
+sub remote_files {
+    return (
+        '/etc/dehydrated/certs/'     => '.letsencrypt/etc-certs',
+        '/var/lib/dehydrated/certs/' => '.letsencrypt/var-certs',
+        '/etc/dehydrated/accounts/'  => '.letsencrypt/accounts',
+    );
 }
 
 1;

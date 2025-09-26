@@ -150,3 +150,10 @@ Be that used for recipes, or what have you.
 
 When your recipe generates things like configs, stick the templates in templates/files.
 Then identify them by name in the template\_files() method.
+
+# Salvaged files
+
+If you want to grab something from a dir on an existing provisioned host, describe them in the remote\_files() method.
+This will stuff them in the specified location of the datadir.
+
+It is straightforward to implement a backup strategy for your hosts using this mechanism, cron-ing new\_config, tarring up the results and shipping it.
