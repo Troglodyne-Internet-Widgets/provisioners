@@ -21,4 +21,4 @@ sudo chmod -R 0755 /var/lib/dehydrated/certs
 sudo chmod 0770 /etc/dehydrated/certs/[% domain %]/priv*
 sudo chmod 0770 /var/lib/dehydrated/certs/[% domain %]/priv*
 
-echo "Done.
+echo "Done."

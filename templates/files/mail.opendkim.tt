@@ -20,10 +20,10 @@ KeyTable				/etc/opendkim/KeyTable
 SigningTable			refile:/etc/opendkim/SigningTable
 InternalHosts			/etc/opendkim/InternalHosts
 
-UserID                  opendkim:postfix
+UserID                  opendkim:opendkim
 UMask                   007
 
-Socket                  local:/run/opendkim/opendkim.sock
+Socket                  local:/var/spool/postfix/opendkim/opendkim.sock
 PidFile                 /run/opendkim/opendkim.pid
 Background				yes
 AutoRestart				yes

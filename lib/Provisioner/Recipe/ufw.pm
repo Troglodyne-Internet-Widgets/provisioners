@@ -48,8 +48,8 @@ sub validate {
 }
 
 my %template2rule = (
-    'ufw.pdns.tt'   => 'ufw/pdns',
-    'ufw.mail.tt'   => 'ufw/mail',
+    'ufw.pdns.tt'    => 'ufw/pdns',
+    'ufw.mail.tt'    => 'ufw/mail',
 );
 
 sub template_files {
@@ -59,14 +59,19 @@ sub template_files {
 
     rmtree $dir; 
     mkdir  $dir;
-    return () unless @recipes;
 
     # Only render things we actually need
-    my %ret;
+    my %ret = (
+		'ufw.rsyslog.tt' => 'ufw/rsyslog',
+	);
+
+    return %ret unless @recipes;
+
     foreach my $r (@recipes) {
         my $key = "ufw.$r.tt";
         $ret{$key} = $template2rule{$key} if exists $template2rule{$key};
     }
+
     return %ret;
 }
 

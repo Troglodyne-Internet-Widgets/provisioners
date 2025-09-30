@@ -15,14 +15,26 @@ mv opendkim.conf /etc/opendkim.conf
 chown -R opendkim:opendkim /etc/opendkim/
 chown opendkim:opendkim /etc/opendkim.conf
 opendkim-genkey -D /mail/[% domain %] -d [% domain %] -s default
+chown opendkim:opendkim /mail/[% domain %]/default.private
+sudo chmod 0600 /mail/[% domain %]/default.private
+#usermod -aG opendkim postfix
+usermod -aG postfix opendkim
+mkdir /var/spool/postfix/opendkim
+chown opendkim:opendkim /var/spool/postfix/opendkim
+chmod 0770 /var/spool/postfix/opendkim
 systemctl restart opendkim
 # opendmarc
 mkdir -p /etc/opendmarc
 mv /etc/opendmarc.conf /etc/opendmarc.conf.orig
 mv opendmarc.conf /etc/opendmarc.conf
 mv ignore.hosts /etc/opendmarc
-chown -R opendkim:opendkim /etc/opendmarc/
-chown opendkim:opendkim /etc/opendmarc.conf
+chown -R opendmarc:opendmarc /etc/opendmarc/
+chown opendmarc:opendmarc /etc/opendmarc.conf
+#usermod -aG opendmarc postfix
+usermod -aG postfix opendmarc
+mkdir /var/spool/postfix/opendmarc
+chown opendmarc:opendmarc /var/spool/postfix/opendmarc
+chmod 0770 /var/spool/postfix/opendmarc
 systemctl restart opendmarc
 # update DNS records IFF we have a dns server locally
 [% script_dir %]/queue_postrun_task [% script_dir %]/install_dkim_records [% domain %] /mail/[% domain %]/default.private
@@ -40,22 +52,20 @@ mv 50-user /etc/amavis/conf.d/
 chown root:root /etc/amavis/conf.d/50-user
 systemctl restart amavis
 # postfix
-# Fix 'tarded ownership
-chown root:postfix /etc/postfix -R
 mv aliases /etc/aliases
-chown root:postfix /etc/aliases
-chown root:postfix /etc/aliases.db
+chown root:root /etc/aliases
+chown root:root /etc/aliases.db
 newaliases
 mkdir -p /etc/postfix/header_checks
 mkdir -p /etc/postfix/virtual
 mv header_checks /etc/postfix/header_checks/[% domain %]
-chown root:postfix /etc/postfix/header_checks
-chown root:postfix /etc/postfix/virtual
+chown root:root /etc/postfix/header_checks
+chown root:root /etc/postfix/virtual
 mv virtual_maps    /etc/postfix/virtual/maps
-chown root:postfix /etc/postfix/virtual/maps
+chown root:root /etc/postfix/virtual/maps
 postmap /etc/postfix/virtual/maps
 mv virtual_aliases /etc/postfix/virtual/aliases
-chown root:postfix /etc/postfix/virtual/aliases
+chown root:root /etc/postfix/virtual/aliases
 postmap /etc/postfix/virtual/aliases
 # configure main.cf -- most of the time the defaults are sane
 # basic stuff
@@ -75,6 +85,7 @@ postconf -e -- "virtual_uid_maps=static:$(id -u dovecot)"
 postconf -e -- "virtual_gid_maps=static:$(id -u dovecot)"
 # Recipient access checks
 mv recipient_access_pcre /etc/postfix/recipient_access_pcre
+chown root:root /etc/postfix/recipient_access_pcre
 # Header checks
 postconf -e -- "header_checks=regexp:/etc/postfix/header_checks/[% domain %]"
 # We are not a relay
@@ -82,20 +93,20 @@ postconf -e -- "mynetworks=127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128"
 # In case we use a relay
 postconf -e -- "sender_dependent_relayhost_maps=hash:/etc/postfix/sdd_relay_maps"
 mv sdd_relay_maps /etc/postfix
-chown root:postfix /etc/postfix/sdd_relay_maps
+chown root:root /etc/postfix/sdd_relay_maps
 postmap /etc/postfix/sdd_relay_maps
 postconf -e -- "transport_maps=hash:/etc/postfix/transport_maps"
 mv transport_maps /etc/postfix/transport_maps
-chown root:postfix /etc/postfix/transport_maps
+chown root:root /etc/postfix/transport_maps
 postmap /etc/postfix/transport_maps
 # Prevent SMTP smuggling
 postconf -e -- "smtpd_forbid_bare_newline=normalize"
 # Don't even talk to people we can't resolve or that are on RBLs
-postconf -e -- "smtp_client_restrictions=permit_mynetworks, reject_unknown_reverse_client_hostname, reject_unknown_client_hostname, reject_rbl_client zen.spamhaus.org, reject_rbl_client bl.spamcop.net, permit"
+postconf -e -- "smtpd_client_restrictions=permit_mynetworks, reject_unknown_reverse_client_hostname, reject_unknown_client_hostname, reject_rbl_client zen.spamhaus.org, reject_rbl_client bl.spamcop.net, permit"
 # Prevent abusive behavior w/data
-postconf -e -- "smtp_data_restrictions=reject_unauth_pipelining, permit"
+postconf -e -- "smtpd_data_restrictions=reject_unauth_pipelining, permit"
 # Reject bad HELO
-postconf -e -- "smtp_helo_restrictions=permit_mynetworks, reject_invalid_helo_hostname, reject_non_fqdn_helo_hostname, permit"
+postconf -e -- "smtpd_helo_restrictions=permit_mynetworks, reject_invalid_helo_hostname, reject_non_fqdn_helo_hostname, permit"
 # Don't accept mail that is FROM obviously bogus addrs when incoming.
 postconf -e -- "smtpd_sender_restrictions=permit_mynetworks, permit_sasl_authenticated, reject_non_fqdn_sender, reject_unknown_sender_domain, reject_invalid_hostname, reject_unknown_reverse_client_hostname, permit"
 # Don't accept mail which is TO things that are either bogus or not on here when incoming.
@@ -107,12 +118,12 @@ postconf -e -- "smtpd_tls_key_file=/etc/ssl/private/[% domain %].pem"
 postconf -e -- "mailbox_transport = lmtp:unix:private/dovecot-lmtp"
 postconf -e -- "content_filter = smtp-amavis:[127.0.0.1]:10024"
 postconf -e -- "milter_default_action=accept"
-postconf -e -- "milter_protocol=2"
-postconf -e -- "smtpd_milters=local:/run/opendkim/opendkim.sock,local:/run/opendmarc/opendmarc.sock"
+postconf -e -- "smtpd_milters=local:opendkim/opendkim.sock,local:opendmarc/opendmarc.sock"
 postconf -e -- 'non_smtpd_milters=$$smtpd_milters'
 # master.cf shenanigans
 mv /etc/postfix/master.cf /etc/postfix/master.cf.orig
 mv master.cf /etc/postfix
+chown root:root /etc/postfix/master.cf
 # Restart
 systemctl restart postfix
 # Fix postfix's dumbass resolver copy grabbing a broken out of the box config (thank you systemd-resolved)
