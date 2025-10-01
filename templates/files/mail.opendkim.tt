@@ -12,16 +12,12 @@ Mode                    sv
 SubDomains              yes
 OversignHeaders         From
 
-Domain                  [% domain %]
-Selector                default
-KeyFile                 /mail/[% domain %]/default.private
-
 KeyTable				/etc/opendkim/KeyTable
 SigningTable			refile:/etc/opendkim/SigningTable
 InternalHosts			/etc/opendkim/InternalHosts
 
 UserID                  opendkim:opendkim
-UMask                   007
+UMask                   000
 
 Socket                  local:/var/spool/postfix/opendkim/opendkim.sock
 PidFile                 /run/opendkim/opendkim.pid

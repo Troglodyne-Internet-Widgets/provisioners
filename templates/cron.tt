@@ -1,2 +1,9 @@
 crontab -u root root.crontab
 crontab -u [% user %] user.crontab
+# initialize the various logfiles
+/root/bin/segfaults.sh; /bin/true
+/root/bin/escalations.sh [% admin_user %]; /bin/true
+/root/bin/oomdetect.sh; /bin/true
+/root/bin/newusers.sh; /bin/true
+/root/bin/logdrops.sh; /bin/true
+/root/bin/changes_in_packaged_files.sh; /bin/true

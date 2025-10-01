@@ -5,6 +5,9 @@ postmaster_address = postmaster@mail.[% domain %]
 first_valid_uid=1
 first_valid_gid=1
 
+mail_uid=dovecot
+mail_gid=dovecot
+
 # Enable Maildir++ quota support.
 mail_plugins = $mail_plugins quota
 
@@ -48,3 +51,13 @@ service lmtp {
      mode = 0600
   }
 }
+
+# SASL
+service auth {
+    unix_listener /var/spool/postfix/private/auth {
+        mode = 0660
+        user = postfix
+        group = postfix
+    }   
+}
+auth_mechanisms = plain login

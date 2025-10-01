@@ -1,4 +1,4 @@
-[%- FOREACH name IN names.keys().sort() -%]
+[% FOREACH name IN names.keys().sort() %]
 [% name %]@[% domain %] [% domain %]/[% name %]
-[%- END -%]
+[%- END %]
 @[% domain %] [% domain %]/catchall

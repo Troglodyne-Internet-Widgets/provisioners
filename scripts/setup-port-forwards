@@ -17,7 +17,7 @@ do
 
     echo "Forwarding port $FROM to $TO"
 
-    sed -i '/^\*filter/i -A PREROUTING -p tcp --dport $FROM -j REDIRECT --to-port $TO' /etc/ufw/before.rules
+    sed -i "/^\*filter/i -A PREROUTING -p tcp --dport $FROM -j REDIRECT --to-port $TO" /etc/ufw/before.rules
 done
 
 sed -i '/^\*filter/i COMMIT\n' /etc/ufw/before.rules

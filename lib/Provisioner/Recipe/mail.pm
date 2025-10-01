@@ -119,4 +119,15 @@ sub formatters {
     );
 }
 
+sub datadirs {
+    return ('.mail');
+}
+
+sub remote_files {
+    return (
+        '/mail/keys'     => '.mail/keys',
+    );
+}
+
+
 1;

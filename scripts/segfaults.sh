@@ -16,7 +16,7 @@ touch /root/segfaults.log
 touch /root/new-segfaults.log
 mv /root/new-segfaults.log /root/segfaults.log
 FSZ=$(stat --printf "%s" /root/segfaults.log)
-grep -i 'segfault' $SYSLOG >> /root/new-segfaults.log
+grep -i 'segfault' $SYSLOG | grep -v 'segfaults.sh' >> /root/new-segfaults.log
 echo "$(sort < /root/new-segfaults.log | uniq)" > /root/new-segfaults.log
 NEWSZ=$(stat --printf "%s" /root/new-segfaults.log)
 
