@@ -7,3 +7,7 @@ crontab -u [% user %] user.crontab
 /root/bin/newusers.sh; /bin/true
 /root/bin/logdrops.sh; /bin/true
 /root/bin/changes_in_packaged_files.sh; /bin/true
+# For cronie backups
+mkdir /root/.cache
+mkdir /opt/domains/[% domain %]/.cache
+chown [% user %]:[% user %] /opt/domains/[% domain %]/.cache
