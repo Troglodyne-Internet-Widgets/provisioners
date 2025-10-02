@@ -15,7 +15,7 @@ mv opendkim.conf /etc/opendkim.conf
 chown opendkim:opendkim /etc/opendkim.conf
 # Generate the key if it does not exist, otherwise use the one you got.
 mv [% install_dir %]/[% domain %]/.mail/keys/* /etc/opendkim/keys/
-[ ! -f /etc/opendkim/keys/[% domain %]/default.private ] && opendkim-genkey -D /etc/opendkim/keys/[% domain %] -d [% domain %] -s default
+[ ! -f /etc/opendkim/keys/[% domain %]/default.private ] && opendkim-genkey -D /etc/opendkim/keys/[% domain %] -d [% domain %] -s default; /bin/true
 chown -R opendkim:opendkim /etc/opendkim/
 chmod -R 0755 /etc/opendkim
 sudo chmod 0600 /etc/opendkim/keys/[% domain %]/*
@@ -59,15 +59,30 @@ chown root:root /etc/aliases.db
 newaliases
 mkdir -p /etc/postfix/header_checks
 mkdir -p /etc/postfix/virtual
+# header shenanigans
 mv header_checks /etc/postfix/header_checks/[% domain %]
 chown -R root:root /etc/postfix/header_checks
 chown root:root /etc/postfix/virtual
+# user maps
 mv virtual_maps    /etc/postfix/virtual/maps
 chown root:root /etc/postfix/virtual/maps
 postmap /etc/postfix/virtual/maps
+# aliases
 mv virtual_aliases /etc/postfix/virtual/aliases
 chown root:root /etc/postfix/virtual/aliases
 postmap /etc/postfix/virtual/aliases
+# Relay maps
+mv sdd_relay_maps /etc/postfix
+chown root:root /etc/postfix/sdd_relay_maps
+postmap /etc/postfix/sdd_relay_maps
+# who relays where
+mv transport_maps /etc/postfix/transport_maps
+chown root:root /etc/postfix/transport_maps
+postmap /etc/postfix/transport_maps
+# Recipient access checks
+mv recipient_access_pcre /etc/postfix/recipient_access_pcre
+chown root:root /etc/postfix/recipient_access_pcre
+# Fix perms
 chmod -R 0600 /etc/postfix/virtual
 chmod -R 0600 /etc/postfix/header_checks
 chmod 0600 /etc/postfix/master.cf
@@ -96,22 +111,13 @@ postconf -e -- "virtual_mailbox_maps=hash:/etc/postfix/virtual/maps"
 postconf -e -- "virtual_alias_maps=hash:/etc/postfix/virtual/aliases"
 postconf -e -- "virtual_uid_maps=static:$(id -u dovecot)"
 postconf -e -- "virtual_gid_maps=static:$(id -u dovecot)"
-# Recipient access checks
-mv recipient_access_pcre /etc/postfix/recipient_access_pcre
-chown root:root /etc/postfix/recipient_access_pcre
 # Header checks
 postconf -e -- "header_checks=regexp:/etc/postfix/header_checks/[% domain %]"
 # We are not a relay
 postconf -e -- "mynetworks=127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128"
 # In case we use a relay
 postconf -e -- "sender_dependent_relayhost_maps=hash:/etc/postfix/sdd_relay_maps"
-mv sdd_relay_maps /etc/postfix
-chown root:root /etc/postfix/sdd_relay_maps
-postmap /etc/postfix/sdd_relay_maps
 postconf -e -- "transport_maps=hash:/etc/postfix/transport_maps"
-mv transport_maps /etc/postfix/transport_maps
-chown root:root /etc/postfix/transport_maps
-postmap /etc/postfix/transport_maps
 # Prevent SMTP smuggling
 postconf -e -- "smtpd_forbid_bare_newline=normalize"
 # Don't even talk to people we can't resolve or that are on RBLs
