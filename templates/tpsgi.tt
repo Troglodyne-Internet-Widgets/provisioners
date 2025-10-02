@@ -3,9 +3,15 @@ mkdir -p '[% install_dir %]/[% domain %]/run';  /bin/true
 cd '[% install_dir %]/[% domain %]' && git clone --no-checkout https://github.com/Troglodyne-Internet-Widgets/tPSGI.git repo && mv repo/.git .git && rmdir repo
 HOME='[% install_dir %]/[% domain %]' git config --global --add safe.directory '[% install_dir %]/[% domain %]'
 cd '[% install_dir %]/[% domain %]' && HOME='[% install_dir %]/[% domain %]' git reset --hard HEAD
+chown -R [% user %]:[% admin_user %] '[% install_dir %]/[% domain %]'
 chown -R [% user %]:www-data '[% install_dir %]/[% domain %]/www'
 chown -R [% user %]:www-data '[% install_dir %]/[% domain %]/run'
-chmod -R 0770 '[% install_dir %]/[% domain %]/www'
-chmod -R 0770 '[% install_dir %]/[% domain %]/run'
-cd /opt/domains/[% domain %] && bin/build_service [% domain %]
-ln -s /opt/domains/[% domain %]/service/tpsgi.service /usr/lib/systemd/system/[% domain %].service 
+chmod -R 0755 '[% install_dir %]/[% domain %]'
+ln -s /opt/domains/[% domain %]/service/tpsgi.service /usr/lib/systemd/system/[% domain %].service
+# We can't guarantee that perl has installed yet.
+# the PATH shenanigans here ensure we get the *right* perl
+[% script_dir %]/queue_postrun_task PATH="/opt/domains/[% domain %]/bin:$PATH" build_service [% domain %]
+[% script_dir %]/queue_postrun_task /opt/domains/[% domain %]/bin/cpanm --installdeps /opt/domains/[% domain %]
+[% script_dir %]/queue_postrun_task systemctl daemon-reload
+[% script_dir %]/queue_postrun_task systemctl enable [% domain %]
+[% script_dir %]/queue_postrun_task systemctl start [% domain %]

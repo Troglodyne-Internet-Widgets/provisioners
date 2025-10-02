@@ -47,7 +47,7 @@ use Crypt::Digest::SHA512 qw{sha512};
 sub deps {
 	my ($self) = @_;
 	if ($self->{target_packager} eq 'deb') {
-		return qw{postfix postfix-pcre dovecot-imapd dovecot-pop3d dovecot-antispam dovecot-sieve dovecot-lmtpd postgrey opendmarc opendkim spamassassin clamav amavisd-new rpm2cpio 7zip bzip2};
+		return qw{postfix postfix-pcre dovecot-imapd dovecot-pop3d dovecot-antispam dovecot-sieve dovecot-lmtpd postgrey opendmarc opendkim spamassassin clamav amavisd-new rpm2cpio 7zip bzip2 lrzip lzop unrar-free};
 	}
 	die "Unsupported packager";
 }

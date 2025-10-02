@@ -42,10 +42,3 @@ fi
 mkdir -p $CLIENT_HOMEDIR/bin
 ln -s /opt/perl5/$NICE_PERL_NAME/bin/perl  $CLIENT_HOMEDIR/bin/perl
 ln -s /opt/perl5/$NICE_PERL_NAME/bin/cpanm $CLIENT_HOMEDIR/bin/cpanm
-
-# Setup the users bashrc
-echo 'export PATH="/opt/perl5/'$NICE_PERL_NAME'/bin:$PATH"' > /root/setup/$DOMAIN/bashrc
-echo "export CLIENT='$CLIENT'" >> /root/setup/$DOMAIN/bashrc
-echo "export DOMAIN='$DOMAIN'" >> /root/setup/$DOMAIN/bashrc
-cp /root/setup/$DOMAIN/bashrc $CLIENT_HOMEDIR/.perlrc
-echo "source $HOME/.perlrc" >> $CLIENT_HOMEDIR/.bashrc
