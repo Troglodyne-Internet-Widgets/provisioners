@@ -2,34 +2,19 @@
 # service type  private unpriv  chroot  wakeup  maxproc command + args
 #               (yes)   (yes)   (yes)   (never) (100)
 # ==========================================================================
+# Port 25, incoming untrusted mail only.
 smtp       inet  n       -       y       -       -       smtpd
-    -o content_filter=spamassassin
-    -o myhostname=mail.[% domain %]
-#  -o smtpd_tls_security_level=encrypt
-#  -o smtpd_sasl_auth_enable=yes
-#  -o smtpd_client_restrictions=permit_sasl_authenticated,reject
-#  -o milter_macro_daemon_name=ORIGINATING
+  	-o smtpd_sasl_auth_enable=no
+# Port 587, incoming trusted mail only, skip dmarc checks & force starttls
 submission inet  n       -       y       -       -       smtpd
-    -o content_filter=spamassassin
-    -o myhostname=mail.[% domain %]
 	-o smtpd_tls_security_level=encrypt
-  	-o smtpd_sasl_auth_enable=yes
-  	-o smtpd_sasl_type=dovecot
-  	-o smtpd_sasl_path=private/auth
-  	-o smtpd_sasl_security_options=noanonymous
-  	-o smtpd_sasl_local_domain=$myhostname
   	-o smtpd_client_restrictions=permit_sasl_authenticated,reject
-  	-o smtpd_sender_login_maps=hash:/etc/postfix/virtual/maps
-  	-o smtpd_sender_restrictions=reject_sender_login_mismatch
-  	-o smtpd_recipient_restrictions=reject_non_fqdn_recipient,reject_unknown_recipient_domain,permit_sasl_authenticated,reject
+	-o smtpd_milters=local:opendkim/opendkim.sock
 #628       inet  n       -       -       -       -       qmqpd
+# 465, encrypted incoming untrusted mail
 smtps      inet  n       -       y       -       -       smtpd
     -o smtpd_tls_wrappermode=yes
-    -o smtpd_sasl_auth_enable=yes
-    -o smtpd_client_restrictions=permit_sasl_authenticated,reject
-    -o milter_macro_daemon_name=ORIGINATING
-    -o content_filter=spamassassin
-    -o myhostname=mail.[% domain %]
+    -o smtpd_sasl_auth_enable=no
 pickup     fifo  n       -       y       60      1       pickup
 cleanup    unix  n       -       y       -       0       cleanup
 qmgr      fifo  n       -       n       300     1       qmgr
@@ -46,6 +31,7 @@ proxywrite unix -       -       n       -       1       proxymap
 # When relaying mail as backup MX, disable fallback_relay to avoid MX loops
 smtp       unix  -       -       y       -       -       smtp
 #       -o smtp_helo_timeout=5 -o smtp_connect_timeout=5
+# For sending stuff to relays
 relay      unix  -       -       y       -       -       smtp
     -o smtp_fallback_relay=
 showq      unix  n       -       y       -       -       showq
@@ -124,7 +110,7 @@ smtp-amavis unix -      -       n     -       2  smtp
   -o disable_dns_lookups=yes
   -o max_use=20
 
-# Also amavis
+# Also amavis XXX pretty sure this is massively overwrought
 127.0.0.1:10025 inet n  -       n     -       -  smtpd
   -o content_filter=
   -o local_recipient_maps=

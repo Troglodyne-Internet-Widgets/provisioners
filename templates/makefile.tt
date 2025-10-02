@@ -1,5 +1,5 @@
 .PHONY: all
-all: scripts service_user data ssl [% FOR module IN fragments.keys().sort() %] [% module %][% END %]
+all: scripts service_user data ssl ssh [% FOR module IN fragments.keys().sort() %] [% module %][% END %]
 	touch /root/install_complete
 	at now -f [% script_dir %]/post_install; /bin/true
 
@@ -21,6 +21,13 @@ ssl:
 	# Setup the link to LE certs
 	ln -s /etc/letsencrypt/live/[% domain %]/fullchain.pem /etc/ssl/certs/[% domain %].pem
 	ln -s /etc/letsencrypt/live/[% domain %]/privkey.pem /etc/ssl/private/[% domain %].pem
+
+# Be explicit about SSH security
+# You will want to have users setup via ipmap/recipes.
+.PHONY: ssh
+ssh:
+	echo 'PermitRootLogin no' > /etc/ssh/sshd_config.d/100-security.conf
+	echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config.d/100-security.conf
 
 .PHONY: data
 data:
