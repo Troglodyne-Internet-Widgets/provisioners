@@ -102,6 +102,8 @@ sub template_files {
         'mail.opendmarc-ignorehosts.tt'  => 'ignore.hosts',
         'mail.postfix.master.tt'         => 'master.cf',
         'mail.amavis.tt'                 => '50-user',
+		'mail.autodiscover.tt'           => 'autodiscover.xml',
+		'mail.autodiscover_vhost.tt'     => 'autodiscover_vhost',
     );
 }
 

@@ -164,3 +164,12 @@ systemctl restart postfix
 # Fix postfix's dumbass resolver copy grabbing a broken out of the box config (thank you systemd-resolved)
 [% script_dir %]/queue_postrun_task "cat /etc/resolv.conf > /var/spool/postfix/resolv.conf"
 [% script_dir %]/queue_postrun_task systemctl restart postfix
+# Setup autodiscover URIs
+mkdir -p '[% install_dir %]/autodiscover.[% domain %]/autodiscover'; /bin/true
+mv autodiscover.xml '[% install_dir %]/autodiscover.[% domain %]/autodiscover/'
+chown -R www-data:www-data  '[% install_dir %]/autodiscover.[% domain %]'
+chmod -R 0770 '[% install_dir %]/autodiscover.[% domain %]'
+[% IF modules.grep('nginxproxy') %]
+mv autodiscover_vhost /etc/nginx/sites-enabled/autodiscover.[% domain %].conf
+[% script_dir %]/queue_postrun_task systemctl reload nginx
+[%- END %]

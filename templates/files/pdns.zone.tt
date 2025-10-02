@@ -22,6 +22,9 @@ mail IN A [% tld_ip %]
 [% subdo %]        IN MX 10 mail.[% subdo %]
 _dmarc.[% subdo %] IN TXT "v=DMARC1; p=none"
 [% subdo %]		   IN TXT "v=spf1 +a +mx -all"
+; Just the autodiscover alias(es)
+autodiscover.[% subdo %] IN CNAME [% subdo %]
+autoconfig.[% subdo %] IN CNAME [% subdo %]
 [% END %]
 
 [%- FOREACH sub IN aliases.keys().sort() -%]
@@ -31,15 +34,20 @@ _dmarc.[% subdo %] IN TXT "v=DMARC1; p=none"
 [%- END -%]
 [%- END -%]
 
+; Autodiscover TXT record
+@ IN TXT "mailconf=https://autoconfig.[% domain %]/autoconfig/autoconfig.xml"
+
 ; Basically bogus records for the TLD which we don't control really
 default._domainkey IN TXT  "o=-"
 mail._domainkey    IN TXT  "o=-"
 _dmarc             IN TXT  "v=DMARC1; p=none"
 @                  IN TXT  "v=spf1 +a +mx -all"
 
-_imaps._tcp        IN SRV 0 0 993 [% domain %].
-_pop3s._tcp        IN SRV 0 0 995 [% domain %].
-_smtps._tcp        IN SRV 0 0 465 [% domain %].
+_imaps._tcp        IN SRV 0 0 993 mail.[% domain %].
+_pop3s._tcp        IN SRV 0 0 995 mail.[% domain %].
+_smtps._tcp        IN SRV 0 0 465 mail.[% domain %].
+_submission.tcp    IN SRV 0 0 564 mail.[% domain %].
+_autodiscover._tcp IN SRV 0 0 80  mail.[% domain %].
 
 ; Include your DKIM key record below, ACME/CAA & GSV et cetera
 [% IF extra_records %]
