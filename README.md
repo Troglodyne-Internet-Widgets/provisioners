@@ -157,3 +157,8 @@ If you want to grab something from a dir on an existing provisioned host, descri
 This will stuff them in the specified location of the datadir.
 
 It is straightforward to implement a backup strategy for your hosts using this mechanism, cron-ing new\_config, tarring up the results and shipping it.
+
+## Modules you don't intend to publish
+
+Feel free to make a vendor/ dir herein, it is gitignored.  Then use the 'libdir' parameter in your domain's configuration to search 'vendor'.
+See the documentation in bin/new_config for more information.

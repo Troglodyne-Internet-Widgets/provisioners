@@ -18,6 +18,28 @@ use List::Util qw{uniq};
 use Net::SFTP::Foreign;
 use File::Path qw{make_path remove_tree};
 
+use FindBin::libs;
+
+=head1 USAGE
+
+	new_config $domain
+
+Builds a new configuration package for a VM to be provisioned by Troglodyne provisioner.
+
+Per-domain Behavior is controlled by:
+
+	recipes.yaml
+	ipmap.cfg
+
+Both of which will be in the Current working directory.
+
+If you have some proprietary recipes to use, you can specify what libdir to search in the _global section of the domain's config in recipes.yaml.
+Use the 'libdir' key (an array of library dir names to search).  By default we include 'lib'.
+
+We use the libdir as 'base' for L<FindBin::libs> to search for the named directory.
+
+=cut
+
 #TODO chdir to bin loc/ ..
 
 my $cfile = 'ipmap.cfg';
@@ -76,6 +98,9 @@ sub main {
     my $tld_ip = $global_conf->{ip};
     die "Must set ip for $domain in global section of $cfile" unless $tld;
 
+	if ($global_conf->{libdir}) {
+		require FindBin::libs "libdir=$global_conf->{libdir}";
+	}
 
     my $fqdn = "$domain.$tld";
 
