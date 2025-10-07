@@ -28,4 +28,10 @@ sub deps {
 	die "Unsupported packager";
 }
 
+sub template_files {
+	return (
+		'tpsgi.tt' => 'tpsgi.ini',
+	);
+}
+
 1;

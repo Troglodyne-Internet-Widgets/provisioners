@@ -3,6 +3,7 @@ mkdir -p '[% install_dir %]/[% domain %]/run';  /bin/true
 cd '[% install_dir %]/[% domain %]' && git clone --no-checkout https://github.com/Troglodyne-Internet-Widgets/tPSGI.git repo && mv repo/.git .git && rmdir repo
 HOME='[% install_dir %]/[% domain %]' git config --global --add safe.directory '[% install_dir %]/[% domain %]'
 cd '[% install_dir %]/[% domain %]' && HOME='[% install_dir %]/[% domain %]' git reset --hard HEAD
+mv tpsgi.ini '[% install_dir %]/[% domain %]'
 chown -R [% user %]:[% admin_user %] '[% install_dir %]/[% domain %]'
 chown -R [% user %]:www-data '[% install_dir %]/[% domain %]/www'
 chown -R [% user %]:www-data '[% install_dir %]/[% domain %]/run'
