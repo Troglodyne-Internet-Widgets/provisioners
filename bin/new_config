@@ -99,7 +99,7 @@ sub main {
     die "Must set ip for $domain in global section of $cfile" unless $tld;
 
 	if ($global_conf->{libdir}) {
-		require FindBin::libs "libdir=$global_conf->{libdir}";
+		FindBin::libs->import("libdir=$global_conf->{libdir}");
 	}
 
     my $fqdn = "$domain.$tld";

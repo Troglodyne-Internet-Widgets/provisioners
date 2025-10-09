@@ -35,7 +35,7 @@ use File::Slurper;
 sub deps {
 	my ($self) = @_;
 	if ($self->{target_packager} eq 'deb') {
-		return qw{pdns-server pdns-tools pdns-backend-sqlite3 sqlite3 libconfig-simple-perl};
+		return qw{pdns-server pdns-tools pdns-backend-sqlite3 sqlite3 libconfig-simple-perl libnet-dns-perl libjson-perl};
 	}
 	die "Unsupported packager";
 }
@@ -45,6 +45,9 @@ sub validate {
 
     my $soa = $opts{soa};
     die "Must define soa ns in [pdns] section of recipes.yaml" unless $soa;
+
+    my $key = $opts{api_key};
+    die "Must define api_key in [pdns] section of recipes.yaml" unless $key;
 
     my $extras = $opts{extra_records};
     die "extra_records defined in [pdns] must be a readable text file" if $extras && ! -f $extras;
@@ -58,9 +61,14 @@ sub template_files {
 	my ($self) = @_;
 
 	return (
-		'pdns.zone.tt'    => 'zonefile',
-        'pdns.domain.tt'  => 'pdns-domain.conf',
-		'pdns.rsyslog.tt' => '10-powerdns.conf',
+		'pdns.zone.tt'      => 'zonefile',
+        'pdns.domain.tt'    => 'pdns-domain.conf',
+		'pdns.rsyslog.tt'   => '10-powerdns.conf',
+		'pdns.api.tt'       => 'pdns-api.conf',
+		'pdns.synczones.tt' => 'synczones.conf',
+		'pdns.lexicon.tt'   => 'lexicon-pdns.sh',
+		'patches/lexicon-pdns-af-unix.patch'           => 'lexicon-pdns-af-unix.patch',
+		'patches/lexicon-arbitrary-record-types.patch' => 'lexicon-arbitrary-record-types.patch'
 	);
 }
 

@@ -1,29 +1,30 @@
+# Grab up to date pdns
+apt-add-repository -r http://repo.powerdns.com/ubuntu -p auth-master
+apt-get update
+apt-get install pdns-server
+# Patch lexicon to work with unix sockets
+cd / && git apply /tmp/domainsetup_[% domain %]/lexicon-pdns-af-unix.patch
+cd / && git apply /tmp/domainsetup_[% domain %]/lexicon-arbitrary-record-types.patch
 # Configure the zone to be loaded into pdns
 mv pdns-domain.conf /etc/powerdns/pdns.d/[% tld %].conf
+mv pdns-api.conf /etc/powerdns/pdns.d/api.conf
+mv synczones.conf /etc/synczones.conf
+chown root:root /etc/synczones.conf
+chmod 0600 /etc/synczones.conf
 # Build the zone database
-mkdir -p [% install_dir %]/[% domain %]/dns/; /bin/true
-sqlite3 [% install_dir %]/[% domain %]/dns/zones.db < /usr/share/pdns-backend-sqlite3/schema/schema.sqlite3.sql
-zone2sql --gsqlite --zone=zonefile --zone-name=[% tld %] > [% install_dir %]/[% domain %]/dns/zone.sql
-sqlite3 [% install_dir %]/[% domain %]/dns/zones.db < [% install_dir %]/[% domain %]/dns/zone.sql
-chown -R pdns:[% user %] [% install_dir %]/[% domain %]/dns/
-chmod -R 0770 [% install_dir %]/[% domain %]/dns/
-# Bind mount our dns/ folder so that pdns can see it in chroot
-mkdir /var/spool/powerdns/[% tld %]; /bin/true
-chown pdns:pdns /var/spool/powerdns/[% tld %]; /bin/true
-cp /etc/fstab /tmp/fstab.new
-echo "[% install_dir %]/[% domain %]/dns/ /var/spool/powerdns/[% tld %] none defaults,bind 0 0" >> /tmp/fstab.new
-sort < /tmp/fstab.new | uniq | grep -o '^[^#]*' > /tmp/fstab.newer
-chown root:root /tmp/fstab.newer
-mv /etc/fstab /etc/fstab.bak
-mv /tmp/fstab.newer /etc/fstab
-mount /var/spool/powerdns/[% tld %]
+mkdir -p /var/spool/powerdns/[% tld %]; /bin/true
+sqlite3 /var/spool/powerdns/[% tld %]/zones.db < /usr/share/pdns-backend-sqlite3/schema/schema.sqlite3.sql
+# TODO do this via lexicon instead
+cp zonefile /var/spool/powerdns/[% tld %]/bind.zone
+zone2sql --gsqlite --zone=zonefile --zone-name=[% tld %] > /var/spool/powerdns/[% tld %]/zone.sql
+sqlite3 /var/spool/powerdns/[% tld %]/zones.db < /var/spool/powerdns/[% tld %]/zone.sql
+chown -R pdns:pdns /var/spool/powerdns/[% tld %]
+chmod -R 0775 /var/spool/powerdns/[% tld %]
 # Don't need no bind
 mkdir -p /etc/powerdns/config-available
 mv /etc/powerdns/pdns.d/bind.conf /etc/powerdns/pdns.d/config-available
 # Fix broken service configuration
 [% script_dir %]/configure_pdns
-chown [% user %]:pdns [% install_dir %]/[% domain %]/dns/
-chown [% user %]:pdns [% install_dir %]/[% domain %]/dns/zones.db
 mkdir -p /var/spool/powerdns/run/pdns/; /bin/true
 chown -R pdns:pdns /var/spool/powerdns/run
 mv 10-powerdns.conf /etc/rsyslog.d/10-powerdns.conf
@@ -31,3 +32,8 @@ systemctl daemon-reload
 systemctl restart rsyslog
 systemctl enable pdns
 systemctl start pdns
+# Setup lexicon shortcuts
+mkdir -p /opt/lexicon; /bin/true
+mv lexicon-pdns.sh /opt/lexicon/[% domain %]/pdns
+chmod -R 0700 /opt/lexicon/[% domain %]
+chown -R root:root /opt/lexicon/[% domain %]
