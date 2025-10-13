@@ -1,0 +1,7 @@
+mkdir -p [% install_dir -%]/webmail.[% domain -%]
+mkdir -p [% install_dir -%]/webmail.[% domain -%]_data
+wget -O [% install_dir -%]/webmail.[% domain -%]/roundcube.tar.gz [% package_url -%]
+cd [% install_dir -%]/webmail.[% domain -%] && tar -zxvf roundcube.tar.gz
+install -t fpm.ini /etc/php/$(shell(php --version | egrep -o '[0-9]+\.[0-9]' | head -n 1))/fpm/pool.d/roundcube-[% domain -%].ini
+install -t config.inc.php [% install_dir -%]/webmail.[% domain -%]/config/config.inc.php
+systemctl restart php$(shell(php --version | egrep -o '[0-9]+\.[0-9]' | head -n 1))-fpm

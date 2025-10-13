@@ -1,0 +1,18 @@
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+
+    server_name mail.[% domain -%];
+
+    ssl_certificate     /etc/ssl/certs/[% domain -%].pem;
+    ssl_certificate_key /etc/ssl/private/[% domain -%].pem;
+
+    location / {
+        root [% install_dir -%]/webmail.[% domain -%]/;
+    }
+    location ~ \.php$ {
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass unix:/var/run/roundcube-[% domain -%].sock;
+        fastcgi_index index.php;
+    }
+}
