@@ -22,3 +22,13 @@ MAILFROM="[% from %]@[% domain %]"
 # SSL
 0 0 * * * dehydrated --config /etc/dehydrated/domains.d/[% domain %].conf --cron
 [% END %]
+
+# Site-specific crons
+[% FOR cob in root_scripts %]
+[% IF cob.mailto %]
+MAILTO="[% cob.mailto %]"
+[% ELSE %]
+MAILTO="[% admin_email %]"
+[% END %]
+[% cob.interval %] [% cob.cmd %]
+[% END %] 

@@ -15,8 +15,11 @@ In recipes.yaml:
         cron:
             from: foo@bar.baz
             user_scripts:
-                - some_script.sh
-                - other_script.sh
+                - cmd: some_script.sh
+                  interval: "5 0 0 0 0"
+				  mailto: "whee@test.test"
+		    root_scripts:
+				...
 
 =head2 DESCRIPTION
 
@@ -32,7 +35,7 @@ Root Crons:
     * scan for writes to packaged files
     * running dehydrated if using the letsencrypt target
 
-Also runs all the configured user_scripts present in the service install dir's bin/ directory.
+Also runs all the configured root_scripts & user_scripts present in the service install dir's bin/ directory.
 
 =cut
 
@@ -54,6 +57,15 @@ sub validate {
             die "user_scripts must have an interval & cmd" unless $cron->{interval} && $cron->{cmd}
         }
     }
+
+    if ( $vars{root_scripts} ) {
+        die "root_scripts must be ARRAY" unless ref $vars{root_scripts} eq 'ARRAY';
+        foreach my $cron (@{$vars{root_scripts}}) {
+            die "Each user script must be a HASH" unless ref $cron eq 'HASH';
+            die "root_scripts must have an interval & cmd" unless $cron->{interval} && $cron->{cmd}
+        }
+    }
+
 
     return %vars;
 }

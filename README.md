@@ -85,6 +85,11 @@ tickle:
             - from: 25
               to: 2500
     cron:
+        from: "cron"
+        root_scripts:
+            - cmd: "do_some_other_thing"
+              interval: "*/5 * * * *"
+              mailto: "foo@bar.baz"
         user_scripts:
             - cmd: "do_some_thing_in_PATH.sh"
               interval: "*/5 * * * *"
