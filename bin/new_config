@@ -36,7 +36,9 @@ Both of which will be in the Current working directory.
 If you have some proprietary recipes to use, you can specify what libdir to search in the _global section of the domain's config in recipes.yaml.
 Use the 'libdir' key (an array of library dir names to search).  By default we include 'lib'.
 
-We use the libdir as 'base' for L<FindBin::libs> to search for the named directory.
+We use the libdir as 'base' for L<FindBin::libs> to search for the named directory, and search for the subdir 'lib' therein.
+
+These directories ought to have both a lib/ and templates/ dir therein, structured basically the same as we do normally.
 
 =cut
 
@@ -98,8 +100,10 @@ sub main {
     my $tld_ip = $global_conf->{ip};
     die "Must set ip for $domain in global section of $cfile" unless $tld;
 
+	my @paths = qw{templates};
 	if ($global_conf->{libdir}) {
-		FindBin::libs->import("libdir=$global_conf->{libdir}");
+		FindBin::libs->import("libdir=$global_conf->{libdir} subdir=lib");
+		push(@paths, "$global_conf->{libdir}/templates");
 	}
 
     my $fqdn = "$domain.$tld";
@@ -145,7 +149,7 @@ sub main {
     );
 
     my $tt = Text::Xslate->new({
-        path     => "templates/",
+        path     => \@paths,
         syntax   => 'TTerse',
         function => \%formatters,
     }) || die "Could not initialize template dir";
