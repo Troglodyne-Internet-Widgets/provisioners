@@ -1,0 +1,7 @@
+mkdir -p /opt/mysql; /bin/true
+mv my.cnf /opt/mysql
+mv secure_installation.sql /opt/mysql
+[% script_dir %]/install_mariadb.sh [% user %] [% version %] [% install_dir %]/[% dump %]
+mysql --defaults-file=/opt/mariadb/my.cnf -sfu root < /opt/mysql/secure_installation.sql
+# Needs to be done, this has a hardcoded pw in it
+rm /opt/mysql/secure_installation.sql
