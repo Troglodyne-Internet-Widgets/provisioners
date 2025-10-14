@@ -200,6 +200,7 @@ sub main {
 
     # set the install_dir for configs to use from here
     $global_config->{install_dir}   = $data_config->{to};
+    $global_config->{data_source}   = $data_config->{from};
     $global_config->{script_dir}    = $root_scripts;
 
     my (@pkgs, @generated);
