@@ -34,6 +34,8 @@ chown root:root /etc/letsencrypt/fetchers/[% domain %]
 chmod +x /etc/letsencrypt/fetchers/[% domain %]
 # Setup LE
 dehydrated --register --accept-terms; /bin/true
+# Setup dehydrated logrotate
+mv dehydrated.logrotate /etc/logrotate.d/dehydrated
 # Queue task to actually get certs
 [% script_dir %]/queue_postrun_task /etc/letsencrypt/fetchers/[% domain %]
 # Restart everything that needs restarting

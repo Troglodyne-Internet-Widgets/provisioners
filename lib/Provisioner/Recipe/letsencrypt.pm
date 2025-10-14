@@ -45,6 +45,7 @@ sub template_files {
         'ssl.dehydrated.hook.tt'   => 'domain.hook',
         'ssl.domains.tt'           => 'domains.txt',
         'ssl.lexicon.sh.tt'        => 'lexicon.sh',
+        'ssl.dehydrated.logrotate.tt' => 'dehydrated.logrotate',
 	);
 }
 
