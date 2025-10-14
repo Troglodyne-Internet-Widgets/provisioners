@@ -65,6 +65,11 @@ sub template_files {
 	return ();
 }
 
+# Return a HASH of name => value of vars to set in the makefile before any target runs.
+sub makefile_vars {
+	return ();
+}
+
 # Global parameter validation
 my $validate = sub {
     my %params = @_;

@@ -205,6 +205,7 @@ sub main {
 
     # Build a makefile based on our configured recipes
     my @modules = sort keys(%{$rconf->{$domain}});
+    my %mf_vars;
     foreach my $module (@modules) {
         require "Provisioner/Recipe/$module.pm" or die "Could not load provisioner recipe $module";
         my $builder = "Provisioner::Recipe::$module"->new(%provisioner_opts);
@@ -213,6 +214,10 @@ sub main {
         my $full_aliases = [map { "$_.$tld" } @$aliases];
         $fragments{$module} = $builder->render(%$global_config, %$pconf, full_aliases => $full_aliases, modules => \@modules );
         push(@pkgs, ($builder->deps(%$pconf)));
+
+		# Grab the relevant makefile vars for the target
+        my %t_vars = $builder->makefile_vars();
+        %mf_vars = ( %mf_vars, %t_vars ) if %t_vars;
 
 		# Make dirs in the DATADIR needed by ssh
 		foreach my $d ($builder->datadirs()) {
@@ -250,7 +255,7 @@ sub main {
         }
     }
 
-    my $makefile = $tt->render('makefile.tt', { %$global_config, data_fragment => $data_fragment, fragments => \%fragments });
+    my $makefile = $tt->render('makefile.tt', { %$global_config, data_fragment => $data_fragment, fragments => \%fragments, vars => \%mf_vars });
     print "Writing Makefile to $cfg_dir\n";
     File::Slurper::write_binary("$cfg_dir/Makefile", $makefile);
 

@@ -59,6 +59,12 @@ sub template_files {
     );
 }
 
+sub makefile_vars {
+    return (
+        PHP_VER => q{$(shell(php --version | egrep -o '[0-9]+\.[0-9]' | head -n 1))},
+    );
+}
+
 sub validate {
 	my ($self, %opts) = @_;
     $opts{'des_key'} = 'rcube-' . UUID::uuid();

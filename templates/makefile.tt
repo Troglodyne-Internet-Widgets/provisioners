@@ -1,3 +1,7 @@
+[% FOR var IN vars.keys().sort() %]
+[% var %]:=[% vars.$var %]
+[% END -%]
+
 .PHONY: all
 all: scripts service_user data ssl ssh [% FOR module IN fragments.keys().sort() %] [% module %][% END %]
 	touch /root/install_complete
