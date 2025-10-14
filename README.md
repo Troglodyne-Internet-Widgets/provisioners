@@ -40,6 +40,7 @@ Suppose we execute `bin/new_config tickle`.
 The above would produce a VM config for tickle.test.test at 192.168.1.1, and place it in /opt/provisioners/tickle.test.test.
 
 It would populate the default users.yaml to make the 'test' user, give them admin rights and ssh-import-id their github key.
+You can augment this users.yaml by having one in the datadir specified in the `data` section of recipes.yaml below.
 
 It would also set up vhost aliases & CNAMEs for the aliases, should you pick the relevant recipes.
 

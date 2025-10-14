@@ -111,7 +111,20 @@ sub main {
     my $cfg_dir = "$basedir/$fqdn";
     mkdir $cfg_dir;
 
-    # Build a users.yaml
+    my $rconf = get_recipe_config();
+
+    # There will always be data config
+    my $data_config = delete $rconf->{$domain}{data};
+    die "Must provide data configuation for $fqdn" unless $data_config;
+
+    my @data_users;
+    my $data_users_f    = "$data_config->{from}/$fqdn/users.yaml";
+    if ( -f $data_users_f ) {
+        my $data_users_yaml = YAML::Load(File::Slurper::read_text($data_users_f));
+        @data_users      = @{$data_users_yaml->{users}};
+    }
+
+    # Build a users.yaml based on ipmap, and any users.yaml found in the DATA dir.
     my $user_conf =  {
         users => [
             {
@@ -120,13 +133,13 @@ sub main {
                 shell => '/bin/bash',
                 sudo => 'ALL=(ALL) NOPASSWD:ALL',
                 ssh_import_id => [ $admin_key ],
-            }
+            },
+            @data_users,
         ],
     };
 
     File::Slurper::write_binary("$cfg_dir/users.yaml", YAML::Dump($user_conf));
 
-    my $rconf = get_recipe_config();
     my %fragments;
 
     my $provisioner_dir = Cwd::abs_path($FindBin::Bin."/../");
@@ -135,10 +148,6 @@ sub main {
 
     # There will always be some global config for a domain which ought be made available to the various modules
     my $global_config = delete $rconf->{$domain}{_global} // {};
-
-    # There will always be data config
-    my $data_config = delete $rconf->{$domain}{data};
-    die "Must provide data configuation for $fqdn" unless $data_config;
 
     my %formatters = (
         tabinate => Text::Xslate::html_builder(sub {
