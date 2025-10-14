@@ -11,3 +11,6 @@ crontab -u [% user %] user.crontab
 mkdir /root/.cache
 mkdir /opt/domains/[% domain %]/.cache
 chown [% user %]:[% user %] /opt/domains/[% domain %]/.cache
+# Initialize rkhunter stuff
+mv rkhunter.conf /etc/rkhunter.conf
+rkhunter --propupd

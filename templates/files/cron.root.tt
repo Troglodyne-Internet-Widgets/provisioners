@@ -20,7 +20,7 @@ MAILFROM="[% from %]@[% domain %]"
 
 [% IF modules.grep('letsencrypt') %]
 # SSL
-0 0 * * * dehydrated --config /etc/dehydrated/domains.d/[% domain %].conf --cron
+0 0 * * * dehydrated --config /etc/dehydrated/domains.d/[% domain %].conf --cron >> /var/log/dehydrated.log
 [% END %]
 
 # Site-specific crons
