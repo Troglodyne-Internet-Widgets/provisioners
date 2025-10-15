@@ -3,6 +3,7 @@ package Provisioner::Recipe::roundcube;
 use strict;
 use warnings;
 
+use List::Util qw{any};
 use UUID ();
 
 use parent qw{Provisioner::Recipe};
@@ -14,10 +15,8 @@ use parent qw{Provisioner::Recipe};
 In recipes.yaml:
 
     somedomain:
-        roundcubeconfig:
-            package_url: https://github.com/roundcube/roundcubemail/releases/download/1.6.11/roundcubemail-1.6.11-complete.tar.gz
-            pkgs: 
-            skel: "/var/www/roundcube"
+        roundcube:
+            version:
 
 =head2 DESCRIPTION
 
@@ -53,21 +52,27 @@ sub deps {
 # NOTE: FPM php.ini: /etc/php/8.3/fpm/php.ini
 
 sub template_files {
-    return (
+    my ($class, @modules) = @_;
+    my %f = (
         'roundcube.config.inc.php.tt' => 'config.inc.php',
         'roundcube.fpm.ini.tt'        => 'fpm.ini',
     );
+    $f{'roundcube.nginx.tt'} = 'webmail_nginx.conf' if any { $_ eq 'nginxproxy' } @modules;
+    return %f;
 }
 
 sub makefile_vars {
     return (
-        PHP_VER => q{$(shell(php --version | egrep -o '[0-9]+\.[0-9]' | head -n 1))},
+        PHP_VER => q{$(shell php --version | egrep -o "[0-9]+\.[0-9]" | head -n 1)},
     );
 }
 
 sub validate {
 	my ($self, %opts) = @_;
     $opts{'des_key'} = 'rcube-' . UUID::uuid();
+
+    my $ver = $opts{version};
+    die "Must set version in [roundcube] section of configuration" unless $ver;
 
 	return %opts;
 }

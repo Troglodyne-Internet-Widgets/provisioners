@@ -1,7 +1,10 @@
 mkdir -p /opt/mysql; /bin/true
+mv mariadb.service /opt/mysql
 mv my.cnf /opt/mysql
+ln -s /opt/mysql /opt/mariadb
 # Install global schema for the recipe
-[% script_dir %]/install_mariadb.sh [% user %] [% version %] [% install_dir %]/[% dump %]
+useradd -s /usr/sbin/nologin -d /opt/mariadb mysql 
+[% script_dir %]/install_mariadb.sh [% user %] [% version %] [% install_dir %]/[% domain %]/[% dumpfile %]
 # Secure the mysql install
 mv secure_installation.sql /opt/mysql
 mysql --defaults-file=/opt/mariadb/my.cnf -sfu root < /opt/mysql/secure_installation.sql

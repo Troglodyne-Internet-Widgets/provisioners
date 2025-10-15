@@ -34,12 +34,12 @@ wait_for_no_mysql() {
 
 
 if [ ! -f /opt/mysql/bin/mariadbd ]; then
-    apt-get install -y libaio-dev
     ln -s /usr/lib/x86_64-linux-gnu/libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1
     mkdir -p /opt/mysql
     curl -so /tmp/mysql.tar.gz -- https://archive.mariadb.org/mariadb-$VERSION/bintar-linux-systemd-x86_64/mariadb-$VERSION-linux-systemd-x86_64.tar.gz
-#    stat /tmp/mysql.tar.gz
-#    stat /opt/mysql/
+    stat /tmp/mysql.tar.gz
+    stat /opt/mysql/
+    echo "curl -so /tmp/mysql.tar.gz -- https://archive.mariadb.org/mariadb-$VERSION/bintar-linux-systemd-x86_64/mariadb-$VERSION-linux-systemd-x86_64.tar.gz"
     tar --strip-components=1 -C /opt/mysql/ -zxf /tmp/mysql.tar.gz
     rm /tmp/mysql.tar.gz
 
@@ -51,7 +51,7 @@ if [ ! -f /opt/mysql/bin/mariadbd ]; then
 
     # Initialize the DB
     /opt/mysql/scripts/mariadb-install-db --defaults-file=/opt/mysql/my.cnf
-    ln -s /opt/mysql/mysql.unit /usr/lib/systemd/system/mariadb.service
+    ln -s /opt/mysql/mariadb.service /usr/lib/systemd/system/mariadb.service
     systemctl enable mariadb
     systemctl start  mariadb
 

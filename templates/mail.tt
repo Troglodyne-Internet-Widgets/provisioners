@@ -48,6 +48,11 @@ mv dovecot.domain.conf /etc/dovecot/conf.d/10-[% domain %].conf
 sed -i "s/%REPLACEME%/$$(id -u dovecot)/gm" mailpasswd
 mv mailpasswd /mail/[% domain %]/passwd
 systemctl restart dovecot
+# Stash a copy of the mailnames, and restore it if necessary
+# TODO make the old one take precedence via configuration
+mv [% install_dir %]/[% domain %]/mailnames/passwd [% install_dir %]/[% domain %]/mailnames/passwd.old
+mv [% install_dir %]/[% domain %]/mailnames/* /mail/[% domain %]/
+chown -R dovecot:dovecot /mail/[% domain %]/
 # amvavisd-new
 mv 50-user /etc/amavis/conf.d/
 chown root:root /etc/amavis/conf.d/50-user

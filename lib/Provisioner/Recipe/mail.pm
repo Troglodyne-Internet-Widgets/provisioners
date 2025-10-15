@@ -126,10 +126,11 @@ sub datadirs {
 }
 
 sub remote_files {
+	my ( $class, $domain ) = @_;
     return (
         '/mail/keys'     => '.mail/keys',
+		"/mail/$domain"  => 'mailnames',
     );
 }
-
 
 1;

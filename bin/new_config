@@ -100,18 +100,26 @@ sub main {
     my $tld_ip = $global_conf->{ip};
     die "Must set ip for $domain in global section of $cfile" unless $tld;
 
-	my @paths = qw{templates};
-	if ($global_conf->{libdir}) {
-		FindBin::libs->import("libdir=$global_conf->{libdir} subdir=lib");
-		push(@paths, "$global_conf->{libdir}/templates");
-	}
-
     my $fqdn = "$domain.$tld";
 
     my $cfg_dir = "$basedir/$fqdn";
     mkdir $cfg_dir;
 
     my $rconf = get_recipe_config();
+
+    # There will always be some global config for a domain which ought be made available to the various modules
+    my $global_config = delete $rconf->{$domain}{_global} // {};
+
+	# Include site-specific stuff
+	my @paths = qw{templates};
+	my $libdirs =  $global_config->{libdir};
+	if ($libdirs) {
+		foreach my $libdir (@$libdirs) {
+			print "Including vendor libs from $libdir/lib\n";
+			push(@INC, "$libdir/lib");
+			push(@paths, "$libdir/templates");
+		}
+	}
 
     # There will always be data config
     my $data_config = delete $rconf->{$domain}{data};
@@ -146,9 +154,6 @@ sub main {
     my $root_scripts    = '/root/bin';
     my $hv_internal_ip  = get_hv_internal_ip();
 
-    # There will always be some global config for a domain which ought be made available to the various modules
-    my $global_config = delete $rconf->{$domain}{_global} // {};
-
     my %formatters = (
         tabinate => Text::Xslate::html_builder(sub {
             my $input = shift;
@@ -171,6 +176,7 @@ sub main {
         provisioner_dir => $provisioner_dir,
         script_loc      => $root_scripts,
         output_dir      => $cfg_dir,
+		template_dirs   => \@paths,
     );
 
     foreach my $subdomain (keys(%$ip_conf)) {
@@ -214,7 +220,7 @@ sub main {
 	$ssh->error and $target_is_up=0;
 
     # Build a makefile based on our configured recipes
-    my @modules = sort keys(%{$rconf->{$domain}});
+    my @modules = sort { ($rconf->{$domain}{$a}{order} // 'ZZZ') cmp ($rconf->{$domain}{$b}{order} // 'ZZZ') } sort keys(%{$rconf->{$domain}});
     my %mf_vars;
     foreach my $module (@modules) {
         require "Provisioner/Recipe/$module.pm" or die "Could not load provisioner recipe $module";
@@ -231,14 +237,12 @@ sub main {
 
 		# Make dirs in the DATADIR needed by ssh
 		foreach my $d ($builder->datadirs()) {
-			#XXX regrettably, Net::SFTP::Foreign has a hideous bug where if the destdir exists, it barfs. dumb.
-			#remove_tree("$data_config->{from}/$fqdn/$d", { safe => 1 });
 			make_path("$data_config->{from}/$fqdn/$d") unless -d $d;
 		}
 
 		# Schlep over stuff from existing deployments
 		if ( $target_is_up ) {
-			my %tg = $builder->remote_files();
+			my %tg = $builder->remote_files($fqdn);
 			foreach my $to_fetch (sort keys(%tg)) {
 				print "Writing remote file $to_fetch as $data_config->{from}/$fqdn/$tg{$to_fetch}\n";
 				my $num_copied = $ssh->rget(
@@ -265,7 +269,7 @@ sub main {
         }
     }
 
-    my $makefile = $tt->render('makefile.tt', { %$global_config, data_fragment => $data_fragment, fragments => \%fragments, vars => \%mf_vars });
+    my $makefile = $tt->render('makefile.tt', { %$global_config, data_fragment => $data_fragment, fragments => \%fragments, modules_ordered => \@modules, vars => \%mf_vars });
     print "Writing Makefile to $cfg_dir\n";
     File::Slurper::write_binary("$cfg_dir/Makefile", $makefile);
 

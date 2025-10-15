@@ -25,7 +25,7 @@ Secures the DB and sets the root pw as specified.
 sub deps {
 	my ($self) = @_;
 	if ($self->{target_packager} eq 'deb') {
-		return qw{mariadb-client libmariadb-dev-compat libmariadb-dev mariadb-backup};
+		return qw{mariadb-client libmariadb-dev-compat libmariadb-dev mariadb-backup libaio-dev};
 	}
 	die "Unsupported packager";
 }
@@ -36,8 +36,8 @@ sub validate {
     my $rpw = $opts{root_pw};
     die "Must define root_pw ns in [mariadb] section of recipes.yaml" unless $rpw;
 
-    my $dump = $opts{dump};
-    die "Must define dump in [mariadb] section of recipes.yaml" unless $dump;
+    my $dump = $opts{dumpfile};
+    die "Must define dumpfile in [mariadb] section of recipes.yaml" unless $dump;
 
     my $ver = $opts{version};
     die "Must define version in [mariadb] section of recipes.yaml" unless $ver;
@@ -49,8 +49,9 @@ sub template_files {
 	my ($self) = @_;
 
 	return (
-		'mysql.secure_installation.tt' => 'mysql_secure_installation.sql',
+		'mysql.secure_installation.tt' => 'secure_installation.sql',
         'my.cnf.tt'                    => 'my.cnf',
+        'mysql.service.tt'             => 'mariadb.service',
     );
 }
 

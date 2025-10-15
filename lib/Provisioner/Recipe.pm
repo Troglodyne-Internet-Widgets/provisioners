@@ -18,8 +18,8 @@ sub new {
     $opts{template} = "$tname.tt";
 
     $opts{tt} = Text::Xslate->new({
-        path   => "templates/",
-        syntax => 'TTerse',
+        path     => $opts{template_dirs},
+        syntax   => 'TTerse',
 		module   => [qw{Text::Xslate::Bridge::TT2}],
 		function => {$class->formatters()},
     }) || die "Could not initialize template dir";

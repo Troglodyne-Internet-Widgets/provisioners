@@ -145,6 +145,18 @@ In the example above, that would mean /opt/client-data/tickle.test.test on the H
 
 See the README.MD or the perldoc for the various modules themselves on usage.
 
+## Order of execution
+
+The 'data' module is executed before all others, and then we use a lexical sort.
+If you want a particular target to run before others, assign it an 'order' in its block in `recipes.yaml`:
+
+    some_recipe:
+        order: 0
+
+In general it's best to only rely on sorting for pretty global stuff, like fixing broken-out-of-the-box networking (such is the fashion these days).
+
+Otherwise, use `[% script\_dir %]/queue_postrun_task` to ensure the stuff from other targets you need are present.
+
 # Writing Modules
 
 ## scripts/
@@ -167,4 +179,4 @@ It is straightforward to implement a backup strategy for your hosts using this m
 ## Modules you don't intend to publish
 
 Feel free to make a vendor/ dir herein, it is gitignored.  Then use the 'libdir' parameter in your domain's configuration to search 'vendor'.
-See the documentation in bin/new_config for more information.
+See the documentation in bin/new\_config for more information.

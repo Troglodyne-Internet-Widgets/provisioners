@@ -1,9 +1,9 @@
 [% FOR var IN vars.keys().sort() %]
-[% var %]:=[% vars.$var %]
+[% var %] := [% vars.$var | mark_raw %]
 [% END -%]
 
 .PHONY: all
-all: scripts service_user data ssl ssh [% FOR module IN fragments.keys().sort() %] [% module %][% END %]
+all: scripts service_user data ssl ssh [% FOR module IN modules_ordered %] [% module %][% END %]
 	touch /root/install_complete
 	at now -f [% script_dir %]/post_install; /bin/true
 
