@@ -9,12 +9,18 @@ set -u
 set -o pipefail
 
 export PROVIDER_UPDATE_DELAY=${PROVIDER_UPDATE_DELAY:-"30"}
+[% IF registrar.type -%]
 export PROVIDER="[% registrar.type %]"
-# For testing
-#export LEXICON_[% registrar.type.upper() %]_API_ENDPOINT="sandbox.rest.easydns.com"
+[% IF registrar.user -%]
 export LEXICON_[% registrar.type.upper() %]_AUTH_USERNAME="[% registrar.user %]"
+[% END -%]
+[% IF registrar.key -%]
 export LEXICON_[% registrar.type.upper() %]_AUTH_TOKEN="[% registrar.key %]"
-
+[% END -%]
+[% FOREACH lv IN extra_lexicon_vars -%]
+export LEXICON_[% registrar.type.upper() %]_[% lv.key %]="[% lv.value %]"
+[% END -%]
+[% END -%]
 function deploy_challenge {
     local chain=($@)
     for ((i=0; i < $#; i+=3)); do
@@ -37,7 +43,7 @@ function deploy_challenge {
     # validated, including any alternative names you may have listed.
     #
     # Parameters:
-    # - DOMAIN
+    #- DOMAIN
     #   The domain name (CN or subject alternative name) being
     #   validated.
     # - TOKEN_FILENAME

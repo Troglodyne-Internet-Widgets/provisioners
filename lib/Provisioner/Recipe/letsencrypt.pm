@@ -5,6 +5,8 @@ use warnings;
 
 use parent qw{Provisioner::Recipe};
 
+use List::Util qw{any};
+
 =head1 Provisioner::Recipe::letsencrypt
 
 =head2 SYNOPSIS
@@ -51,6 +53,28 @@ sub template_files {
 
 sub datadirs {
     return ('.letsencrypt');
+}
+
+sub validate {
+	my ($self, %params) = @_;
+
+	# If the user instructs that we ought to use the local DNS server
+	# instead of the global registrar info, let's do that.
+	# Also make sure that we have the "right stuff" setup otherwise.
+	if ($params{prefer_local_dns}) {
+		die "Must have at least one dns provider recipe used" if !any { my $mod = $_; grep { $mod eq $_ } qw{pdns} } @{$params{modules}};
+		$params{registrar} = {
+			type => 'powerdns',
+			user => '',
+			key  => $params{local_dns_access_token},
+		};
+		$params{extra_lexicon_vars} = [
+			{ key => 'SERVER', value => "/var/spool/powerdns/api.sock" },
+		];
+	} else {
+		die "Must set registrar info in _global section of config" unless exists $params{registrar} && ( ref( $params{registrar}) eq 'HASH' );
+	}
+	return %params;
 }
 
 sub remote_files {

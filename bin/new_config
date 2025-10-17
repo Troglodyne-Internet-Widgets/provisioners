@@ -209,6 +209,10 @@ sub main {
     $global_config->{data_source}   = $data_config->{from};
     $global_config->{script_dir}    = $root_scripts;
 
+	# If we use a local dns provider, we might be doing NS delegation to this box.
+	# As such we have to teach anything relying on DNS changes to use it.
+	$global_config->{local_dns_access_token} = get_dns_provider_token($rconf->{$domain});
+
     my (@pkgs, @generated);
 
 	#XXX because everything needs openssl, we explicitly generate a self-signed FIRST.
@@ -301,6 +305,15 @@ sub _coerce_arrayref {
     my ($input) = @_;
     return [] unless $input;
     return ref $input eq 'ARRAY' ? $input : [$input];
+}
+
+sub get_dns_provider_token {
+	my ($rconf) = @_;
+	my @known_dns_providers = qw{pdns};
+	foreach my $provider (@known_dns_providers) {
+		return $rconf->{$provider}{api_key} if exists $rconf->{$provider} && (ref($rconf->{$provider}) eq 'HASH')
+	}
+	return '';
 }
 
 main(@ARGV) unless caller;

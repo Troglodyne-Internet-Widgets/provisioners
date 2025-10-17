@@ -42,7 +42,7 @@ Also runs all the configured root_scripts & user_scripts present in the service 
 sub deps {
 	my ($self) = @_;
 	if ($self->{target_packager} eq 'deb') {
-		return qw{rkhunter sysstat cronie};
+		return qw{rkhunter sysstat cronie debsums};
 	}
 	die "Unsupported packager";
 }

@@ -29,17 +29,14 @@ sub deps {
 }
 
 # router is an absolute path
-my $validate = sub {
-	my (%params) = @_;
+sub validate {
+	my ($self, %params) = @_;
 
-	use Data::Dumper;
-	die Dumper(\%params);
-
-	my $router = $params{router};
-	die "Router file must be set in [tpsgi] section, no point using tpsgi without one" unless $router;
+	my $router = $params{routers};
+	die "Router file(s) must be set in [tpsgi] section as 'routers', no point using tpsgi without one" unless $router;
 
 	return %params;
-};
+}
 
 sub template_files {
 	return (

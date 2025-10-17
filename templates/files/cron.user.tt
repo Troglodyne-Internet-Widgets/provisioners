@@ -3,7 +3,7 @@ MAILTO="[% admin_email %]"
 MAILFROM="[% from %]@[% domain %]"
 [% END %]
 
-PATH="[% install_dir %]/[% domain %]/bin:/bin:/usr/bin:/usr/local/bin:$PATH"
+PATH="[% install_dir %]/[% domain %]/bin:/bin:/usr/bin:/usr/local/bin:/usr/sbin:/usr/local/sbin:$PATH"
 HOME="[% install_dir %]/[% domain %]"
 
 [% FOREACH s IN user_scripts %]
