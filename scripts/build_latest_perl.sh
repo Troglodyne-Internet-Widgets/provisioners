@@ -42,3 +42,5 @@ fi
 mkdir -p $CLIENT_HOMEDIR/bin
 ln -s /opt/perl5/$NICE_PERL_NAME/bin/perl  $CLIENT_HOMEDIR/bin/perl
 ln -s /opt/perl5/$NICE_PERL_NAME/bin/cpanm $CLIENT_HOMEDIR/bin/cpanm
+ln -s /opt/perl5/$NICE_PERL_NAME/bin/perl  /root/bin/perl
+ln -s /opt/perl5/$NICE_PERL_NAME/bin/cpanm /root/bin/cpanm

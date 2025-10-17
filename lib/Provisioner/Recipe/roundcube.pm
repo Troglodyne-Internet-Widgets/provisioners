@@ -45,6 +45,7 @@ sub deps {
         php-intl
         php-mbstring
         php-sqlite3
+		php-zip
         sqlite3
     };
 }

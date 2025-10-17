@@ -1,7 +1,7 @@
-[roundcube_[% domain -%]]
-user = [% user -%]
-group = [% user -%]
-listen = /var/run/roundcube-[% domain -%].sock
+[roundcube_[% domain %]]
+user = [% user %]
+group = [% user %]
+listen = /var/run/roundcube-[% domain %].sock
 listen.owner = www-data
 listen.group = www-data
 php_admin_value[disable_functions] = exec,passthru,shell_exec,system
