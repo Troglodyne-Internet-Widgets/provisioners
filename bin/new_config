@@ -23,14 +23,14 @@ use FindBin::libs;
 
 =head1 USAGE
 
-	new_config $domain
+    new_config [--ipmap=file] [--recipes=file] $domain $domain2 ...
 
 Builds a new configuration package for a VM to be provisioned by Troglodyne provisioner.
 
 Per-domain Behavior is controlled by:
 
-	recipes.yaml
-	ipmap.cfg
+    recipes.yaml
+    ipmap.cfg
 
 Both of which will be in the Current working directory, unless you specify the --recipes or --ipmap options.
 
@@ -65,20 +65,20 @@ sub get_recipe_config {
 }
 
 sub main {
-	my @args = @_;
+    my @args = @_;
 
-	GetOptionsFromArray(\@args, 
-		'ipmap=s'   => \$cfile,
-		'recipes=s' => \$pfile,
-	);
-	$cfile //= 'ipmap.cfg';
-	$pfile //= 'recipes.yaml';
+    GetOptionsFromArray(\@args, 
+        'ipmap=s'   => \$cfile,
+        'recipes=s' => \$pfile,
+    );
+    $cfile //= 'ipmap.cfg';
+    $pfile //= 'recipes.yaml';
 
-	foreach my $d (@args) {
-		my $res = handle_domain($d);
-		return $res if $res;
-	}
-	return 0;
+    foreach my $d (@args) {
+        my $res = handle_domain($d);
+        return $res if $res;
+    }
+    return 0;
 }
 
 sub handle_domain {
@@ -119,19 +119,27 @@ sub handle_domain {
 
     my $rconf = get_recipe_config();
 
+    # Allow a base recipe set
+    my $base_recipe = delete $rconf->{_base} // {};
+    my $base_globals = delete $base_recipe->{_global} // {};
+
     # There will always be some global config for a domain which ought be made available to the various modules
     my $global_config = delete $rconf->{$domain}{_global} // {};
+    $global_config = { %$base_globals, %$global_config };
 
-	# Include site-specific stuff
-	my @paths = qw{templates};
-	my $libdirs =  $global_config->{libdir};
-	if ($libdirs) {
-		foreach my $libdir (@$libdirs) {
-			print "Including vendor libs from $libdir/lib\n";
-			push(@INC, "$libdir/lib");
-			push(@paths, "$libdir/templates");
-		}
-	}
+    # Merge base recipe and the one requested
+    $rconf->{$domain} = { %$base_recipe, %{$rconf->{$domain}} };
+
+    # Include site-specific stuff
+    my @paths = qw{templates};
+    my $libdirs =  $global_config->{libdir};
+    if ($libdirs) {
+        foreach my $libdir (@$libdirs) {
+            print "Including vendor libs from $libdir/lib\n";
+            push(@INC, "$libdir/lib");
+            push(@paths, "$libdir/templates");
+        }
+    }
 
     # There will always be data config
     my $data_config = delete $rconf->{$domain}{data};
@@ -188,7 +196,7 @@ sub handle_domain {
         provisioner_dir => $provisioner_dir,
         script_loc      => $root_scripts,
         output_dir      => $cfg_dir,
-		template_dirs   => \@paths,
+        template_dirs   => \@paths,
     );
 
     foreach my $subdomain (keys(%$ip_conf)) {
@@ -221,19 +229,19 @@ sub handle_domain {
     $global_config->{data_source}   = $data_config->{from};
     $global_config->{script_dir}    = $root_scripts;
 
-	# If we use a local dns provider, we might be doing NS delegation to this box.
-	# As such we have to teach anything relying on DNS changes to use it.
-	$global_config->{local_dns_access_token} = get_dns_provider_token($rconf->{$domain});
+    # If we use a local dns provider, we might be doing NS delegation to this box.
+    # As such we have to teach anything relying on DNS changes to use it.
+    $global_config->{local_dns_access_token} = get_dns_provider_token($rconf->{$domain});
 
     my (@pkgs, @generated);
 
-	#XXX because everything needs openssl, we explicitly generate a self-signed FIRST.
-	push(@pkgs, 'openssl');
+    #XXX because everything needs openssl, we explicitly generate a self-signed FIRST.
+    push(@pkgs, 'openssl');
 
-	# Figure out whether the remote host is actually up
-	my $target_is_up = 1;
-	my $ssh = Net::SFTP::Foreign->new( host => $static_ip, user => $admin_user );
-	$ssh->error and $target_is_up=0;
+    # Figure out whether the remote host is actually up
+    my $target_is_up = 1;
+    my $ssh = Net::SFTP::Foreign->new( host => $static_ip, user => $admin_user );
+    $ssh->error and $target_is_up=0;
 
     # Build a makefile based on our configured recipes
     my @modules = sort { ($rconf->{$domain}{$a}{order} // 'ZZZ') cmp ($rconf->{$domain}{$b}{order} // 'ZZZ') } sort keys(%{$rconf->{$domain}});
@@ -247,32 +255,32 @@ sub handle_domain {
         $fragments{$module} = $builder->render(%$global_config, %$pconf, full_aliases => $full_aliases, modules => \@modules );
         push(@pkgs, ($builder->deps(%$pconf)));
 
-		# Grab the relevant makefile vars for the target
+        # Grab the relevant makefile vars for the target
         my %t_vars = $builder->makefile_vars();
         %mf_vars = ( %mf_vars, %t_vars ) if %t_vars;
 
-		# Make dirs in the DATADIR needed by ssh
-		foreach my $d ($builder->datadirs()) {
-			make_path("$data_config->{from}/$fqdn/$d") unless -d $d;
-		}
+        # Make dirs in the DATADIR needed by ssh
+        foreach my $d ($builder->datadirs()) {
+            make_path("$data_config->{from}/$fqdn/$d") unless -d $d;
+        }
 
-		# Schlep over stuff from existing deployments
-		if ( $target_is_up ) {
-			my %tg = $builder->remote_files($fqdn);
-			foreach my $to_fetch (sort keys(%tg)) {
-				print "Writing remote file $to_fetch as $data_config->{from}/$fqdn/$tg{$to_fetch}\n";
-				my $num_copied = $ssh->rget(
-					$to_fetch,
-					"$data_config->{from}/$fqdn/$tg{$to_fetch}",
-					wanted => sub { 1 },
-					#XXX most of the 'errors' here are literally normal operation, so who cares lol
-					on_error => sub { print $ssh->error()."\n" },
-					overwrite => 1,
-					newer_only => 1,
-				);
-				print "Wrote $num_copied files.\n"
-			}
-		}
+        # Schlep over stuff from existing deployments
+        if ( $target_is_up ) {
+            my %tg = $builder->remote_files($fqdn);
+            foreach my $to_fetch (sort keys(%tg)) {
+                print "Writing remote file $to_fetch as $data_config->{from}/$fqdn/$tg{$to_fetch}\n";
+                my $num_copied = $ssh->rget(
+                    $to_fetch,
+                    "$data_config->{from}/$fqdn/$tg{$to_fetch}",
+                    wanted => sub { 1 },
+                    #XXX most of the 'errors' here are literally normal operation, so who cares lol
+                    on_error => sub { print $ssh->error()."\n" },
+                    overwrite => 1,
+                    newer_only => 1,
+                );
+                print "Wrote $num_copied files.\n"
+            }
+        }
 
         # Now build the various templates for the recipes
         my %tf = $builder->template_files(@modules);
@@ -320,12 +328,12 @@ sub _coerce_arrayref {
 }
 
 sub get_dns_provider_token {
-	my ($rconf) = @_;
-	my @known_dns_providers = qw{pdns};
-	foreach my $provider (@known_dns_providers) {
-		return $rconf->{$provider}{api_key} if exists $rconf->{$provider} && (ref($rconf->{$provider}) eq 'HASH')
-	}
-	return '';
+    my ($rconf) = @_;
+    my @known_dns_providers = qw{pdns};
+    foreach my $provider (@known_dns_providers) {
+        return $rconf->{$provider}{api_key} if exists $rconf->{$provider} && (ref($rconf->{$provider}) eq 'HASH')
+    }
+    return '';
 }
 
 main(@ARGV) unless caller;
