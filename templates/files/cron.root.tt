@@ -25,7 +25,7 @@ MAILFROM="[% from %]@[% domain %]"
 
 # Site-specific crons
 [% FOR cob in root_scripts %]
-[% IF cob.mailto %]
+[% IF cob.mailto != "none" %]
 MAILTO="[% cob.mailto %]"
 [% ELSE %]
 MAILTO="[% admin_email %]"

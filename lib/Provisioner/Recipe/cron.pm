@@ -21,6 +21,8 @@ In recipes.yaml:
 		    root_scripts:
 				...
 
+Set mailto to 'none' if you don't care about the output of a script.
+
 =head2 DESCRIPTION
 
 Sets up some root crons, and a cron for the service user.

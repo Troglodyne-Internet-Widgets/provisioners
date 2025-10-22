@@ -7,7 +7,7 @@ PATH="[% install_dir %]/[% domain %]/bin:/bin:/usr/bin:/usr/local/bin:/usr/sbin:
 HOME="[% install_dir %]/[% domain %]"
 
 [% FOREACH s IN user_scripts %]
-[% IF s.mailto %]
+[% IF s.mailto != 'none' %]
 MAILTO="[% s.mailto %]"
 [% ELSE %]
 MAILTO="[% admin_email %]"

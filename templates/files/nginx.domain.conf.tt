@@ -8,7 +8,7 @@ server {
     ssl_certificate_key /etc/ssl/private/[% domain %].pem;
 
     location / {
-        root [% install_dir %]/[% domain %]/;
+        root [% install_dir %]/[% domain %]/www/;
         try_files $uri @default;
     }
 
@@ -28,7 +28,7 @@ server {
     server_name [% domain %] www.[% domain %] [% full_aliases.join(', ') %];
 
     location / {
-        root [% install_dir %]/[% domain %]/;
+        root [% install_dir %]/[% domain %]/www/;
         try_files $uri @default;
     }
 
