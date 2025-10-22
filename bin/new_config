@@ -17,6 +17,7 @@ use Text::Xslate;
 use List::Util qw{uniq};
 use Net::SFTP::Foreign;
 use File::Path qw{make_path remove_tree};
+use Getopt::Long qw{GetOptionsFromArray};
 
 use FindBin::libs;
 
@@ -31,7 +32,7 @@ Per-domain Behavior is controlled by:
 	recipes.yaml
 	ipmap.cfg
 
-Both of which will be in the Current working directory.
+Both of which will be in the Current working directory, unless you specify the --recipes or --ipmap options.
 
 If you have some proprietary recipes to use, you can specify what libdir to search in the _global section of the domain's config in recipes.yaml.
 Use the 'libdir' key (an array of library dir names to search).  By default we include 'lib'.
@@ -44,7 +45,7 @@ These directories ought to have both a lib/ and templates/ dir therein, structur
 
 #TODO chdir to bin loc/ ..
 
-my $cfile = 'ipmap.cfg';
+my $cfile;
 sub get_config {
     die "No ipmap available..." unless -f $cfile;
     my $c = Config::Simple->new( $cfile );
@@ -56,21 +57,32 @@ sub get_config {
     return ($global_conf, $ip_conf, $alias_conf, $ns_conf);
 }
 
-
-
-my $pfile = 'recipes.yaml';
+my $pfile;
 sub get_recipe_config {
-    return {} unless $pfile;
+    return {} unless -f $pfile;
     my $c = YAML::Load( File::Slurper::read_text($pfile) );
     return $c;
 }
 
-
 sub main {
-    my @args = @_;
+	my @args = @_;
 
-    # Only positional arg
-    my $domain = shift @args;
+	GetOptionsFromArray(\@args, 
+		'ipmap=s'   => \$cfile,
+		'recipes=s' => \$pfile,
+	);
+	$cfile //= 'ipmap.cfg';
+	$pfile //= 'recipes.yaml';
+
+	foreach my $d (@args) {
+		my $res = handle_domain($d);
+		return $res if $res;
+	}
+	return 0;
+}
+
+sub handle_domain {
+    my $domain = shift;
 
     die "Must pass domain" unless $domain;
 
