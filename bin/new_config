@@ -5,6 +5,10 @@ package Trog::Provisioner::Config::Generator;
 use strict;
 use warnings;
 
+no warnings qw{experimental};
+use feature qw{state};
+use warnings;
+
 use FindBin;
 use FindBin::libs;
 
@@ -12,6 +16,7 @@ use YAML;
 use File::Slurper;
 use Config::Simple;
 use Cwd();
+use Clone qw{clone};
 
 use Text::Xslate;
 use List::Util qw{uniq};
@@ -59,9 +64,27 @@ sub get_config {
 
 my $pfile;
 sub get_recipe_config {
+    state $c;
+    return $c if $c;
     return {} unless -f $pfile;
-    my $c = YAML::Load( File::Slurper::read_text($pfile) );
+    $c = YAML::Load( File::Slurper::read_text($pfile) );
     return $c;
+}
+
+sub expand_dependent_domains {
+    my $d = shift;
+    my $c = get_recipe_config();
+    my $shared = $c->{_shared};
+    return $d unless ref $shared eq 'HASH';
+
+    foreach my $host (keys(%$shared)) {
+        next unless ref $shared->{$host} eq 'ARRAY' && @{$shared->{$host}};
+        next unless grep { $_ eq $d } @{$shared->{$host}};
+        print "Expanding list of configs to generate to include $host\n";
+        return ($host, $d);
+    }
+
+    return $d;
 }
 
 sub main {
@@ -73,6 +96,9 @@ sub main {
     );
     $cfile //= 'ipmap.cfg';
     $pfile //= 'recipes.yaml';
+
+    # Expand the domain list to also create those we depend upon.
+    @args = uniq map { expand_dependent_domains($_) } @args;
 
     foreach my $d (@args) {
         my $res = handle_domain($d);
@@ -117,11 +143,20 @@ sub handle_domain {
     my $cfg_dir = "$basedir/$fqdn";
     mkdir $cfg_dir;
 
-    my $rconf = get_recipe_config();
+    my $rconf = clone(get_recipe_config());
 
     # Allow a base recipe set
     my $base_recipe = delete $rconf->{_base} // {};
     my $base_globals = delete $base_recipe->{_global} // {};
+
+    # Figure out if we need to make this recipe depend on another
+    my $shared_hosts = delete $rconf->{_shared} // {};
+    my ($dep_dom) = expand_dependent_domains($domain);
+
+    my $depends_on;
+    if ( $dep_dom ne $domain ) {
+        $depends_on = "$dep_dom.$tld";
+    }
 
     # There will always be some global config for a domain which ought be made available to the various modules
     my $global_config = delete $rconf->{$domain}{_global} // {};
@@ -306,6 +341,7 @@ sub handle_domain {
         contact_email=$admin_email
         ips=$static_ip
     );
+    $pconf .= "depends_on=$depends_on" if $depends_on;
     File::Slurper::write_binary("$cfg_dir/provision.conf", $pconf);
 
     # Gzip the Makefile & generated configs
