@@ -2,45 +2,58 @@
 [% var %] := [% vars.$var | mark_raw %]
 [% END -%]
 
+[% global_targets = ['state', 'packages', 'scripts', 'data', 'ssl', 'ssh'] -%]
+[% IF user -%]
+[% global_targets.push('service_user') -%]
+[% END -%]
+
 .PHONY: all
-all: scripts service_user data ssl ssh [% FOR module IN modules_ordered %] [% module %][% END %]
+all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% FOR module IN modules_ordered %] [% state_dir %]/[% module %][% END %]
 	touch /root/install_complete
 	at now -f [% script_dir %]/post_install; /bin/true
 
-.PHONY: service_user
-service_user:
-	useradd -s /usr/sbin/nologin -d [% homepath %]/[% domain %] [% user %]
-	mkdir -p [% homepath %]/[% domain %]; /bin/true
-	chown [% user %]:[% admin_user %] [% homepath %]/[% domain %]
+[% state_dir %]/state:
+	mkdir -p [% state_dir %]
+	touch [% state_dir %]/$@
 
-.PHONY: scripts
-scripts:
+[% state_dir %]/packages:
+	[% packager_invocation %] [% FOR pkg IN packages %][% pkg %] [% END %]
+	touch [% state_dir %]/$@
+
+[% IF user %]
+[% state_dir %]/service_user:
+	useradd -s /usr/sbin/nologin -d [% install_dir %]/[% domain %] [% user %]
+	mkdir -p [% install_dir %]/[% domain %]; /bin/true
+	chown [% user %]:[% admin_user %] [% install_dir %]/[% domain %]
+	touch [% state_dir %]/$@
+[% END -%]
+
+[% state_dir %]/scripts:
 	mkdir -p [% script_dir %]; rsync -av [% hv_ip %]:[% provisioner_dir %]/scripts/* [% script_dir %]
+	touch [% state_dir %]/$@
 
 # Make a self-signed cert FIRST, because everybody and their mama needs a damn cert
-.PHONY: ssl
-ssl:
+[% state_dir %]/ssl:
 	mkdir -p '/etc/letsencrypt/live/[% domain %]'
 	openssl req -x509 -config openssl.conf -nodes -newkey rsa:4096 -subj '/CN=[% domain %]' -addext 'subjectAltName=DNS:www.[% domain %],DNS:mail.[% domain %][% full_aliases.join(',DNS:') %]' -keyout '/etc/letsencrypt/live/[% domain %]/privkey.pem' -out '/etc/letsencrypt/live/[% domain %]/fullchain.pem' -days 365
 	# Setup the link to LE certs
 	ln -s /etc/letsencrypt/live/[% domain %]/fullchain.pem /etc/ssl/certs/[% domain %].pem
 	ln -s /etc/letsencrypt/live/[% domain %]/privkey.pem /etc/ssl/private/[% domain %].pem
+	touch [% state_dir %]/$@
 
 # Be explicit about SSH security
 # You will want to have users setup via ipmap/recipes.
-.PHONY: ssh
-ssh:
+[% state_dir %]/ssh:
 	echo 'PermitRootLogin no' > /etc/ssh/sshd_config.d/100-security.conf
 	echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config.d/100-security.conf
+	touch [% state_dir %]/$@
 
-.PHONY: data
-data:
-[% data_fragment | tabinate %]
+[% state_dir %]/data:
+[% data_fragment | tabinate -%]
+	touch [% state_dir %]/$@
 
-[%- FOR module IN fragments.keys().sort() -%]
-
-.PHONY: [% module %]
-[% module %]:
-[% fragments.$module | tabinate %]
-
-[%- END -%]
+[% FOR module IN fragments.keys().sort() %]
+[% state_dir %]/[% module %]:
+[% fragments.$module | tabinate -%]
+	touch [% state_dir %]/$@
+[% END -%]

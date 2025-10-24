@@ -19,6 +19,7 @@ use Cwd();
 use Clone qw{clone};
 
 use Text::Xslate;
+use Text::Xslate::Bridge::TT2;
 use List::Util qw{uniq};
 use Net::SFTP::Foreign;
 use File::Path qw{make_path remove_tree};
@@ -220,6 +221,7 @@ sub handle_domain {
     my $tt = Text::Xslate->new({
         path     => \@paths,
         syntax   => 'TTerse',
+		module   => [qw{Text::Xslate::Bridge::TT2}],
         function => \%formatters,
     }) || die "Could not initialize template dir";
     
@@ -269,9 +271,6 @@ sub handle_domain {
     $global_config->{local_dns_access_token} = get_dns_provider_token($rconf->{$domain});
 
     my (@pkgs, @generated);
-
-    #XXX because everything needs openssl, we explicitly generate a self-signed FIRST.
-    push(@pkgs, 'openssl');
 
     # Figure out whether the remote host is actually up
     my $target_is_up = 1;
@@ -328,16 +327,37 @@ sub handle_domain {
         }
     }
 
-    my $makefile = $tt->render('makefile.tt', { %$global_config, data_fragment => $data_fragment, fragments => \%fragments, modules_ordered => \@modules, vars => \%mf_vars });
+    # Regrettably, we may be running this on an existing system so we gotta install pkgs anyways.
+    my $pkgr_invoc;
+    if ($provisioner_opts{target_packager} eq 'deb') {
+        push(@pkgs, qw{openssl openssh-server openssh-client rsync});
+        $pkgr_invoc = 'apt-get install';
+    } else {
+        die "unsupported packager!";
+    }
+    @pkgs = sort { $a cmp $b } uniq @pkgs;
+
+    my $extra_packages = join(', ', @pkgs);
+
+    my $makefile = $tt->render('makefile.tt', {
+        %$global_config,
+        data_fragment   => $data_fragment,
+        fragments       => \%fragments,
+        modules_ordered => \@modules,
+        vars            => \%mf_vars,
+        packages        => \@pkgs,
+        packager_invocation => $pkgr_invoc,
+        state_dir       => "/etc/provisioner/state/$fqdn",
+    });
+
     print "Writing Makefile to $cfg_dir\n";
     File::Slurper::write_binary("$cfg_dir/Makefile", $makefile);
 
-    my $extra_packages = join(', ', uniq @pkgs);
     # Build a provision.conf
     my $pconf = qq(
         image=https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
         size=42949672960
-        packages=openssh-server, openssh-client, rsync, $extra_packages
+        packages=$extra_packages
         contact_email=$admin_email
         ips=$static_ip
         admin_user=$admin_user

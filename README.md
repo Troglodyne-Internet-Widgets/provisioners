@@ -46,6 +46,13 @@ It would also set up vhost aliases & CNAMEs for the aliases, should you pick the
 
 TODO: support raw keys.
 
+## Domains which are not subdomains of the TLD
+
+Leave tld= blank, or do not set it in the event you wish to specify things by FQDN rather than subdomains.
+This is useful when you have many sites to host on various domains.
+
+Alternatively, setup CNAMES and use subdomains as normal.
+
 ## recipes.yaml
 
 These will have sections describing user-configuration for the various recipes used by the subdomains defined in the IP map.
@@ -59,7 +66,6 @@ Here's an example setting up a tPSGI host:
 tickle:
     _global:
         user: my_service_user
-        homepath: /opt/domains
         registrar:
             type: "cloudflare"
             user: "someGuy"
@@ -156,6 +162,35 @@ If you want a particular target to run before others, assign it an 'order' in it
 In general it's best to only rely on sorting for pretty global stuff, like fixing broken-out-of-the-box networking (such is the fashion these days).
 
 Otherwise, use `[% script\_dir %]/queue_postrun_task` to ensure the stuff from other targets you need are present.
+
+## Shared configuration
+
+You can have a special top-level item of the configuration `_base` to specify recipes which you want present in all hosts.
+We will merge it under the domain's config (what you specify in `_base` will be overwritten where applicable).
+
+## Shared Hosting
+
+If you want to instruct trog-provisioner to (attempt) to use an already existing machine, use the `_shared` top-level item to note which can share VMs.
+
+Example:
+
+```
+---
+\_global:
+    ...
+\_shared:
+    my.shared.host:
+        - my.client.on.shared.host
+        - ...
+my.shared.host:
+my.client.on.shared.host:
+    ...
+```
+
+Supposing no VM exists, the config from `_global`, and `my.shared.host` would be built.
+We would then immediately build the config from `_global` and `my.client.on.shared.host`, and instruct trog-provisioner it depends on the former.
+
+When running trog-provisioner, it will then apply both configs, waiting until the first has reported success.
 
 # Writing Modules
 
