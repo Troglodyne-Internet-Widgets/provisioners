@@ -17,18 +17,3 @@ MAILFROM="[% from %]@[% domain %]"
 */5  * * * *  newusers.sh
 */5  * * * *  logdrops.sh
 */30 * * * *  changes_in_packaged_files.sh
-
-[% IF modules.grep('letsencrypt') %]
-# SSL
-0 0 * * * dehydrated --config /etc/dehydrated/domains.d/[% domain %].conf --cron >> /var/log/dehydrated.log
-[% END %]
-
-# Site-specific crons
-[% FOR cob in root_scripts %]
-[% IF cob.mailto != "none" %]
-MAILTO="[% cob.mailto %]"
-[% ELSE %]
-MAILTO="[% admin_email %]"
-[% END %]
-[% cob.interval %] [% cob.cmd %]
-[% END %] 

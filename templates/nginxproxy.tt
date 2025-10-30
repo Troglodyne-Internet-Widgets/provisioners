@@ -8,3 +8,5 @@ systemctl restart nginx
 mkdir -p [% install_dir %]/[% domain %]/www/.well_known; /bin/true
 chown [% user %]:www-data [% install_dir %]/[% domain %]/www/.well_known
 chmod 0755 [% install_dir %]/[% domain %]/www/.well_known
+# Deal with other demented deps that want apache2
+[% packager_remove_invocation %] apache2

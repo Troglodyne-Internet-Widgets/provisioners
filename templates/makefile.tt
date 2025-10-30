@@ -2,10 +2,11 @@
 [% var %] := [% vars.$var | mark_raw %]
 [% END -%]
 
-[% global_targets = ['state', 'packages', 'scripts', 'data', 'ssl', 'ssh'] -%]
+[% global_targets = ['packages', 'scripts', 'data', 'ssl', 'ssh'] -%]
 [% IF user -%]
-[% global_targets.push('service_user') -%]
+[% global_targets.unshift('service_user') -%]
 [% END -%]
+[% global_targets.unshift('state') -%]
 
 .PHONY: all
 all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% FOR module IN modules_ordered %] [% state_dir %]/[% module %][% END %]
@@ -14,23 +15,28 @@ all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% F
 
 [% state_dir %]/state:
 	mkdir -p [% state_dir %]
-	touch [% state_dir %]/$@
+	touch $@
 
 [% state_dir %]/packages:
-	[% packager_invocation %] [% FOR pkg IN packages %][% pkg %] [% END %]
-	touch [% state_dir %]/$@
+	# We have to account for broken packages that depend on apache or some other incompatible sofware for no reason
+	# Or forgets to list a dependency, or relies on a curses UI to install
+	# As such we have no way of knowing whether we have a fucked kit or not, yay
+	[% packager_up_invocation | mark_raw %]; /bin/true
+	#[% packager_invocation | mark_raw %] [% FOR pkg IN packages %][% pkg %] [% END %]; /bin/true
+	#[% packager_invocation | mark_raw %] [% FOR pkg IN packages %][% pkg %] [% END %]; /bin/true
+	touch $@
 
 [% IF user %]
 [% state_dir %]/service_user:
 	useradd -s /usr/sbin/nologin -d [% install_dir %]/[% domain %] [% user %]
 	mkdir -p [% install_dir %]/[% domain %]; /bin/true
 	chown [% user %]:[% admin_user %] [% install_dir %]/[% domain %]
-	touch [% state_dir %]/$@
+	touch $@
 [% END -%]
 
 [% state_dir %]/scripts:
 	mkdir -p [% script_dir %]; rsync -av [% hv_ip %]:[% provisioner_dir %]/scripts/* [% script_dir %]
-	touch [% state_dir %]/$@
+	touch $@
 
 # Make a self-signed cert FIRST, because everybody and their mama needs a damn cert
 [% state_dir %]/ssl:
@@ -39,21 +45,21 @@ all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% F
 	# Setup the link to LE certs
 	ln -s /etc/letsencrypt/live/[% domain %]/fullchain.pem /etc/ssl/certs/[% domain %].pem
 	ln -s /etc/letsencrypt/live/[% domain %]/privkey.pem /etc/ssl/private/[% domain %].pem
-	touch [% state_dir %]/$@
+	touch $@
 
 # Be explicit about SSH security
 # You will want to have users setup via ipmap/recipes.
 [% state_dir %]/ssh:
 	echo 'PermitRootLogin no' > /etc/ssh/sshd_config.d/100-security.conf
 	echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config.d/100-security.conf
-	touch [% state_dir %]/$@
+	touch $@
 
 [% state_dir %]/data:
 [% data_fragment | tabinate -%]
-	touch [% state_dir %]/$@
+	touch $@
 
 [% FOR module IN fragments.keys().sort() %]
 [% state_dir %]/[% module %]:
 [% fragments.$module | tabinate -%]
-	touch [% state_dir %]/$@
+	touch $@
 [% END -%]

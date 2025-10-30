@@ -63,6 +63,7 @@ sub template_files {
     # Only render things we actually need
     my %ret = (
 		'ufw.rsyslog.tt' => 'ufw/rsyslog',
+		'ufw.http.tt'    => 'ufw/http',
 	);
 
     return %ret unless @recipes;

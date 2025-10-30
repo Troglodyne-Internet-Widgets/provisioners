@@ -77,6 +77,7 @@ sub template_files {
 
 	return (
         'cron.root.tt'          => 'root.crontab',
+		'cron.root.domain.tt'   => 'root.domain.crontab',
 		'cron.user.tt'          => 'user.crontab',
 		'cron.rkhunter.conf.tt' => 'rkhunter.conf',
 	);

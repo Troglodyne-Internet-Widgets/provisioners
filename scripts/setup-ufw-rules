@@ -27,7 +27,7 @@ foreach my $app (@apps) {
         ["allow", "out", $app],
     );
     # HTTP tends to request lots of stuff simultaneously
-    if ($app =~ m/^Nginx/i) {
+    if ($app =~ m/^Nginx|HTTP/i) {
         push(@rules,
             ["allow", "in", $app]
         );
