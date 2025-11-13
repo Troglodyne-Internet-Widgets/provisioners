@@ -25,6 +25,7 @@ use Net::SFTP::Foreign;
 use File::Path qw{make_path remove_tree};
 use Getopt::Long qw{GetOptionsFromArray};
 use File::Copy qw{copy};
+use Hash::Merge();
 
 use FindBin::libs;
 
@@ -176,7 +177,9 @@ sub handle_domain {
     $global_config = { %$base_globals, %$global_config };
 
     # Merge base recipe and the one requested
-    $rconf->{$domain} = { %$base_recipe, %{$rconf->{$domain}} };
+    Hash::Merge::set_behavior('RIGHT_PRECEDENT');
+    Hash::Merge::set_behavior('STORAGE_PRECEDENT');
+    $rconf->{$domain} = Hash::Merge::merge($base_recipe, $rconf->{$domain});
 
     # Include site-specific stuff
     my @paths = qw{templates};
@@ -236,7 +239,7 @@ sub handle_domain {
 		module   => [qw{Text::Xslate::Bridge::TT2}],
         function => \%formatters,
     }) || die "Could not initialize template dir";
-    
+
 
     # TODO stop hardcoding some things, and document this in P::R
     my %provisioner_opts = (

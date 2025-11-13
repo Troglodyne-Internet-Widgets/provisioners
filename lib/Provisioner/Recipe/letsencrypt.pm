@@ -57,7 +57,6 @@ sub datadirs {
 
 sub validate {
 	my ($self, %params) = @_;
-
 	# If the user instructs that we ought to use the local DNS server
 	# instead of the global registrar info, let's do that.
 	# Also make sure that we have the "right stuff" setup otherwise.

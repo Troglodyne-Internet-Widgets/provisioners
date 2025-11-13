@@ -51,7 +51,7 @@ sub validate {
 
     my $extras = $opts{extra_records};
     die "extra_records defined in [pdns] must be a readable text file" if $extras && ! -f $extras;
-    $opts{extra_records} = File::Slurper::read_text($extras);
+    $opts{extra_records} = File::Slurper::read_text($extras) if $extras;
 
     $opts{serial} = time;
 	return %opts;
