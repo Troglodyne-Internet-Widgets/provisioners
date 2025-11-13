@@ -61,7 +61,8 @@ sub get_config {
     my $ip_conf     = $c->param(-block => 'ips');
     my $alias_conf  = $c->param(-block => 'aliases');
     my $ns_conf     = $c->param(-block => 'nameservers');
-    return ($global_conf, $ip_conf, $alias_conf, $ns_conf);
+    my $addons      = $c->param(-block => 'addons');
+    return ($global_conf, $ip_conf, $alias_conf, $ns_conf, $addons);
 }
 
 my $pfile;
@@ -92,7 +93,7 @@ sub expand_dependent_domains {
 sub main {
     my @args = @_;
 
-    GetOptionsFromArray(\@args, 
+    GetOptionsFromArray(\@args,
         'ipmap=s'   => \$cfile,
         'recipes=s' => \$pfile,
     );
@@ -114,14 +115,14 @@ sub handle_domain {
 
     die "Must pass domain" unless $domain;
 
-    my ($global_conf, $ip_conf, $alias_conf, $ns_conf) = get_config();
+    my ($global_conf, $ip_conf, $alias_conf, $ns_conf, $addons) = get_config();
 
     my $basedir = $global_conf->{basedir};
     die "Must have basedir defined in global section of $cfile" unless $basedir;
 
     my $admin_user = $global_conf->{admin_user};
     die "Must set admin_user in global section of $cfile" unless $admin_user;
-    
+
     my $admin_key = $global_conf->{admin_key};
     die "Must set admin_key in global section of $cfile" unless $admin_key;
 
@@ -138,9 +139,19 @@ sub handle_domain {
     die "Must set tld for $domain in global section of $cfile" unless $tld;
 
     my $tld_ip = $global_conf->{ip};
-    die "Must set ip for $domain in global section of $cfile" unless $tld;
+    die "Must set ip for $tld in global section of $cfile" unless $tld_ip;
 
     my $fqdn = "$domain.$tld";
+
+    # Override fqdn for addons
+    if (ref $addons eq 'HASH') {
+        my @addon = keys(%$addons);
+        my ($maybe_fqdn) = grep { $domain eq $_ } @addon;
+        if ($maybe_fqdn) {
+            print "$domain is addon...\n";
+            $fqdn = $maybe_fqdn if $maybe_fqdn;
+        }
+    }
 
     my $cfg_dir = "$basedir/$fqdn";
     mkdir $cfg_dir;
