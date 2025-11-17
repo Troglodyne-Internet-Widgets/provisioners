@@ -1,7 +1,7 @@
-$ORIGIN [% tld %].
+$ORIGIN [% domain %].
 $TTL    300
 
-@       IN      SOA     [% soa %]. [% admin_email | email_for_dns %]. (
+@       IN      SOA     ns1.[% domain %]. [% admin_email | email_for_dns %]. (
                         [% serial %]      ; Serial (unix timestamp)
                         300               ; Refresh
                         300               ; Retry
@@ -10,13 +10,10 @@ $TTL    300
 
 [% FOREACH ns IN nameservers.values().sort() %]
 @        300      IN NS   [% ns %].
-[% END %]
-
-@    IN A [% tld_ip %]
-mail IN A [% tld_ip %]
-@ IN MX 10 mail
+[% END -%]
 
 [% FOREACH subdo IN ipmap.keys().sort() %]
+[% NEXT IF subdo != domain %]
 [% subdo %]        IN A    [% ipmap.$subdo %]
 ns1.[% subdo %]    IN A    [% ipmap.$subdo %]
 ;[% ipmap.$subdo | reverse_ip %] IN PTR  [% subdo %]
@@ -26,14 +23,14 @@ _dmarc.[% subdo %] IN TXT "v=DMARC1; p=none"
 ; Just the autodiscover alias(es)
 autodiscover.[% subdo %] IN CNAME [% subdo %]
 autoconfig.[% subdo %] IN CNAME [% subdo %]
-[% END %]
+[% END -%]
 
-[%- FOREACH sub IN aliases.keys().sort() -%]
-[%- FOREACH alias IN aliases.$sub.sort() -%]
+[% FOREACH sub IN aliases.keys().sort() %]
+[% NEXT IF sub != domain %]
+[% FOREACH alias IN aliases.$sub.sort() %]
 [% alias %] IN CNAME [% sub %]
-
-[%- END -%]
-[%- END -%]
+[% END -%]
+[% END -%]
 
 ; Autodiscover TXT record
 @ IN TXT "mailconf=https://autoconfig.[% domain %]/autoconfig/autoconfig.xml"

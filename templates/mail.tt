@@ -14,7 +14,7 @@ mv /etc/opendkim.conf /etc/opendkim.conf.orig
 mv opendkim.conf /etc/opendkim.conf
 chown opendkim:opendkim /etc/opendkim.conf
 # Generate the key if it does not exist, otherwise use the one you got.
-mv [% install_dir %]/[% domain %]/.mail/keys/* /etc/opendkim/keys/
+mv [% install_dir %]/[% domain %]/.mail/keys/* /etc/opendkim/keys/; /bin/true
 [ ! -f /etc/opendkim/keys/[% domain %]/default.private ] && opendkim-genkey -D /etc/opendkim/keys/[% domain %] -d [% domain %] -s default; /bin/true
 chown -R opendkim:opendkim /etc/opendkim/
 chmod -R 0755 /etc/opendkim
@@ -50,8 +50,8 @@ mv mailpasswd /mail/[% domain %]/passwd
 systemctl restart dovecot
 # Stash a copy of the mailnames, and restore it if necessary
 # TODO make the old one take precedence via configuration
-mv [% install_dir %]/[% domain %]/mailnames/passwd [% install_dir %]/[% domain %]/mailnames/passwd.old
-mv [% install_dir %]/[% domain %]/mailnames/* /mail/[% domain %]/
+mv [% install_dir %]/[% domain %]/mailnames/passwd [% install_dir %]/[% domain %]/mailnames/passwd.old; /bin/true
+mv [% install_dir %]/[% domain %]/mailnames/* /mail/[% domain %]/; /bin/true
 chown -R dovecot:dovecot /mail/[% domain %]/
 # amvavisd-new
 mv 50-user /etc/amavis/conf.d/

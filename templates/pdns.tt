@@ -2,27 +2,28 @@
 apt-add-repository -r http://repo.powerdns.com/ubuntu -p auth-master
 apt-get update
 apt-get install pdns-server
-# Patch lexicon to work with unix sockets
-cd / && git apply /tmp/domainsetup_[% domain %]/lexicon-pdns-af-unix.patch
-cd / && git apply /tmp/domainsetup_[% domain %]/lexicon-arbitrary-record-types.patch
+# Patch lexicon to work with unix sockets XXX it may have already been applied.
+cd / && git apply /tmp/domainsetup_[% domain %]/lexicon-pdns-af-unix.patch; /bin/true
+cd / && git apply /tmp/domainsetup_[% domain %]/lexicon-arbitrary-record-types.patch; /bin/true
 # Configure the zone to be loaded into pdns
-mv pdns-domain.conf /etc/powerdns/pdns.d/[% tld %].conf
+mv pdns-domain.conf /etc/powerdns/pdns.d/[% domain %].conf
 mv pdns-api.conf /etc/powerdns/pdns.d/api.conf
 mv synczones.conf /etc/synczones.conf
 chown root:root /etc/synczones.conf
 chmod 0600 /etc/synczones.conf
 # Build the zone database
-mkdir -p /var/spool/powerdns/[% tld %]; /bin/true
-sqlite3 /var/spool/powerdns/[% tld %]/zones.db < /usr/share/pdns-backend-sqlite3/schema/schema.sqlite3.sql
+mkdir -p /var/spool/powerdns/[% domain %]; /bin/true
+sqlite3 /var/spool/powerdns/[% domain %]/zones.db < /usr/share/pdns-backend-sqlite3/schema/schema.sqlite3.sql
 # TODO do this via lexicon instead
-cp zonefile /var/spool/powerdns/[% tld %]/bind.zone
-zone2sql --gsqlite --zone=zonefile --zone-name=[% tld %] > /var/spool/powerdns/[% tld %]/zone.sql
-sqlite3 /var/spool/powerdns/[% tld %]/zones.db < /var/spool/powerdns/[% tld %]/zone.sql
-chown -R pdns:pdns /var/spool/powerdns/[% tld %]
-chmod -R 0775 /var/spool/powerdns/[% tld %]
+cp zonefile /var/spool/powerdns/[% domain %]/bind.zone
+zone2sql --gsqlite --zone=zonefile --zone-name=[% domain %] > /var/spool/powerdns/[% domain %]/zone.sql
+sqlite3 /var/spool/powerdns/[% domain %]/zones.db < /var/spool/powerdns/[% domain %]/zone.sql
+chown -R pdns:pdns /var/spool/powerdns/[% domain %]
+chmod -R 0775 /var/spool/powerdns/[% domain %]
 # Don't need no bind
 mkdir -p /etc/powerdns/config-available
-mv /etc/powerdns/pdns.d/bind.conf /etc/powerdns/pdns.d/config-available
+# May already be done
+mv /etc/powerdns/pdns.d/bind.conf /etc/powerdns/pdns.d/config-available; /bin/true
 # Fix broken service configuration
 [% script_dir %]/configure_pdns
 mkdir -p /var/spool/powerdns/run/pdns/; /bin/true
