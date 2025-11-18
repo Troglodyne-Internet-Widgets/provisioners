@@ -1,4 +1,4 @@
 api=yes
-api_key=[% api_key %]
-webserver_address=/var/spool/powerdns/api.sock
+api-key=[% api_key %]
+webserver-address=/var/spool/powerdns/api.sock
 webserver-hash-plaintext-credentials=yes
