@@ -34,7 +34,7 @@ use File::Slurper;
 sub deps {
 	my ($self) = @_;
 	if ($self->{target_packager} eq 'deb') {
-		return qw{pdns-server pdns-tools pdns-backend-sqlite3 sqlite3 libconfig-simple-perl libnet-dns-perl libjson-perl};
+		return qw{pdns-server pdns-tools pdns-backend-sqlite3 sqlite3 libconfig-simple-perl libnet-dns-perl libjson-perl python3-requests-unixsocket};
 	}
 	die "Unsupported packager";
 }
