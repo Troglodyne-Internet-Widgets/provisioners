@@ -142,15 +142,23 @@ sub handle_domain {
     my $tld_ip = $global_conf->{ip};
     die "Must set ip for $tld in global section of $cfile" unless $tld_ip;
 
+    my $gateway = $global_conf->{gateway};
+    die "Must set gateway for $tld (ipv4) in global section of $cfile" unless $gateway;
+
+    my $resolvers = $global_conf->{resolvers};
+    die "Must set resolvers for $tld in global section of $cfile" unless $resolvers;
+
     my $fqdn = "$domain.$tld";
 
     # Override fqdn for addons
+    my $is_addon = 0;
     if (ref $addons eq 'HASH') {
         my @addon = keys(%$addons);
         my ($maybe_fqdn) = grep { $domain eq $_ } @addon;
         if ($maybe_fqdn) {
             print "$domain is addon...\n";
             $fqdn = $maybe_fqdn if $maybe_fqdn;
+            $is_addon = 1;
         }
     }
 
@@ -255,7 +263,9 @@ sub handle_domain {
         $alias_conf->{$subdomain} = _coerce_arrayref($alias_conf->{$subdomain});
 
         # Basically every single web host is gonna need its own mail/www cnames
-        push(@{$alias_conf->{$subdomain}}, (map { "$_.$subdomain" } qw{www mail}));
+        my @standard_aliases = qw{www mail};
+        @standard_aliases = map { "$_.$subdomain" } @standard_aliases unless $is_addon;
+        push(@{$alias_conf->{$subdomain}}, @standard_aliases);
         $alias_conf->{$subdomain} = [uniq @{$alias_conf->{$subdomain}}];
     }
 
@@ -374,6 +384,8 @@ sub handle_domain {
     print "Writing Makefile to $cfg_dir\n";
     File::Slurper::write_binary("$cfg_dir/Makefile", $makefile);
 
+    my $r_text = join(', ', @$resolvers);
+
     # Build a provision.conf
     my $pconf = qq(
         image=https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
@@ -382,6 +394,8 @@ sub handle_domain {
         contact_email=$admin_email
         ips=$static_ip
         admin_user=$admin_user
+        gateway=$gateway
+        resolvers=$r_text
     );
     $pconf .= "depends_on=$depends_on" if $depends_on;
     File::Slurper::write_binary("$cfg_dir/provision.conf", $pconf);

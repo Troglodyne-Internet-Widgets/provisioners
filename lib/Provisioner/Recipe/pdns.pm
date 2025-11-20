@@ -11,7 +11,6 @@ use parent qw{Provisioner::Recipe};
 
     somedomain:
         pdns:
-            soa: ns1.somedomain.test
             extra_records: /opt/domains/dns/sub.somedomain/zonefile_fragment
 
 =head2 DESCRIPTION
@@ -42,9 +41,6 @@ sub deps {
 
 sub validate {
 	my ($self, %opts) = @_;
-
-    my $soa = $opts{soa};
-    die "Must define soa ns in [pdns] section of recipes.yaml" unless $soa;
 
     my $key = $opts{api_key};
     die "Must define api_key in [pdns] section of recipes.yaml" unless $key;

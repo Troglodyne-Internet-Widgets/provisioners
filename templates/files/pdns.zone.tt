@@ -8,34 +8,37 @@ $TTL    300
                         1209600           ; Expire
                         10800 )           ; Minimum
 
+; We are our own nameserver, delegated.
+@ 300 IN NS ns1.[% domain %].
+
+; If we have any *other* namservers clustered, add them too.
 [% FOREACH ns IN nameservers.values().sort() %]
 @        300      IN NS   [% ns %].
 [% END -%]
 
 [% FOREACH subdo IN ipmap.keys().sort() %]
 [% NEXT IF subdo != domain %]
-[% subdo %]        IN A    [% ipmap.$subdo %]
-ns1.[% subdo %]    IN A    [% ipmap.$subdo %]
+@       IN A    [% ipmap.$subdo %]
+ns1     IN A    [% ipmap.$subdo %]
 ;[% ipmap.$subdo | reverse_ip %] IN PTR  [% subdo %]
-[% subdo %]        IN MX 10 mail.[% subdo %]
-_dmarc.[% subdo %] IN TXT "v=DMARC1; p=none"
-[% subdo %]		   IN TXT "v=spf1 +a +mx -all"
-; Just the autodiscover alias(es)
-autodiscover.[% subdo %] IN CNAME [% subdo %]
-autoconfig.[% subdo %] IN CNAME [% subdo %]
 [% END -%]
 
 [% FOREACH sub IN aliases.keys().sort() %]
 [% NEXT IF sub != domain %]
 [% FOREACH alias IN aliases.$sub.sort() %]
-[% alias %] IN CNAME [% sub %]
+[% alias %] IN CNAME @
 [% END -%]
 [% END -%]
+
+; Mail
+@       IN MX 10 mail.[% domain %]
+autodiscover IN CNAME @
+autoconfig   IN CNAME @
 
 ; Autodiscover TXT record
 @ IN TXT "mailconf=https://autoconfig.[% domain %]/autoconfig/autoconfig.xml"
 
-; Basically bogus records for the TLD which we don't control really
+; DKIM/DMARC. If we have mail setup, we'll modify this with the relevant lexicon script.
 default._domainkey IN TXT  "o=-"
 mail._domainkey    IN TXT  "o=-"
 _dmarc             IN TXT  "v=DMARC1; p=none"

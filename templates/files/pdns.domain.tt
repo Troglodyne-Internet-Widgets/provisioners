@@ -1,3 +1,2 @@
-# powerdns configuration for [% tld %]
-launch=gsqlite3:[% domain %]
-gsqlite3-[% domain %]-database=/var/spool/powerdns/[% domain %]/zones.db
+launch=gsqlite3
+gsqlite3-database=/var/spool/powerdns/zones.db
