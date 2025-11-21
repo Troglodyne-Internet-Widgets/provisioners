@@ -2,13 +2,15 @@
 mkdir -p /etc/dehydrated/domains.d; /bin/true
 mkdir -p /etc/dehydrated/conf.d; /bin/true
 mkdir -p /etc/dehydrated/hooks; /bin/true
+# SAN = Subject Alternate Name
+mkdir -p /etc/dehydrated/sans; /bin/true
 mv dehydrated.conf /etc/dehydrated/config
 mv dehydrated.domain /etc/dehydrated/domains.d/[% domain %].conf
-cat domains.txt >> /etc/dehydrated/domains.txt
+mv domains.txt /etc/dehydrated/sans/[% domain %].txt
 mv domain.hook /etc/dehydrated/hooks/[% domain %].sh
 chown root:root /etc/dehydrated/config
 chown root:root /etc/dehydrated/domains.d/[% domain %].conf
-chown root:root /etc/dehydrated/domains.txt
+chown -R root:root /etc/dehydrated/sans
 chown root:root /etc/dehydrated/hooks/[% domain %].sh
 # This contains actual secret information which will need to remain, so must be protected!
 # TODO: watch this file for all accesses via auditd

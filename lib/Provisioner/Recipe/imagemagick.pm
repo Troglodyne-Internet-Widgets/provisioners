@@ -8,7 +8,7 @@ use parent qw{Provisioner::Recipe};
 sub deps {
 	my ($self) = @_;
 	if ($self->{target_packager} eq 'deb') {
-		return qw{ghostscript libjpeg-dev libpng-dev libtiff-dev liblzma-dev libxml2-dev libdjvulibre-dev libfreetype-dev};
+		return qw{ghostscript libjpeg-dev libpng-dev libtiff-dev liblzma-dev libxml2-dev libdjvulibre-dev libfreetype-dev libperl-dev};
 	}
 	die "Unsupported packager";
 }

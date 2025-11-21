@@ -12,5 +12,5 @@ if [ ! $(/opt/perl5/$NICE_PERL_NAME/bin/perl -MImage::Magick -e 'print "OK" if I
 	cd /tmp/imagick/src && make install
 	[ $(grep "/usr/local/lib" /etc/ld.so.conf) ] || echo "/usr/local/lib/" >> /etc/ld.so.conf
 	ldconfig
-	/opt/perl5/$NICE_PERL_NAME/bin/perl -MImage::Magick -e 'print Image::Magick::VERSION'
+	/opt/perl5/$NICE_PERL_NAME/bin/perl -MImage::Magick -e 'print $Image::Magick::VERSION'
 fi

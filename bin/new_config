@@ -152,12 +152,16 @@ sub handle_domain {
 
     # Override fqdn for addons
     my $is_addon = 0;
+    my $orig_tld = $tld;
     if (ref $addons eq 'HASH') {
         my @addon = keys(%$addons);
         my ($maybe_fqdn) = grep { $domain eq $_ } @addon;
         if ($maybe_fqdn) {
             print "$domain is addon...\n";
-            $fqdn = $maybe_fqdn if $maybe_fqdn;
+            if ($maybe_fqdn) {
+                $fqdn = $maybe_fqdn;
+                $tld  = $maybe_fqdn;
+            }
             $is_addon = 1;
         }
     }
@@ -177,7 +181,8 @@ sub handle_domain {
 
     my $depends_on;
     if ( $dep_dom ne $domain ) {
-        $depends_on = "$dep_dom.$tld";
+        #XXX wat do if the domain we depend on is *also* an addon?  Probably best to just not do that.
+        $depends_on = "$dep_dom.$orig_tld";
     }
 
     # There will always be some global config for a domain which ought be made available to the various modules
