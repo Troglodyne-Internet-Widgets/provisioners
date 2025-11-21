@@ -300,7 +300,7 @@ sub handle_domain {
     # Regrettably, we may be running this on an existing system so we gotta install pkgs anyways.
     my ($pkgr_invoc, $pkgr_up, $pkgr_rm);
     if ($provisioner_opts{target_packager} eq 'deb') {
-        push(@pkgs, qw{openssl openssh-server openssh-client rsync});
+        push(@pkgs, qw{openssl openssh-server openssh-client rsync retry});
         $pkgr_invoc = 'DEBIAN_FRONTEND="noninteractive" apt-get install -Uy -o Acquire::Retries=3 -o Dpkg::Options=--force-confdef -o Dpkg::Options=--force-confold -o Dpkg::Options=--force-overwrite --autoremove';
         $pkgr_up    = 'DEBIAN_FRONTEND="noninteractive" apt-get upgrade -Uy';
         $pkgr_rm    = 'DEBIAN_FRONTEND="noninteractive" apt-get remove -y';

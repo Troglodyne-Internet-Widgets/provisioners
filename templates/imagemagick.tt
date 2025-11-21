@@ -1,1 +1,1 @@
-[%script_dir %]/queue_postrun_task [% script_dir %]/build_imagick.sh
+[%script_dir %]/queue_postrun_task [% script_dir %]/build_imagick.sh [% version %]

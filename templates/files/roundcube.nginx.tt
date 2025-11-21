@@ -36,6 +36,6 @@ server {
 	listen 80;
 	listen [::]:80;
 
-	server_name webmail.[% domain %]
-	return 301 https://$host$request_uri
+	server_name webmail.[% domain %];
+	return 301 https://$host$request_uri;
 }

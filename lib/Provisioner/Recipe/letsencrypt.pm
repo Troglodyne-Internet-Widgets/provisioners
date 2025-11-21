@@ -67,8 +67,10 @@ sub validate {
 			user => '',
 			key  => $params{local_dns_access_token},
 		};
+        #XXX pretty dopey that the var is POWERDNS_PDNS_SERVER, but load bearing at this point
 		$params{extra_lexicon_vars} = [
-			{ key => 'SERVER', value => "/var/spool/powerdns/api.sock" },
+			{ key => 'PDNS_SERVER', value => "/var/spool/powerdns/api.sock" },
+            { key => 'DELEGATED',   value => $params{domain}, global => 1 },
 		];
 	} else {
 		die "Must set registrar info in _global section of config" unless exists $params{registrar} && ( ref( $params{registrar}) eq 'HASH' );

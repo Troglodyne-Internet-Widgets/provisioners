@@ -10,8 +10,8 @@
 
 .PHONY: all
 all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% FOR module IN modules_ordered %] [% state_dir %]/[% module %][% END %]
+	[% script_dir %]/post_install
 	touch /root/install_complete
-	at now -f [% script_dir %]/post_install; /bin/true
 
 [% state_dir %]/state:
 	mkdir -p [% state_dir %]

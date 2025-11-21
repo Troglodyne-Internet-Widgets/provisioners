@@ -18,7 +18,11 @@ export LEXICON_[% registrar.type.upper() %]_AUTH_USERNAME="[% registrar.user %]"
 export LEXICON_[% registrar.type.upper() %]_AUTH_TOKEN="[% registrar.key %]"
 [% END -%]
 [% FOREACH lv IN extra_lexicon_vars -%]
+[% IF lv.global %]
+export LEXICON_[% lv.key %]="[% lv.value %]"
+[% ELSE -%]
 export LEXICON_[% registrar.type.upper() %]_[% lv.key %]="[% lv.value %]"
+[% END -%]
 [% END -%]
 [% END -%]
 function deploy_challenge {
