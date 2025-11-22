@@ -11,10 +11,15 @@ use parent qw{Provisioner::Recipe};
 
     somedomain:
         tpsgi:
+            routers:
+                - my/lib/Router.pm
+            extra_env: "MY_VAR=foo OTHER_VAR=bar"
 
 =head2 DESCRIPTION
 
 Sets up TPSGI inside of the install_dir, so it can run your application schlepped over by the data recipe.
+
+Optionally specify extra ENV vars to inject into the systemd service.
 
 TODO: allow specification of specific SHA to check out.
 

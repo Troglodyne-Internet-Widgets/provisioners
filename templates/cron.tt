@@ -13,8 +13,8 @@ crontab -u [% user %] user.crontab
 /root/bin/changes_in_packaged_files.sh; /bin/true
 # For cronie backups
 mkdir /root/.cache; /bin/true
-mkdir /opt/domains/[% domain %]/.cache; /bin/true
-chown [% user %]:[% user %] /opt/domains/[% domain %]/.cache
+mkdir [% install_dir %]/[% domain %]/.cache; /bin/true
+chown [% user %]:[% user %] [% install_dir %]/[% domain %]/.cache
 # Initialize rkhunter stuff
 mv rkhunter.conf /etc/rkhunter.conf
 rkhunter --propupd
