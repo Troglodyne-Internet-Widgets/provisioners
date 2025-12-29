@@ -1,0 +1,2 @@
+mv backupdestination.cron /etc/cron.d/backups
+mv backupdestination.logrotate /etc/logrotate.d/backups 
