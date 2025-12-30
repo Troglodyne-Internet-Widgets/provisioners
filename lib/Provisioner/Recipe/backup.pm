@@ -51,7 +51,7 @@ sub validate {
 
     # Extract the pubkey so we don't have to schlep the pkey over to the host
     # XXX support non rsa keys ig?
-    $opts{pubkey} = `openssl rsa -in "$kf" -pubout`;
+    $opts{pubkey} = `ssh-keygen -yf "$kf"`;
     chomp $opts{pubkey};
     die "Could not extract pubkey!" unless $opts{pubkey};
 
