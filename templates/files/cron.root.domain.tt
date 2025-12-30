@@ -5,7 +5,7 @@ MAILTO="[% admin_email %]"
 MAILFROM="[% from %]@[% domain %]"
 [% END %]
 
-[% IF modules.grep('letsencrypt') %]
+[% IF modules.grep('letsencrypt').size %]
 # SSL
 0 0 * * * dehydrated --config /etc/dehydrated/domains.d/[% domain %].conf --cron >> /var/log/dehydrated.log
 [% END %]
@@ -18,4 +18,4 @@ MAILTO="[% cob.mailto %]"
 MAILTO="[% admin_email %]"
 [% END %]
 [% cob.interval %] [% cob.cmd %]
-[% END %] 
+[% END %]
