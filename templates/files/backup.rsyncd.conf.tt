@@ -3,4 +3,6 @@ port = 40404
 [[% target %]]
 use chroot = yes
 path = [% targets.$target %]
+uid = root
+gid = root
 [% END %]

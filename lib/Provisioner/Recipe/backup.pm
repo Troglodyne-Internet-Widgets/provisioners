@@ -27,6 +27,8 @@ Pair with a VM using L<Provisioner::Recipe::backupdestination> to fully automate
 
 Backups are implemented via SSH authorized key read-only restricted execution of an ephemeral & chrooted instance of rsyncd as root on port 40404.
 
+TODO: Make this module consult all the other loaded recipes to know "what do we need to backup, and what uid/gid ought we do it as"
+
 =cut
 
 sub deps {
