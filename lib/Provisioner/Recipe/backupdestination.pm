@@ -5,6 +5,8 @@ use warnings;
 
 use parent qw{Provisioner::Recipe};
 
+use List::Util qw{uniq};
+
 =head1 Provisioner::Recipe::backupdestination
 
 =head2 SYNOPSIS
@@ -15,8 +17,8 @@ In recipes.yaml:
         backupdestination:
             base_dir: /backup
             targets:
-                database: "mysql"
-                mail: "mail"
+                - database
+                - mail
                 ...
             hosts:
                 - "some.domain.name"
@@ -62,9 +64,23 @@ sub validate {
     die "Must define hosts in [backupdestination] section of recipes.yaml" unless $hosts;
     die "hosts in [backupdestination] must be ARRAY" unless ref $hosts eq 'ARRAY';
 
+    # Gather all the remote_files
+    my @default_targets;
+    foreach my $module (@{$opts{modules}}) {
+        require "Provisioner/Recipe/$module.pm";
+        my %mtargets = "Provisioner::Recipe::$module"->remote_files($opts{domain});
+        my @ts = sort keys(%mtargets);
+        foreach my $t (1..@ts) {
+            push(@default_targets, "$module$t");
+        }
+    }
+
     my $targets = $opts{targets};
     die "Must define targets ns in [backupdestination] section of recipes.yaml" unless $targets;
-    die "targets in [backupdestination] must be HASH" unless ref $targets eq 'HASH';
+    die "targets in [backupdestination] must be ARRAY" unless ref $targets eq 'ARRAY';
+
+    # Merge the remote_files and specified backup stuff
+    $targets = [uniq(@default_targets, @$targets)];
 
     my $key_file = $opts{key_file};
     die "Must define key_file in [backupdestination] section of recipes.yaml" unless $key_file;

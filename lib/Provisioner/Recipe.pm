@@ -1,7 +1,7 @@
 package Provisioner::Recipe;
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use Text::Xslate;
 use Text::Xslate::Bridge::TT2;

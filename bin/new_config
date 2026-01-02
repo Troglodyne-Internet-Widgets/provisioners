@@ -3,7 +3,7 @@
 package Trog::Provisioner::Config::Generator;
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 no warnings qw{experimental};
 use feature qw{state};
