@@ -50,7 +50,6 @@ sub deps {
             python3-unpaddedbase64
             python3-pymacaroons
             python3-msgpack
-            nginx
         };
     }
     die "Unsupported packager";
@@ -108,22 +107,14 @@ sub template_files {
 }
 
 sub datadirs {
-    return qw{matrix-admin};
+    return qw{matrix matrix-admin};
 }
 
 sub remote_files {
+    my ($self, $install_dir, $domain) = @_;
     return (
-        '[% install_dir %]/matrix.[% domain %]/homeserver.db' => 'matrix/homeserver.db',
-        '[% install_dir %]/matrix.[% domain %]/media' => 'matrix/media',
-        '[% install_dir %]/matrix.[% domain %]/homeserver.signing.key' => 'matrix/homeserver.signing.key',
-        '/etc/matrix-synapse/homeserver.yaml' => 'matrix/homeserver.yaml',
-        '/etc/matrix-synapse/log.yaml' => 'matrix/log.yaml',
-    );
-}
-
-sub makefile_vars {
-    return (
-        SYNAPSE_ADMIN_URL => 'https://github.com/etkecc/synapse-admin/releases/latest/download/synapse-admin.tar.gz',
+        "$install_dir/matrix.$domain/"        => 'matrix/',
+        "$install_dir/admin.matrix.$domain/"  => 'admin.matrix/',
     );
 }
 

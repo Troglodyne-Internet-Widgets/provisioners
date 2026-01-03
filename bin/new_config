@@ -345,7 +345,7 @@ sub handle_domain {
 
         # Schlep over stuff from existing deployments
         if ( $target_is_up ) {
-            my %tg = $builder->remote_files($fqdn);
+            my %tg = $builder->remote_files($data_config->{to}, $fqdn);
             foreach my $to_fetch (sort keys(%tg)) {
                 print "Writing remote file $to_fetch as $data_config->{from}/$fqdn/$tg{$to_fetch}\n";
                 my $num_copied = $ssh->rget(

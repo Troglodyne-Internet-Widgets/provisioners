@@ -1,7 +1,7 @@
 # Setup directories
 mkdir -p [% install_dir %]/matrix.[% domain %]
 mkdir -p [% install_dir %]/matrix.[% domain %]/media
-mkdir -p [% install_dir %]/admin.[% domain %]
+mkdir -p [% install_dir %]/admin.matrix.[% domain %]
 mkdir -p /etc/matrix-synapse
 mkdir -p /var/log/matrix-synapse
 
@@ -15,31 +15,31 @@ mv log.yaml /etc/matrix-synapse/
 mv matrix-synapse.service /etc/systemd/system/
 
 # Download and setup Synapse Admin
-[% script_dir %]/matrix.download-admin.sh [% install_dir %]/admin.[% domain %]
+[% script_dir %]/matrix.download-admin.sh [% install_dir %]/admin.matrix.[% domain %]
+# TODO need a cron keeping the above up to date
 
 # Setup nginx sites
 mkdir -p /etc/nginx/sites-enabled; /bin/true
 mv matrix.nginx.conf /etc/nginx/sites-enabled/matrix.[% domain %].conf
-mv matrix-admin.nginx.conf /etc/nginx/sites-enabled/admin.[% domain %].conf
+mv matrix-admin.nginx.conf /etc/nginx/sites-enabled/admin.matrix.[% domain %].conf
 chown root:root /etc/nginx/sites-enabled/matrix.[% domain %].conf
-chown root:root /etc/nginx/sites-enabled/admin.[% domain %].conf
+chown root:root /etc/nginx/sites-enabled/admin.matrix.[% domain %].conf
 [% script_dir %]/queue_postrun_task systemctl reload nginx
+# TODO need to die in validate() if nginxproxy isn't loaded
+# TODO need to add matrix. and admin.matrix. to the zonefile from the pdns recipe IFF this recipe is loaded
 
 # Generate signing key
 python3 -c "from synapse.crypto import key; print(key.generate_signing_key('ed25519').decode('ascii'))" > [% install_dir %]/matrix.[% domain %]/homeserver.signing.key
 chown matrix-synapse:matrix-synapse [% install_dir %]/matrix.[% domain %]/homeserver.signing.key
-chmod 600 [% install_dir %]/matrix.[% domain %]/homeserver.signing.key
+chmod 0600 [% install_dir %]/matrix.[% domain %]/homeserver.signing.key
 
-# Register admin user (will be done after service starts)
-# su - matrix-synapse -c "register_new_matrix_user -c /etc/matrix-synapse/homeserver.yaml -u [% admin_user %] -p [% admin_password %] -a"
+# TODO configure matrix-admin service to point against our local synapse
+# TODO if possible, instruct matrix to listen on a local socket file instead of a world-available port.  But if not we need to make a firewall rule!
 
 # Enable and start service
 systemctl daemon-reload
 systemctl enable matrix-synapse
 systemctl start matrix-synapse
-
-# Wait a bit for service to start
-sleep 10
 
 # Register admin user
 su - matrix-synapse -c "register_new_matrix_user -c /etc/matrix-synapse/homeserver.yaml -u [% admin_user %] -p [% admin_password %] --admin"

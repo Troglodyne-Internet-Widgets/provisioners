@@ -56,6 +56,7 @@ sub datadirs {
 # NOTE: this will only happen if the admin user's authorized keys has the key of the person running the deploys.
 # Also, we use this as a list of files to backup with the backup/backupdestination recipes
 sub remote_files {
+    my ($self, $install_dir, $domain) = @_;
 	return ();
 }
 
