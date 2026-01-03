@@ -14,6 +14,8 @@ use warnings;
                   options: "noatime,noexec"
                   mountpoint: "/mountpoint_on_guest"
                   device: "device_or_file_on_HV"
+                  partition: 2
+                  pool: tf_disks
             fuse:
                 - type: "s3fs"
                   options: "ro"
@@ -33,7 +35,12 @@ If you want to setup a chroot-mount in the install_dir, use setup_chroot_mount i
 
 You'll obviously want to have your application's recipe include the relevant FUSE driver (s3fs for the example above).
 
-TODO: make this support more than 10 mounts at a time (csplit issue).
+TODO: make this support more than 10 fusemounts at a time (csplit issue).
+
+In the event that a pool is specified in a disk, specify the path relative to that pool.
+Otherwise, use an absolute path to the file or device.
+
+Optionally, you can specify a partition number in a disk, we use 1 by default.
 
 =cut
 
@@ -57,6 +64,7 @@ sub validate {
         foreach my $disk (@$fuse) {
             $disk->{servicename} = $disk->{mountpoint};
             $disk->{servicename} =~ s|/|_|g;
+            $disk->{pool} //= 'file';
         }
     }
 
@@ -68,6 +76,7 @@ sub template_files {
 
     return (
         'mounts.fuse.service.tt' => 'fusemounts.txt',
+        'mounts.tt'              => 'mounts.txt',
     );
 }
 

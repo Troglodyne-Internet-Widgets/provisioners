@@ -4,8 +4,11 @@ TARGET=$1
 LINK_NAME=$2
 TYPE=$3
 OPTIONS=$4
+PARTITION=$5
 
 ACTUAL_TARGET=$(grep "^$TARGET" /root/devices.map | awk -F "=" '{print $2}')
+[[ -z $PARTITION ]] && PARTITION=1
+ACTUAL_TARGET="$ACTUAL_TARGET$PARTITION"
 
 # Mount things inside a chroot
 mkdir -p $LINK_NAME
