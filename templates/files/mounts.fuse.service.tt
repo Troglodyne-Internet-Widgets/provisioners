@@ -1,0 +1,15 @@
+[% FOREACH mount IN fuse %]
+[Unit]
+Description=Fuse Mount of [% mount.device %]
+After=network.target
+
+[Mount]
+What=[% mount.device %]
+Where=[% mount.mountpoint %]
+Type=fuse.[% mount.type %]
+Options=[% mount.options %]
+
+[Install]
+WantedBy=multi-user.target
+--SEPARATOR--
+[% END %]

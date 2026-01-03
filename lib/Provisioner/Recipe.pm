@@ -54,6 +54,7 @@ sub datadirs {
 # Return a HASH of thing_to_fetch => where_to_store
 # So that we can grab artifacts from a prior deploy and shove them in the DATA dir.
 # NOTE: this will only happen if the admin user's authorized keys has the key of the person running the deploys.
+# Also, we use this as a list of files to backup with the backup/backupdestination recipes
 sub remote_files {
 	return ();
 }
