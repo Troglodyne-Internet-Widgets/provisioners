@@ -15,9 +15,7 @@ mv log.yaml /etc/matrix-synapse/
 mv matrix-synapse.service /etc/systemd/system/
 
 # Download and setup Synapse Admin
-chmod +x download-admin.sh
-./download-admin.sh
-rm download-admin.sh
+[% script_dir %]/matrix.download-admin.sh [% install_dir %]/admin.[% domain %]
 
 # Setup nginx sites
 mkdir -p /etc/nginx/sites-enabled; /bin/true
@@ -46,9 +44,3 @@ sleep 10
 # Register admin user
 su - matrix-synapse -c "register_new_matrix_user -c /etc/matrix-synapse/homeserver.yaml -u [% admin_user %] -p [% admin_password %] --admin"
 
-# Setup backup script
-chmod +x matrix-backup.sh
-mv matrix-backup.sh /usr/local/bin/matrix-backup
-
-# Setup cron for backup (daily at 2am)
-echo "0 2 * * * root /usr/local/bin/matrix-backup" > /etc/cron.d/matrix-backup

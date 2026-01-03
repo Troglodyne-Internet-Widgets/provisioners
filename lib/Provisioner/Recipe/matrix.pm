@@ -104,13 +104,21 @@ sub template_files {
         'matrix.nginx.tt' => 'matrix.nginx.conf',
         'matrix.admin.nginx.tt' => 'matrix-admin.nginx.conf',
         'matrix.synapse.service.tt' => 'matrix-synapse.service',
-        'matrix.backup.sh.tt' => 'matrix-backup.sh',
-        'matrix.download-admin.sh.tt' => 'download-admin.sh',
     );
 }
 
 sub datadirs {
     return qw{matrix-admin};
+}
+
+sub remote_files {
+    return (
+        '[% install_dir %]/matrix.[% domain %]/homeserver.db' => 'matrix/homeserver.db',
+        '[% install_dir %]/matrix.[% domain %]/media' => 'matrix/media',
+        '[% install_dir %]/matrix.[% domain %]/homeserver.signing.key' => 'matrix/homeserver.signing.key',
+        '/etc/matrix-synapse/homeserver.yaml' => 'matrix/homeserver.yaml',
+        '/etc/matrix-synapse/log.yaml' => 'matrix/log.yaml',
+    );
 }
 
 sub makefile_vars {
