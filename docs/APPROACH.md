@@ -13,6 +13,10 @@
 
 * When you need to restart services or interact with things which may or may not be present and functioning at the time your recipe's target runs, be sure to queue it as a postrun task.
 
+## Waiting on things
+
+* Don't ever use static sleeps unless inside of a polling loop which checks that what you are waiting on is actually ready.  It's fine to write a standalone script to do this when necessary.
+
 ## Dependencies
 
 * Don't require dependencies for things which are dependencies of recipes you depend on.  Instead, simply die during validate() if the recipe you depend on is not present in `$opts{modules}`.
