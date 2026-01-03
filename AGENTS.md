@@ -205,6 +205,22 @@ sub template_files {
 }
 ```
 
+## Recipe Guidelines (from docs/APPROACH.md)
+
+### Networking and Security
+- **Unix Sockets**: Use unix sockets for HTTP services when possible, proxy via nginx
+- **UFW Rules**: If public sockets are needed, add UFW application config to `/etc/ufw/applications.d`
+- **SSL**: Update letsencrypt and pdns templates for DNS DCV when service requires SSL
+
+### Execution and Dependencies
+- **Order Not Guaranteed**: Use `queue_postrun_task` for service restarts or dependent operations
+- **No Static Sleeps**: Use polling loops to check readiness, never static sleep times
+- **Recipe Dependencies**: Don't list packages from dependent recipes in `deps()`. Instead validate:
+  ```perl
+  die "This recipe requires the nginxproxy recipe" 
+      unless List::Util::any { $_ eq 'nginxproxy' } @{$opts{modules}};
+  ```
+
 ## Debugging Tips
 
 1. Check generated makefile in target directory
