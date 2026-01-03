@@ -25,19 +25,19 @@ TODO: allow list of cpan deps
 =cut
 
 sub deps {
-	my ($self) = @_;
-	if ($self->{target_packager} eq 'deb') {
-		return qw{perlbrew libcarp-always-perl};
-	}
-	die "Unsupported packager";
+    my ($self) = @_;
+    if ( $self->{target_packager} eq 'deb' ) {
+        return qw{perlbrew libcarp-always-perl};
+    }
+    die "Unsupported packager";
 }
 
 sub validate {
-	my ($self, %opts) = @_;
-	my $user = $opts{user};
-	die "Must set user in [perl] section of recipes.yaml" unless $user;
+    my ( $self, %opts ) = @_;
+    my $user = $opts{user};
+    die "Must set user in [perl] section of recipes.yaml" unless $user;
 
-	return %opts;
+    return %opts;
 }
 
 1;

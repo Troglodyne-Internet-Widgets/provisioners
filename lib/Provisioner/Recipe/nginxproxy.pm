@@ -23,29 +23,30 @@ Optionally turn off proxy buffering (if you do things like COMET this is needed)
 =cut
 
 sub deps {
-	my ($self) = @_;
-	if ($self->{target_packager} eq 'deb') {
-		return qw{nginx-full};
-	}
-	die "Unsupported packager";
+    my ($self) = @_;
+    if ( $self->{target_packager} eq 'deb' ) {
+        return qw{nginx-full};
+    }
+    die "Unsupported packager";
 }
 
 sub validate {
-	my ($self, %opts) = @_;
-	my $uri = $opts{proxy_uri};
-	die "Must set proxy_uri in [nginxproxy] section of recipes.yaml" unless $uri;
-	return %opts;
+    my ( $self, %opts ) = @_;
+    my $uri = $opts{proxy_uri};
+    die "Must set proxy_uri in [nginxproxy] section of recipes.yaml" unless $uri;
+    return %opts;
 }
 
 sub template_files {
-	my ($self) = @_;
+    my ($self) = @_;
 
-	return (
-		'nginx.global.conf.tt' => 'nginx.global.conf',
-		'nginx.domain.conf.tt' => 'nginx.domain.conf',
+    return (
+        'nginx.global.conf.tt' => 'nginx.global.conf',
+        'nginx.domain.conf.tt' => 'nginx.domain.conf',
+
         #XXX TODO this needs to be in the MAIN target, NOT here
-        'openssl.tt'           => 'openssl.conf',
-	);
+        'openssl.tt' => 'openssl.conf',
+    );
 }
 
 1;

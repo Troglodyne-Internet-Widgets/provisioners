@@ -42,46 +42,44 @@ Also runs all the configured root_scripts & user_scripts present in the service 
 =cut
 
 sub deps {
-	my ($self) = @_;
-	if ($self->{target_packager} eq 'deb') {
-		return qw{rkhunter sysstat cronie debsums};
-	}
-	die "Unsupported packager";
+    my ($self) = @_;
+    if ( $self->{target_packager} eq 'deb' ) {
+        return qw{rkhunter sysstat cronie debsums};
+    }
+    die "Unsupported packager";
 }
 
 sub validate {
-    my ($self, %vars) = @_;
+    my ( $self, %vars ) = @_;
 
     if ( $vars{user_scripts} ) {
         die "user_scripts must be ARRAY" unless ref $vars{user_scripts} eq 'ARRAY';
-        foreach my $cron (@{$vars{user_scripts}}) {
+        foreach my $cron ( @{ $vars{user_scripts} } ) {
             die "Each user script must be a HASH" unless ref $cron eq 'HASH';
-            die "user_scripts must have an interval & cmd" unless $cron->{interval} && $cron->{cmd}
+            die "user_scripts must have an interval & cmd" unless $cron->{interval} && $cron->{cmd};
         }
     }
 
     if ( $vars{root_scripts} ) {
         die "root_scripts must be ARRAY" unless ref $vars{root_scripts} eq 'ARRAY';
-        foreach my $cron (@{$vars{root_scripts}}) {
+        foreach my $cron ( @{ $vars{root_scripts} } ) {
             die "Each user script must be a HASH" unless ref $cron eq 'HASH';
-            die "root_scripts must have an interval & cmd" unless $cron->{interval} && $cron->{cmd}
+            die "root_scripts must have an interval & cmd" unless $cron->{interval} && $cron->{cmd};
         }
     }
-
 
     return %vars;
 }
 
 sub template_files {
-	my ($self) = @_;
+    my ($self) = @_;
 
-	return (
+    return (
         'cron.root.tt'          => 'root.crontab',
-		'cron.root.domain.tt'   => 'root.domain.crontab',
-		'cron.user.tt'          => 'user.crontab',
-		'cron.rkhunter.conf.tt' => 'rkhunter.conf',
-	);
+        'cron.root.domain.tt'   => 'root.domain.crontab',
+        'cron.user.tt'          => 'user.crontab',
+        'cron.rkhunter.conf.tt' => 'rkhunter.conf',
+    );
 }
-
 
 1;

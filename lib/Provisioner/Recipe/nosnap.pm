@@ -21,11 +21,11 @@ For those of you who consider it an unacceptable risk to your deployed systems.
 use parent qw{Provisioner::Recipe};
 
 sub template_files {
-	my ($self) = @_;
+    my ($self) = @_;
 
-	return (
-		'nosnap.tt' => 'nosnap.pref',
-	);
+    return (
+        'nosnap.tt' => 'nosnap.pref',
+    );
 }
 
 1;

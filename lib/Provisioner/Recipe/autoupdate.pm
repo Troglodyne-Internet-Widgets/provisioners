@@ -24,11 +24,11 @@ Optionally autorestart when this updates the kernel, unless the specified touchf
 =cut
 
 sub deps {
-	my ($self, %opts) = @_;
-	if ($self->{target_packager} eq 'deb') {
-		return qw{};
-	}
-	die "Unsupported packager";
+    my ( $self, %opts ) = @_;
+    if ( $self->{target_packager} eq 'deb' ) {
+        return qw{};
+    }
+    die "Unsupported packager";
 }
 
 sub template_files {

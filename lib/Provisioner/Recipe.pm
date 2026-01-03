@@ -38,21 +38,23 @@ Create new recipe instance.
 =cut
 
 sub new {
-    my ($class, %opts) = @_;
+    my ( $class, %opts ) = @_;
 
     my ($tname) = $class =~ m/^Provisioner::Recipe::(\w+)$/;
     die "Could not extract recipe name.  Recipes must be of form Provisioner::Recipe::*" unless $tname;
 
     $opts{template} = "$tname.tt";
 
-    $opts{tt} = Text::Xslate->new({
-        path     => $opts{template_dirs},
-        syntax   => 'TTerse',
-		module   => [qw{Text::Xslate::Bridge::TT2}],
-		function => {$class->formatters()},
-    }) || die "Could not initialize template dir";
+    $opts{tt} = Text::Xslate->new(
+        {
+            path     => $opts{template_dirs},
+            syntax   => 'TTerse',
+            module   => [qw{Text::Xslate::Bridge::TT2}],
+            function => { $class->formatters() },
+        }
+    ) || die "Could not initialize template dir";
 
-    return bless(\%opts, $class);
+    return bless( \%opts, $class );
 }
 
 =head3 formatters
@@ -70,7 +72,7 @@ Define custom template formatters. Override in subclasses.
 =cut
 
 sub formatters {
-	return ();
+    return ();
 }
 
 =head3 vars
@@ -143,7 +145,7 @@ Define data directories to create.
 =cut
 
 sub datadirs {
-	return ();
+    return ();
 }
 
 =head3 remote_files
@@ -161,8 +163,8 @@ Define files to backup/restore between deployments.
 =cut
 
 sub remote_files {
-    my ($self, $install_dir, $domain) = @_;
-	return ();
+    my ( $self, $install_dir, $domain ) = @_;
+    return ();
 }
 
 =head3 template_files
@@ -180,8 +182,8 @@ Define template files to process.
 =cut
 
 sub template_files {
-    my ($self, @recipes) = @_;
-	return ();
+    my ( $self, @recipes ) = @_;
+    return ();
 }
 
 =head3 makefile_vars
@@ -199,7 +201,7 @@ Define makefile variables.
 =cut
 
 sub makefile_vars {
-	return ();
+    return ();
 }
 
 # Global parameter validation
@@ -224,7 +226,7 @@ Render recipe's main template.
 
 sub render {
     my ($self) = shift;
-	return $self->render_file($self->{template}, @_);
+    return $self->render_file( $self->{template}, @_ );
 }
 
 =head3 render_file
@@ -242,16 +244,17 @@ Render specified template file.
 =cut
 
 sub render_file {
-    my ($self, $file) = (shift, shift);
+    my ( $self, $file ) = ( shift, shift );
     my %vars = $self->validate(
+
         # Sane defaults
         $self->vars(),
+
         # Config overrides
         @_,
     );
     %vars = $validate->(%vars);
-    return $self->{tt}->render($file, \%vars);
+    return $self->{tt}->render( $file, \%vars );
 }
-
 
 1;

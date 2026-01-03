@@ -30,20 +30,20 @@ TODO integrate this into some manner of IDS mechanism.
 =cut
 
 sub deps {
-	my ($self) = @_;
-	if ($self->{target_packager} eq 'deb') {
-		return qw{auditd};
-	}
-	die "Unsupported packager";
+    my ($self) = @_;
+    if ( $self->{target_packager} eq 'deb' ) {
+        return qw{auditd};
+    }
+    die "Unsupported packager";
 }
 
 sub template_files {
-	my ($self) = @_;
+    my ($self) = @_;
 
-	return (
+    return (
         'auditd.global.tt' => 'global.rules',
-		'auditd.domain.tt' => 'domain.rules',
-	);
+        'auditd.domain.tt' => 'domain.rules',
+    );
 }
 
 1;

@@ -26,21 +26,21 @@ Optionally set up port forwarding.
 use File::Path qw{rmtree};
 
 sub deps {
-	my ($self) = @_;
-	if ($self->{target_packager} eq 'deb') {
-		return qw{ufw};
-	}
-	die "Unsupported packager";
+    my ($self) = @_;
+    if ( $self->{target_packager} eq 'deb' ) {
+        return qw{ufw};
+    }
+    die "Unsupported packager";
 }
 
 sub validate {
-    my ($self, %vars) = @_;
+    my ( $self, %vars ) = @_;
 
     if ( $vars{port_forwards} ) {
         die "port_forwards must be ARRAY" unless ref $vars{port_forwards} eq 'ARRAY';
-        foreach my $cron (@{$vars{port_forwards}}) {
+        foreach my $cron ( @{ $vars{port_forwards} } ) {
             die "Each port forward must be a HASH" unless ref $cron eq 'HASH';
-            die "port forwards must have a from & to" unless $cron->{from} && $cron->{to}
+            die "port forwards must have a from & to" unless $cron->{from} && $cron->{to};
         }
     }
 
@@ -48,23 +48,23 @@ sub validate {
 }
 
 my %template2rule = (
-    'ufw.pdns.tt'    => 'ufw/pdns',
-    'ufw.mail.tt'    => 'ufw/mail',
+    'ufw.pdns.tt' => 'ufw/pdns',
+    'ufw.mail.tt' => 'ufw/mail',
 );
 
 sub template_files {
-	my ($self, @recipes) = @_;
+    my ( $self, @recipes ) = @_;
 
     my $dir = "$self->{output_dir}/ufw";
 
-    rmtree $dir; 
-    mkdir  $dir;
+    rmtree $dir;
+    mkdir $dir;
 
     # Only render things we actually need
     my %ret = (
-		'ufw.rsyslog.tt' => 'ufw/rsyslog',
-		'ufw.http.tt'    => 'ufw/http',
-	);
+        'ufw.rsyslog.tt' => 'ufw/rsyslog',
+        'ufw.http.tt'    => 'ufw/http',
+    );
 
     return %ret unless @recipes;
 

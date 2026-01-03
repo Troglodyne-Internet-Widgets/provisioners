@@ -27,33 +27,33 @@ Optionally add in packages for the administrator to use on the provisioned host.
 =cut
 
 sub deps {
-	my ($self, %opts) = @_;
+    my ( $self, %opts ) = @_;
     return qw{
-        dbconfig-common
-        enchant-2
-        libapr1t64
-        libaprutil1-dbd-sqlite3
-        libaprutil1-ldap
-        libaprutil1t64
-        libenchant-2-2
-        php
-        php-fpm
-        php-auth-sasl
-        php-common
-        php-enchant
-        php-gd
-        php-intl
-        php-mbstring
-        php-sqlite3
-		php-zip
-        sqlite3
+      dbconfig-common
+      enchant-2
+      libapr1t64
+      libaprutil1-dbd-sqlite3
+      libaprutil1-ldap
+      libaprutil1t64
+      libenchant-2-2
+      php
+      php-fpm
+      php-auth-sasl
+      php-common
+      php-enchant
+      php-gd
+      php-intl
+      php-mbstring
+      php-sqlite3
+      php-zip
+      sqlite3
     };
 }
 
 # NOTE: FPM php.ini: /etc/php/8.3/fpm/php.ini
 
 sub template_files {
-    my ($class, @modules) = @_;
+    my ( $class, @modules ) = @_;
     my %f = (
         'roundcube.config.inc.php.tt' => 'config.inc.php',
         'roundcube.fpm.ini.tt'        => 'fpm.ini',
@@ -69,13 +69,13 @@ sub makefile_vars {
 }
 
 sub validate {
-	my ($self, %opts) = @_;
+    my ( $self, %opts ) = @_;
     $opts{'des_key'} = 'rcube-' . UUID::uuid();
 
     my $ver = $opts{version};
     die "Must set version in [roundcube] section of configuration" unless $ver;
 
-	return %opts;
+    return %opts;
 }
 
 1;

@@ -23,11 +23,11 @@ Also useful in network environments where its default behavior is unhelpful.
 =cut
 
 sub template_files {
-	my ($self) = @_;
+    my ($self) = @_;
 
-	return (
-		'nostubresolver.tt' => '10-disable-stub-resolver.conf',
-	);
+    return (
+        'nostubresolver.tt' => '10-disable-stub-resolver.conf',
+    );
 }
 
 1;

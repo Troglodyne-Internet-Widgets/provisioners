@@ -37,24 +37,24 @@ TODO: Make this module consult all the other loaded recipes to know what uid/gid
 =cut
 
 sub deps {
-	my ($self, %opts) = @_;
-	if ($self->{target_packager} eq 'deb') {
-		return qw{rsync openssh-server};
-	}
-	die "Unsupported packager";
+    my ( $self, %opts ) = @_;
+    if ( $self->{target_packager} eq 'deb' ) {
+        return qw{rsync openssh-server};
+    }
+    die "Unsupported packager";
 }
 
 sub validate {
-	my ($self, %opts) = @_;
+    my ( $self, %opts ) = @_;
 
     # Gather all the remote_files
     my %default_targets;
-    foreach my $module (@{$opts{modules}}) {
+    foreach my $module ( @{ $opts{modules} } ) {
         require "Provisioner/Recipe/$module.pm";
-        my %mtargets = "Provisioner::Recipe::$module"->remote_files($opts{domain});
-        my @ts = sort keys(%mtargets);
-        foreach my $t (1..@ts) {
-            $default_targets{"$module$t"} = $ts[$t-1];
+        my %mtargets = "Provisioner::Recipe::$module"->remote_files( $opts{domain} );
+        my @ts       = sort keys(%mtargets);
+        foreach my $t ( 1 .. @ts ) {
+            $default_targets{"$module$t"} = $ts[ $t - 1 ];
         }
     }
 
@@ -63,7 +63,7 @@ sub validate {
     die "targets in [backup] must be HASH" unless ref $targets eq 'HASH';
 
     # Merge the remote_files and specified backup stuff
-    %$targets = (%default_targets, %$targets);
+    %$targets = ( %default_targets, %$targets );
 
     my $key_file = $opts{key_file};
     die "Must define key_file in [backupdestination] section of recipes.yaml" unless $key_file;
@@ -76,7 +76,7 @@ sub validate {
     chomp $opts{pubkey};
     die "Could not extract pubkey!" unless $opts{pubkey};
 
-	return %opts;
+    return %opts;
 }
 
 sub template_files {

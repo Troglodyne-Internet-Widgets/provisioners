@@ -45,15 +45,15 @@ use MIME::Base64 qw{encode_base64};
 use Crypt::Digest::SHA512 qw{sha512};
 
 sub deps {
-	my ($self) = @_;
-	if ($self->{target_packager} eq 'deb') {
-		return qw{postfix postfix-pcre dovecot-imapd dovecot-pop3d dovecot-antispam dovecot-sieve dovecot-lmtpd postgrey opendmarc opendkim spamassassin clamav amavisd-new rpm2cpio 7zip bzip2 lrzip lzop unrar-free};
-	}
-	die "Unsupported packager";
+    my ($self) = @_;
+    if ( $self->{target_packager} eq 'deb' ) {
+        return qw{postfix postfix-pcre dovecot-imapd dovecot-pop3d dovecot-antispam dovecot-sieve dovecot-lmtpd postgrey opendmarc opendkim spamassassin clamav amavisd-new rpm2cpio 7zip bzip2 lrzip lzop unrar-free};
+    }
+    die "Unsupported packager";
 }
 
 sub validate {
-    my ($self, %vars) = @_;
+    my ( $self, %vars ) = @_;
 
     if ( $vars{forwarders} ) {
         die "aliases must be ARRAY" unless ref $vars{aliases} eq 'ARRAY';
@@ -61,18 +61,18 @@ sub validate {
 
     if ( $vars{names} ) {
         die "names must be HASH" unless ref $vars{names} eq 'HASH';
-        foreach my $name (keys %{$vars{names}}) {
+        foreach my $name ( keys %{ $vars{names} } ) {
             my $passwd = $vars{names}{$name};
             die "Each name must be a HASH" unless ref $passwd eq 'HASH';
-            die "names must have a password & gecos" unless $passwd->{password} && $passwd->{gecos}
+            die "names must have a password & gecos" unless $passwd->{password} && $passwd->{gecos};
         }
     }
 
     if ( $vars{mail_aliases} ) {
         die "mail_aliases must be ARRAY" unless ref $vars{mail_aliases} eq 'ARRAY';
-        foreach my $alias (@{$vars{mail_aliases}}) {
+        foreach my $alias ( @{ $vars{mail_aliases} } ) {
             die "Each alias must be a HASH" unless ref $alias eq 'HASH';
-            die "mail_aliases must have a from & to" unless $alias->{from} && $alias->{to}
+            die "mail_aliases must have a from & to" unless $alias->{from} && $alias->{to};
         }
     }
 
@@ -80,7 +80,7 @@ sub validate {
 }
 
 sub template_files {
-	my ($self, @recipes) = @_;
+    my ( $self, @recipes ) = @_;
 
     return (
         'mail.aliases.tt'                => 'aliases',
@@ -102,22 +102,25 @@ sub template_files {
         'mail.opendmarc-ignorehosts.tt'  => 'ignore.hosts',
         'mail.postfix.master.tt'         => 'master.cf',
         'mail.amavis.tt'                 => '50-user',
-		'mail.autodiscover.tt'           => 'autodiscover.xml',
-		'mail.autodiscover_vhost.tt'     => 'autodiscover_vhost',
+        'mail.autodiscover.tt'           => 'autodiscover.xml',
+        'mail.autodiscover_vhost.tt'     => 'autodiscover_vhost',
     );
 }
 
 sub formatters {
     my ($class) = shift;
     return (
-        salted_sha_512 => Text::Xslate::html_builder(sub {
-            my $pw = shift;
-            my $salt = uuid();
-            # https://doc.dovecot.org/2.3/configuration_manual/authentication/password_schemes/#salting
-            my $raw = encode_base64( sha512("$pw$salt") . $salt );
-            $raw =~ s/\n//g;
-            return "{SSHA512}$raw";
-        }),
+        salted_sha_512 => Text::Xslate::html_builder(
+            sub {
+                my $pw   = shift;
+                my $salt = uuid();
+
+                # https://doc.dovecot.org/2.3/configuration_manual/authentication/password_schemes/#salting
+                my $raw = encode_base64( sha512("$pw$salt") . $salt );
+                $raw =~ s/\n//g;
+                return "{SSHA512}$raw";
+            }
+        ),
     );
 }
 
@@ -126,10 +129,10 @@ sub datadirs {
 }
 
 sub remote_files {
-	my ( $class, $install_dir, $domain ) = @_;
+    my ( $class, $install_dir, $domain ) = @_;
     return (
-        '/mail/keys'     => '.mail/keys',
-		"/mail/$domain"  => 'mailnames',
+        '/mail/keys'    => '.mail/keys',
+        "/mail/$domain" => 'mailnames',
     );
 }
 

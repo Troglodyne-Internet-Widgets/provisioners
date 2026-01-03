@@ -22,23 +22,21 @@ Currently very limited, only sets stuff up for tpsgi.
 
 =cut
 
-
 sub deps {
-	my ($self) = @_;
-	if ($self->{target_packager} eq 'deb') {
-		return qw{fail2ban};
-	}
-	die "Unsupported packager";
+    my ($self) = @_;
+    if ( $self->{target_packager} eq 'deb' ) {
+        return qw{fail2ban};
+    }
+    die "Unsupported packager";
 }
 
 sub template_files {
-	my ($self) = @_;
+    my ($self) = @_;
 
-	return (
-        'fail2ban.jail.tt'    => 'jail.cfg',
-		'fail2ban.filter.tt'  => 'filter.cfg',
-	);
+    return (
+        'fail2ban.jail.tt'   => 'jail.cfg',
+        'fail2ban.filter.tt' => 'filter.cfg',
+    );
 }
-
 
 1;

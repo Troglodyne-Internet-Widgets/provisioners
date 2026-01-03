@@ -54,19 +54,21 @@ These directories ought to have both a lib/ and templates/ dir therein, structur
 #TODO chdir to bin loc/ ..
 
 my $cfile;
+
 sub get_config {
     die "No ipmap available..." unless -f $cfile;
-    my $c = Config::Simple->new( $cfile );
+    my $c = Config::Simple->new($cfile);
 
-    my $global_conf = $c->param(-block => 'global');
-    my $ip_conf     = $c->param(-block => 'ips');
-    my $alias_conf  = $c->param(-block => 'aliases');
-    my $ns_conf     = $c->param(-block => 'nameservers');
-    my $addons      = $c->param(-block => 'addons');
-    return ($global_conf, $ip_conf, $alias_conf, $ns_conf, $addons);
+    my $global_conf = $c->param( -block => 'global' );
+    my $ip_conf     = $c->param( -block => 'ips' );
+    my $alias_conf  = $c->param( -block => 'aliases' );
+    my $ns_conf     = $c->param( -block => 'nameservers' );
+    my $addons      = $c->param( -block => 'addons' );
+    return ( $global_conf, $ip_conf, $alias_conf, $ns_conf, $addons );
 }
 
 my $pfile;
+
 sub get_recipe_config {
     state $c;
     return $c if $c;
@@ -76,16 +78,16 @@ sub get_recipe_config {
 }
 
 sub expand_dependent_domains {
-    my $d = shift;
-    my $c = get_recipe_config();
+    my $d      = shift;
+    my $c      = get_recipe_config();
     my $shared = $c->{_shared};
     return $d unless ref $shared eq 'HASH';
 
-    foreach my $host (keys(%$shared)) {
-        next unless ref $shared->{$host} eq 'ARRAY' && @{$shared->{$host}};
-        next unless grep { $_ eq $d } @{$shared->{$host}};
+    foreach my $host ( keys(%$shared) ) {
+        next unless ref $shared->{$host} eq 'ARRAY' && @{ $shared->{$host} };
+        next unless grep { $_ eq $d } @{ $shared->{$host} };
         print "Expanding list of configs to generate to include $host\n";
-        return ($host, $d);
+        return ( $host, $d );
     }
 
     return $d;
@@ -94,7 +96,8 @@ sub expand_dependent_domains {
 sub main {
     my @args = @_;
 
-    GetOptionsFromArray(\@args,
+    GetOptionsFromArray(
+        \@args,
         'ipmap=s'   => \$cfile,
         'recipes=s' => \$pfile,
     );
@@ -116,7 +119,7 @@ sub handle_domain {
 
     die "Must pass domain" unless $domain;
 
-    my ($global_conf, $ip_conf, $alias_conf, $ns_conf, $addons) = get_config();
+    my ( $global_conf, $ip_conf, $alias_conf, $ns_conf, $addons ) = get_config();
 
     my $basedir = $global_conf->{basedir};
     die "Must have basedir defined in global section of $cfile" unless $basedir;
@@ -153,7 +156,7 @@ sub handle_domain {
     # Override fqdn for addons
     my $is_addon = 0;
     my $orig_tld = $tld;
-    if (ref $addons eq 'HASH') {
+    if ( ref $addons eq 'HASH' ) {
         my @addon = keys(%$addons);
         my ($maybe_fqdn) = grep { $domain eq $_ } @addon;
         if ($maybe_fqdn) {
@@ -169,10 +172,10 @@ sub handle_domain {
     my $cfg_dir = "$basedir/$fqdn";
     mkdir $cfg_dir;
 
-    my $rconf = clone(get_recipe_config());
+    my $rconf = clone( get_recipe_config() );
 
     # Allow a base recipe set
-    my $base_recipe = delete $rconf->{_base} // {};
+    my $base_recipe  = delete $rconf->{_base}         // {};
     my $base_globals = delete $base_recipe->{_global} // {};
 
     # Figure out if we need to make this recipe depend on another
@@ -181,6 +184,7 @@ sub handle_domain {
 
     my $depends_on;
     if ( $dep_dom ne $domain ) {
+
         #XXX wat do if the domain we depend on is *also* an addon?  Probably best to just not do that.
         $depends_on = "$dep_dom.$orig_tld";
     }
@@ -192,16 +196,16 @@ sub handle_domain {
     # Merge base recipe and the one requested
     Hash::Merge::set_behavior('RIGHT_PRECEDENT');
     Hash::Merge::set_behavior('STORAGE_PRECEDENT');
-    $rconf->{$domain} = Hash::Merge::merge($base_recipe, $rconf->{$domain});
+    $rconf->{$domain} = Hash::Merge::merge( $base_recipe, $rconf->{$domain} );
 
     # Include site-specific stuff
-    my @paths = qw{templates};
-    my $libdirs =  $global_config->{libdir};
+    my @paths   = qw{templates};
+    my $libdirs = $global_config->{libdir};
     if ($libdirs) {
         foreach my $libdir (@$libdirs) {
             print "Including vendor libs from $libdir/lib\n";
-            push(@INC, "$libdir/lib");
-            push(@paths, "$libdir/templates");
+            push( @INC,   "$libdir/lib" );
+            push( @paths, "$libdir/templates" );
         }
     }
 
@@ -210,49 +214,52 @@ sub handle_domain {
     die "Must provide data configuation for $fqdn" unless $data_config;
 
     my @data_users;
-    my $data_users_f    = "$data_config->{from}/$fqdn/users.yaml";
+    my $data_users_f = "$data_config->{from}/$fqdn/users.yaml";
     if ( -f $data_users_f ) {
-        my $data_users_yaml = YAML::Load(File::Slurper::read_text($data_users_f));
-        @data_users      = @{$data_users_yaml->{users}};
+        my $data_users_yaml = YAML::Load( File::Slurper::read_text($data_users_f) );
+        @data_users = @{ $data_users_yaml->{users} };
     }
 
     # Build a users.yaml based on ipmap, and any users.yaml found in the DATA dir.
-    my $user_conf =  {
+    my $user_conf = {
         users => [
             {
-                gecos => $admin_gecos,
-                name  => $admin_user,
-                shell => '/bin/bash',
-                sudo => 'ALL=(ALL) NOPASSWD:ALL',
-                ssh_import_id => [ $admin_key ],
+                gecos         => $admin_gecos,
+                name          => $admin_user,
+                shell         => '/bin/bash',
+                sudo          => 'ALL=(ALL) NOPASSWD:ALL',
+                ssh_import_id => [$admin_key],
             },
             @data_users,
         ],
     };
 
-    File::Slurper::write_binary("$cfg_dir/users.yaml", YAML::Dump($user_conf));
+    File::Slurper::write_binary( "$cfg_dir/users.yaml", YAML::Dump($user_conf) );
 
     my %fragments;
 
-    my $provisioner_dir = Cwd::abs_path($FindBin::Bin."/../");
+    my $provisioner_dir = Cwd::abs_path( $FindBin::Bin . "/../" );
     my $root_scripts    = '/root/bin';
     my $hv_internal_ip  = get_hv_internal_ip();
 
     my %formatters = (
-        tabinate => Text::Xslate::html_builder(sub {
-            my $input = shift;
-            $input =~ s/^\s*/\t/mg;
-            return $input;
-        }),
+        tabinate => Text::Xslate::html_builder(
+            sub {
+                my $input = shift;
+                $input =~ s/^\s*/\t/mg;
+                return $input;
+            }
+        ),
     );
 
-    my $tt = Text::Xslate->new({
-        path     => \@paths,
-        syntax   => 'TTerse',
-		module   => [qw{Text::Xslate::Bridge::TT2}],
-        function => \%formatters,
-    }) || die "Could not initialize template dir";
-
+    my $tt = Text::Xslate->new(
+        {
+            path     => \@paths,
+            syntax   => 'TTerse',
+            module   => [qw{Text::Xslate::Bridge::TT2}],
+            function => \%formatters,
+        }
+    ) || die "Could not initialize template dir";
 
     # TODO stop hardcoding some things, and document this in P::R
     my %provisioner_opts = (
@@ -264,52 +271,53 @@ sub handle_domain {
         template_dirs   => \@paths,
     );
 
-    foreach my $subdomain (keys(%$ip_conf)) {
-        $alias_conf->{$subdomain} = _coerce_arrayref($alias_conf->{$subdomain});
+    foreach my $subdomain ( keys(%$ip_conf) ) {
+        $alias_conf->{$subdomain} = _coerce_arrayref( $alias_conf->{$subdomain} );
 
         # Basically every single web host is gonna need its own mail/www cnames
         my @standard_aliases = qw{www mail};
         @standard_aliases = map { "$_.$subdomain" } @standard_aliases unless $is_addon;
-        push(@{$alias_conf->{$subdomain}}, @standard_aliases);
-        $alias_conf->{$subdomain} = [uniq @{$alias_conf->{$subdomain}}];
+        push( @{ $alias_conf->{$subdomain} }, @standard_aliases );
+        $alias_conf->{$subdomain} = [ uniq @{ $alias_conf->{$subdomain} } ];
     }
 
-    $global_config->{hv_ip}         = $hv_internal_ip;
+    $global_config->{hv_ip}           = $hv_internal_ip;
     $global_config->{provisioner_dir} = $provisioner_dir;
-    $global_config->{tld}           = $tld;
-    $global_config->{admin_user}    = $admin_user;
-    $global_config->{admin_email}   = $admin_email;
-    $global_config->{domain}        = $fqdn;
-    $global_config->{ipmap}         = $ip_conf;
-    $global_config->{subdomain}     = $domain;
-    $global_config->{aliases}       = $alias_conf;
-    $global_config->{nameservers}   = $ns_conf;
-    $global_config->{main_ip}       = $static_ip;
-    $global_config->{tld_ip}        = $tld_ip;
+    $global_config->{tld}             = $tld;
+    $global_config->{admin_user}      = $admin_user;
+    $global_config->{admin_email}     = $admin_email;
+    $global_config->{domain}          = $fqdn;
+    $global_config->{ipmap}           = $ip_conf;
+    $global_config->{subdomain}       = $domain;
+    $global_config->{aliases}         = $alias_conf;
+    $global_config->{nameservers}     = $ns_conf;
+    $global_config->{main_ip}         = $static_ip;
+    $global_config->{tld_ip}          = $tld_ip;
 
     require Provisioner::Recipe::data;
-    my $do = Provisioner::Recipe::data->new(%provisioner_opts);
-    my $data_fragment = $do->render(%$global_config, %$data_config );
+    my $do            = Provisioner::Recipe::data->new(%provisioner_opts);
+    my $data_fragment = $do->render( %$global_config, %$data_config );
 
     # set the install_dir for configs to use from here
-    $global_config->{install_dir}   = $data_config->{to};
-    $global_config->{data_source}   = $data_config->{from};
-    $global_config->{script_dir}    = $root_scripts;
+    $global_config->{install_dir} = $data_config->{to};
+    $global_config->{data_source} = $data_config->{from};
+    $global_config->{script_dir}  = $root_scripts;
 
     # If we use a local dns provider, we might be doing NS delegation to this box.
     # As such we have to teach anything relying on DNS changes to use it.
-    $global_config->{local_dns_access_token} = get_dns_provider_token($rconf->{$domain});
+    $global_config->{local_dns_access_token} = get_dns_provider_token( $rconf->{$domain} );
 
-    my (@pkgs, @generated);
+    my ( @pkgs, @generated );
 
     # Regrettably, we may be running this on an existing system so we gotta install pkgs anyways.
-    my ($pkgr_invoc, $pkgr_up, $pkgr_rm);
-    if ($provisioner_opts{target_packager} eq 'deb') {
-        push(@pkgs, qw{openssl openssh-server openssh-client rsync retry});
+    my ( $pkgr_invoc, $pkgr_up, $pkgr_rm );
+    if ( $provisioner_opts{target_packager} eq 'deb' ) {
+        push( @pkgs, qw{openssl openssh-server openssh-client rsync retry} );
         $pkgr_invoc = 'DEBIAN_FRONTEND="noninteractive" apt-get install -Uy -o Acquire::Retries=3 -o Dpkg::Options=--force-confdef -o Dpkg::Options=--force-confold -o Dpkg::Options=--force-overwrite --autoremove';
         $pkgr_up    = 'DEBIAN_FRONTEND="noninteractive" apt-get upgrade -Uy';
         $pkgr_rm    = 'DEBIAN_FRONTEND="noninteractive" apt-get remove -y';
-    } else {
+    }
+    else {
         die "unsupported packager!";
     }
 
@@ -319,77 +327,81 @@ sub handle_domain {
 
     # Figure out whether the remote host is actually up
     my $target_is_up = 1;
-    my $ssh = Net::SFTP::Foreign->new( host => $static_ip, user => $admin_user );
-    $ssh->error and $target_is_up=0;
+    my $ssh          = Net::SFTP::Foreign->new( host => $static_ip, user => $admin_user );
+    $ssh->error and $target_is_up = 0;
 
     # Build a makefile based on our configured recipes
-    my @modules = sort { ($rconf->{$domain}{$a}{order} // 'ZZZ') cmp ($rconf->{$domain}{$b}{order} // 'ZZZ') } sort keys(%{$rconf->{$domain}});
+    my @modules = sort { ( $rconf->{$domain}{$a}{order} // 'ZZZ' ) cmp( $rconf->{$domain}{$b}{order} // 'ZZZ' ) } sort keys( %{ $rconf->{$domain} } );
     my %mf_vars;
     foreach my $module (@modules) {
         require "Provisioner/Recipe/$module.pm" or die "Could not load provisioner recipe $module";
-        my $builder = "Provisioner::Recipe::$module"->new(%provisioner_opts);
-        my $pconf = $rconf->{$domain}{$module};
-        my $aliases = $alias_conf->{$domain};
-        my $full_aliases = [map { "$_.$tld" } @$aliases];
-        $fragments{$module} = $builder->render(%$global_config, %$pconf, full_aliases => $full_aliases, modules => \@modules );
-        push(@pkgs, ($builder->deps(%$pconf)));
+        my $builder      = "Provisioner::Recipe::$module"->new(%provisioner_opts);
+        my $pconf        = $rconf->{$domain}{$module};
+        my $aliases      = $alias_conf->{$domain};
+        my $full_aliases = [ map { "$_.$tld" } @$aliases ];
+        $fragments{$module} = $builder->render( %$global_config, %$pconf, full_aliases => $full_aliases, modules => \@modules );
+        push( @pkgs, ( $builder->deps(%$pconf) ) );
 
         # Grab the relevant makefile vars for the target
         my %t_vars = $builder->makefile_vars();
         %mf_vars = ( %mf_vars, %t_vars ) if %t_vars;
 
         # Make dirs in the DATADIR needed by ssh
-        foreach my $d ($builder->datadirs()) {
+        foreach my $d ( $builder->datadirs() ) {
             make_path("$data_config->{from}/$fqdn/$d") unless -d $d;
         }
 
         # Schlep over stuff from existing deployments
-        if ( $target_is_up ) {
-            my %tg = $builder->remote_files($data_config->{to}, $fqdn);
-            foreach my $to_fetch (sort keys(%tg)) {
+        if ($target_is_up) {
+            my %tg = $builder->remote_files( $data_config->{to}, $fqdn );
+            foreach my $to_fetch ( sort keys(%tg) ) {
                 print "Writing remote file $to_fetch as $data_config->{from}/$fqdn/$tg{$to_fetch}\n";
                 my $num_copied = $ssh->rget(
                     $to_fetch,
                     "$data_config->{from}/$fqdn/$tg{$to_fetch}",
                     wanted => sub { 1 },
+
                     #XXX most of the 'errors' here are literally normal operation, so who cares lol
-                    on_error => sub { print $ssh->error()."\n" },
-                    overwrite => 1,
+                    on_error   => sub { print $ssh->error() . "\n" },
+                    overwrite  => 1,
                     newer_only => 1,
                 );
-                print "Wrote $num_copied files.\n"
+                print "Wrote $num_copied files.\n";
             }
         }
 
         # Now build the various templates for the recipes
         my %tf = $builder->template_files(@modules);
-        foreach my $template (sort keys(%tf)) {
+        foreach my $template ( sort keys(%tf) ) {
             my $destination = "$cfg_dir/$tf{$template}";
-            my $rendered = $builder->render_file("files/$template", %$global_config, %$pconf, full_aliases => $full_aliases, modules => \@modules );
+            my $rendered    = $builder->render_file( "files/$template", %$global_config, %$pconf, full_aliases => $full_aliases, modules => \@modules );
             print "Writing $template as $destination\n";
             File::Slurper::write_binary( $destination, $rendered );
-            push(@generated, $tf{$template});
+            push( @generated, $tf{$template} );
         }
     }
 
     @pkgs = sort { $a cmp $b } uniq @pkgs;
 
-    my $extra_packages = join(', ', @pkgs);
+    my $extra_packages = join( ', ', @pkgs );
 
-    my $makefile = $tt->render('makefile.tt', {
-        %$global_config,
-        data_fragment   => $data_fragment,
-        fragments       => \%fragments,
-        modules_ordered => \@modules,
-        vars            => \%mf_vars,
-        packages        => \@pkgs,
-        state_dir       => "/etc/provisioner/state/$fqdn",
-    });
+    my $makefile = $tt->render(
+        'makefile.tt',
+        {
+            %$global_config,
+            data_fragment   => $data_fragment,
+            fragments       => \%fragments,
+            modules_ordered => \@modules,
+            vars            => \%mf_vars,
+            packages        => \@pkgs,
+            state_dir       => "/etc/provisioner/state/$fqdn",
+        }
+    );
 
     print "Writing Makefile to $cfg_dir\n";
-    File::Slurper::write_binary("$cfg_dir/Makefile", $makefile);
+    File::Slurper::write_binary( "$cfg_dir/Makefile", $makefile );
 
-    my $r_text = join(', ', @$resolvers);
+    my $r_text = join( ', ', @$resolvers );
 
     # Build a provision.conf
     my $pconf = qq(
@@ -403,16 +415,16 @@ sub handle_domain {
         resolvers=$r_text
     );
     $pconf .= "depends_on=$depends_on" if $depends_on;
-    File::Slurper::write_binary("$cfg_dir/provision.conf", $pconf);
+    File::Slurper::write_binary( "$cfg_dir/provision.conf", $pconf );
 
     # Slap in openssl.conf to make self-signed cert work
     print "Copying openssl.conf to $cfg_dir/openssl.conf\n";
-    copy('openssl.conf', "$cfg_dir/openssl.conf");
+    copy( 'openssl.conf', "$cfg_dir/openssl.conf" );
 
     # Gzip the Makefile & generated configs
     print "Tarring up Makefile and generated configuration\n";
     unlink "$cfg_dir/data.tar.gz";
-    system(qw{tar -cz -C}, $cfg_dir, '-f', "$cfg_dir/data.tar.gz", "./Makefile", @generated, 'openssl.conf');
+    system( qw{tar -cz -C}, $cfg_dir, '-f', "$cfg_dir/data.tar.gz", "./Makefile", @generated, 'openssl.conf' );
     print "Done.\n";
     return 0;
 }
@@ -433,7 +445,7 @@ sub get_dns_provider_token {
     my ($rconf) = @_;
     my @known_dns_providers = qw{pdns};
     foreach my $provider (@known_dns_providers) {
-        return $rconf->{$provider}{api_key} if exists $rconf->{$provider} && (ref($rconf->{$provider}) eq 'HASH')
+        return $rconf->{$provider}{api_key} if exists $rconf->{$provider} && ( ref( $rconf->{$provider} ) eq 'HASH' );
     }
     return '';
 }

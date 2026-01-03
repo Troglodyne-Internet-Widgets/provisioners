@@ -40,7 +40,7 @@ TODO: make this support more than 10 mounts at a time (csplit issue).
 use parent qw{Provisioner::Recipe};
 
 sub validate {
-    my ($self, %opts) = @_;
+    my ( $self, %opts ) = @_;
 
     my $disks = $opts{disks};
     if ($disks) {
@@ -64,7 +64,7 @@ sub validate {
 }
 
 sub template_files {
-    my ($self, @recipes) = @_;
+    my ( $self, @recipes ) = @_;
 
     return (
         'mounts.fuse.service.tt' => 'fusemounts.txt',
