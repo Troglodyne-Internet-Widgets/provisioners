@@ -1,0 +1,54 @@
+# Setup directories
+mkdir -p [% install_dir %]/matrix.[% domain %]
+mkdir -p [% install_dir %]/matrix.[% domain %]/media
+mkdir -p [% install_dir %]/admin.[% domain %]
+mkdir -p /etc/matrix-synapse
+mkdir -p /var/log/matrix-synapse
+
+# Set ownership
+chown -R matrix-synapse:matrix-synapse [% install_dir %]/matrix.[% domain %]
+chown -R matrix-synapse:matrix-synapse /var/log/matrix-synapse
+
+# Move config files
+mv homeserver.yaml /etc/matrix-synapse/
+mv log.yaml /etc/matrix-synapse/
+mv matrix-synapse.service /etc/systemd/system/
+
+# Download and setup Synapse Admin
+chmod +x download-admin.sh
+./download-admin.sh
+rm download-admin.sh
+
+# Setup nginx sites
+mkdir -p /etc/nginx/sites-enabled; /bin/true
+mv matrix.nginx.conf /etc/nginx/sites-enabled/matrix.[% domain %].conf
+mv matrix-admin.nginx.conf /etc/nginx/sites-enabled/admin.[% domain %].conf
+chown root:root /etc/nginx/sites-enabled/matrix.[% domain %].conf
+chown root:root /etc/nginx/sites-enabled/admin.[% domain %].conf
+[% script_dir %]/queue_postrun_task systemctl reload nginx
+
+# Generate signing key
+python3 -c "from synapse.crypto import key; print(key.generate_signing_key('ed25519').decode('ascii'))" > [% install_dir %]/matrix.[% domain %]/homeserver.signing.key
+chown matrix-synapse:matrix-synapse [% install_dir %]/matrix.[% domain %]/homeserver.signing.key
+chmod 600 [% install_dir %]/matrix.[% domain %]/homeserver.signing.key
+
+# Register admin user (will be done after service starts)
+# su - matrix-synapse -c "register_new_matrix_user -c /etc/matrix-synapse/homeserver.yaml -u [% admin_user %] -p [% admin_password %] -a"
+
+# Enable and start service
+systemctl daemon-reload
+systemctl enable matrix-synapse
+systemctl start matrix-synapse
+
+# Wait a bit for service to start
+sleep 10
+
+# Register admin user
+su - matrix-synapse -c "register_new_matrix_user -c /etc/matrix-synapse/homeserver.yaml -u [% admin_user %] -p [% admin_password %] --admin"
+
+# Setup backup script
+chmod +x matrix-backup.sh
+mv matrix-backup.sh /usr/local/bin/matrix-backup
+
+# Setup cron for backup (daily at 2am)
+echo "0 2 * * * root /usr/local/bin/matrix-backup" > /etc/cron.d/matrix-backup
