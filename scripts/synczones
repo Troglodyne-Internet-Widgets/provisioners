@@ -11,7 +11,17 @@ use Net::DNS::ZoneFile;
 use Config::Simple;
 use Getopt::Long qw{GetOptionsFromArray};
 
-# Synchronize what zone "ought" with what "is", based on what's configured.
+=head1 synczones
+
+=head2 SYNOPSIS
+
+    synczones --driver powerdns --config /etc/synczones.conf zonefile.zone
+
+=head2 DESCRIPTION
+
+Synchronize DNS zone files with DNS providers using lexicon.
+
+=cut
 
 # Not exhaustive, just what we know how to do. 
 # See zonediff() for why, lots of jiggly stuff here.

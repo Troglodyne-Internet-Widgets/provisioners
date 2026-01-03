@@ -5,6 +5,20 @@ use warnings;
 
 use parent qw{Provisioner::Recipe};
 
+=head1 Provisioner::Recipe::imagemagick
+
+=head2 SYNOPSIS
+
+    somedomain:
+        imagemagick:
+            version: 7.1.0-48
+
+=head2 DESCRIPTION
+
+Builds and installs ImageMagick from source with Perl bindings.
+
+=cut
+
 sub deps {
 	my ($self) = @_;
 	if ($self->{target_packager} eq 'deb') {
