@@ -6,7 +6,17 @@ use warnings;
 use File::Copy;
 use Config::Simple;
 
-# Fix broken out of the box systemd unit for pdns
+=head1 configure_pdns
+
+=head2 SYNOPSIS
+
+    configure_pdns
+
+=head2 DESCRIPTION
+
+Fix PowerDNS systemd unit file for chroot operation.
+
+=cut
 my $service_file = "/usr/lib/systemd/system/pdns.service";
 die "Can't find service file $service_file" unless -f $service_file;
 

@@ -3,9 +3,19 @@
 use strict;
 use warnings;
 
-my $DRY_RUN = $ARGV[0] ? 1 : 0;
+=head1 setup-ufw-rules
 
-# Build rules, apply rules.
+=head2 SYNOPSIS
+
+    setup-ufw-rules [--dry-run]
+
+=head2 DESCRIPTION
+
+Configure UFW firewall rules based on available applications.
+
+=cut
+
+my $DRY_RUN = $ARGV[0] ? 1 : 0;
 
 # Enable every available service.
 my $list = qx{ufw app list};
