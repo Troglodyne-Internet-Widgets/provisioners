@@ -2,7 +2,7 @@ server {
     listen 443 ssl;
     listen [::]:443 ssl;
 
-    server_name [% server_name %];
+    server_name matrix.[% domain %];
     server_tokens off;
 
     ssl_certificate     /etc/ssl/certs/[% domain %].pem;
@@ -35,6 +35,6 @@ server {
     listen 80;
     listen [::]:80;
 
-    server_name [% server_name %];
+    server_name matrix.[% domain %];
     return 301 https://$host$request_uri;
 }

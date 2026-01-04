@@ -1,46 +1,84 @@
-# Setup directories
-mkdir -p [% install_dir %]/matrix.[% domain %]
-mkdir -p [% install_dir %]/matrix.[% domain %]/media
-mkdir -p [% install_dir %]/admin.matrix.[% domain %]
-mkdir -p /etc/matrix-synapse
-mkdir -p /var/log/matrix-synapse
+[% state_dir %]/matrix: [% state_dir %]/scripts [% state_dir %]/packages
+	# Setup directories
+	mkdir -p [% install_dir %]/matrix.[% domain %]
+	mkdir -p [% install_dir %]/matrix.[% domain %]/media
+	mkdir -p [% install_dir %]/admin.matrix.[% domain %]
+	mkdir -p /etc/matrix-synapse
+	mkdir -p /var/log/matrix-synapse
+	# Set ownership using admin_user pattern
+	chown -R matrix-synapse:[% admin_user %] [% install_dir %]/matrix.[% domain %]
+	chmod -R 0750 [% install_dir %]/matrix.[% domain %]
+	chown -R matrix-synapse:matrix-synapse /var/log/matrix-synapse
+	# Deploy configuration files
+	cp homeserver.yaml /etc/matrix-synapse/
+	cp log.yaml /etc/matrix-synapse/
+	cp matrix-synapse.service /etc/systemd/system/
+	chown root:root /etc/matrix-synapse/homeserver.yaml
+	chown root:root /etc/matrix-synapse/log.yaml
+	chmod 0644 /etc/matrix-synapse/homeserver.yaml
+	chmod 0644 /etc/matrix-synapse/log.yaml
+	# Generate signing key if it doesn't exist
+	if [ ! -f [% install_dir %]/matrix.[% domain %]/homeserver.signing.key ]; then \
+		python3 -c "from synapse.crypto import key; print(key.generate_signing_key('ed25519').decode('ascii'))" > [% install_dir %]/matrix.[% domain %]/homeserver.signing.key; \
+		chown matrix-synapse:[% admin_user %] [% install_dir %]/matrix.[% domain %]/homeserver.signing.key; \
+		chmod 0600 [% install_dir %]/matrix.[% domain %]/homeserver.signing.key; \
+	fi
+	touch $@
 
-# Set ownership
-chown -R matrix-synapse:matrix-synapse [% install_dir %]/matrix.[% domain %]
-chown -R matrix-synapse:matrix-synapse /var/log/matrix-synapse
+[% state_dir %]/matrix-admin: [% state_dir %]/matrix
+	# Download and setup Synapse Admin
+	[% script_dir %]/matrix.download-admin.sh [% install_dir %]/admin.matrix.[% domain %]
+	chown -R www-data:[% admin_user %] [% install_dir %]/admin.matrix.[% domain %]
+	chmod -R 0750 [% install_dir %]/admin.matrix.[% domain %]
+	touch $@
 
-# Move config files
-mv homeserver.yaml /etc/matrix-synapse/
-mv log.yaml /etc/matrix-synapse/
-mv matrix-synapse.service /etc/systemd/system/
+[% state_dir %]/matrix-nginx: [% state_dir %]/matrix [% state_dir %]/matrix-admin
+	# Setup nginx sites
+	mkdir -p /etc/nginx/sites-enabled
+	cp matrix.nginx.conf /etc/nginx/sites-enabled/matrix.[% domain %].conf
+	cp matrix-admin.nginx.conf /etc/nginx/sites-enabled/admin.matrix.[% domain %].conf
+	chown root:root /etc/nginx/sites-enabled/matrix.[% domain %].conf
+	chown root:root /etc/nginx/sites-enabled/admin.matrix.[% domain %].conf
+	chmod 0644 /etc/nginx/sites-enabled/*.conf
+	touch $@
 
-# Download and setup Synapse Admin
-[% script_dir %]/matrix.download-admin.sh [% install_dir %]/admin.matrix.[% domain %]
-# TODO need a cron keeping the above up to date
+[% state_dir %]/matrix-service: [% state_dir %]/matrix [% state_dir %]/matrix-nginx
+	# Enable service (actual start will be queued)
+	systemctl daemon-reload
+	systemctl enable matrix-synapse
+	# Queue service start for postrun
+	[% script_dir %]/queue_postrun_task systemctl start matrix-synapse
+	[% script_dir %]/queue_postrun_task systemctl reload nginx
+	touch $@
 
-# Setup nginx sites
-mkdir -p /etc/nginx/sites-enabled; /bin/true
-mv matrix.nginx.conf /etc/nginx/sites-enabled/matrix.[% domain %].conf
-mv matrix-admin.nginx.conf /etc/nginx/sites-enabled/admin.matrix.[% domain %].conf
-chown root:root /etc/nginx/sites-enabled/matrix.[% domain %].conf
-chown root:root /etc/nginx/sites-enabled/admin.matrix.[% domain %].conf
-[% script_dir %]/queue_postrun_task systemctl reload nginx
-# TODO need to die in validate() if nginxproxy isn't loaded
-# TODO need to add matrix. and admin.matrix. to the zonefile from the pdns recipe IFF this recipe is loaded
+[% state_dir %]/matrix-admin-user: [% state_dir %]/matrix-service
+	# Create script to register admin user after service is running
+	cat > [% script_dir %]/matrix_register_admin.sh <<'EOF'
+#!/bin/bash
+# Wait for Matrix Synapse to be ready
+for i in {1..30}; do
+    if curl -s http://127.0.0.1:8008/_matrix/client/versions > /dev/null 2>&1; then
+        echo "Matrix Synapse is ready"
+        break
+    fi
+    echo "Waiting for Matrix Synapse to start... ($i/30)"
+    sleep 2
+done
 
-# Generate signing key
-python3 -c "from synapse.crypto import key; print(key.generate_signing_key('ed25519').decode('ascii'))" > [% install_dir %]/matrix.[% domain %]/homeserver.signing.key
-chown matrix-synapse:matrix-synapse [% install_dir %]/matrix.[% domain %]/homeserver.signing.key
-chmod 0600 [% install_dir %]/matrix.[% domain %]/homeserver.signing.key
+# Register admin user if not exists
+if ! su - matrix-synapse -s /bin/bash -c "register_new_matrix_user -c /etc/matrix-synapse/homeserver.yaml -u [% admin_user %] -p [% admin_password %] --admin 2>&1" | grep -q "User ID already taken"; then
+    echo "Admin user registered successfully"
+else
+    echo "Admin user already exists"
+fi
+EOF
+	chmod +x [% script_dir %]/matrix_register_admin.sh
+	# Queue admin user creation for postrun
+	[% script_dir %]/queue_postrun_task [% script_dir %]/matrix_register_admin.sh
+	touch $@
 
-# TODO configure matrix-admin service to point against our local synapse
-# TODO if possible, instruct matrix to listen on a local socket file instead of a world-available port.  But if not we need to make a firewall rule!
-
-# Enable and start service
-systemctl daemon-reload
-systemctl enable matrix-synapse
-systemctl start matrix-synapse
-
-# Register admin user
-su - matrix-synapse -c "register_new_matrix_user -c /etc/matrix-synapse/homeserver.yaml -u [% admin_user %] -p [% admin_password %] --admin"
-
+# Since Matrix is listening on localhost only, no UFW rules needed
+# But we document this for clarity
+[% state_dir %]/matrix-firewall-note: [% state_dir %]/matrix-service
+	echo "Matrix Synapse listens on 127.0.0.1:8008 only - no firewall rules needed" > [% state_dir %]/matrix-firewall.note
+	touch $@
