@@ -9,14 +9,14 @@ declare DIRS=("$BASE_DIR/$BACKUP_HOST");
 
 for dir in "${DIRS[@]}"
 do
-    logger --stdout "Pruning $dir..."
+    logger --stderr "Pruning $dir..."
     for subdir in $dir/*
     do
         CUR_DATE=$(basename $subdir)
         CUR_TIME=$(date -d"$CUR_DATE" +%s)
         if [ $CUR_TIME -lt $CUTOFF ]
         then
-            logger --stdout "Deleting $subdir"
+            logger --stderr "Deleting $subdir"
             rm -rf $subdir
         fi
     done

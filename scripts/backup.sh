@@ -18,8 +18,8 @@ YESTERDAY=$(date -I --date '-1 day')
 BACKUPDIR=/$BASEDIR/$REMOTE
 
 # Snapshot the host.
-logger --stdout "Backing up $REMOTE..."
-logger --stdout "Using $KEYFILE against $REMOTE to backup $TARGETS into $BASEDIR"
+logger --stderr "Backing up $REMOTE..."
+logger --stderr "Using $KEYFILE against $REMOTE to backup $TARGETS into $BASEDIR"
 
 for TARGET IN $@; do
 
@@ -29,11 +29,11 @@ for TARGET IN $@; do
     DESTDIR="$BACKUPDIR/$DATE/$TARGET"
     mkdir -p $DESTDIR
 
-    logger --stdout "Copying $TARGET data to $DESTDIR with hardlinking to $LINKDIR..."
+    logger --stderr "Copying $TARGET data to $DESTDIR with hardlinking to $LINKDIR..."
     rsync -a -e "ssh -i $KEYFILE -o 'StrictHostKeyChecking no'" rsync://root@$REMOTE/$TARGET --link-dest $LINKDIR $DESTDIR
 
 done
 
-logger --stdout "Done."
+logger --stderr "Done."
 
 rm /root/backup_in_progress

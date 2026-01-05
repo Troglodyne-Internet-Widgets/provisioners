@@ -1,5 +1,5 @@
 [% FOREACH mount IN disks %]
-[% script_dir %]/add_to_fstab [% mount.device %] [% mount.type %] [% mount.options %] [% mount.mountpoint %] [% mount.partition %]
+[% script_dir %]/add_to_fstab [% mount.device %] [% mount.mountpoint %] [% mount.type %] [% mount.options %] [% mount.partition %]
 [% END -%]
 [% IF fuse.size() %]
 # this works because we generate them in the same order as we are splitting them!
