@@ -1,9 +1,10 @@
 package Provisioner::Recipe::matrix;
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use parent qw{Provisioner::Recipe};
+use List::Util;
 
 =head1 Provisioner::Recipe::matrix
 
@@ -11,14 +12,82 @@ use parent qw{Provisioner::Recipe};
 
     somedomain:
         matrix:
-            server_name: matrix.example.com
             admin_user: admin
             admin_password: somepassword
+            smtp_host: smtp.example.com
+            smtp_port: 465
+            smtp_user: notifications@example.com
+            smtp_pass: smtp_password
+            smtp_domain: example.com
 
 =head2 DESCRIPTION
 
 Installs and configures Matrix Synapse homeserver with nginx reverse proxy,
-and includes Synapse Admin web interface.
+and includes Synapse Admin web interface. Requires nginxproxy recipe.
+
+NOTE: For SSL certificates to work properly with matrix subdomains, ensure
+'matrix' and 'admin.matrix' are included in the aliases section of ipmap.cfg
+for your domain.
+
+=head3 deps
+
+Returns system package dependencies for Matrix Synapse.
+
+=over 1
+
+=item INPUTS: none
+
+=item OUTPUTS: list of Debian package names
+
+=back
+
+=head3 validate
+
+Validates and processes configuration options.
+
+=over 1
+
+=item INPUTS: %opts hash with matrix configuration
+
+=item OUTPUTS: processed %opts hash
+
+=back
+
+=head3 template_files
+
+Returns template file mappings.
+
+=over 1
+
+=item INPUTS: none
+
+=item OUTPUTS: hash of template source => destination mappings
+
+=back
+
+=head3 datadirs
+
+Returns directories to create for data storage.
+
+=over 1
+
+=item INPUTS: none
+
+=item OUTPUTS: list of directory names
+
+=back
+
+=head3 remote_files
+
+Returns remote file mappings for backup/restore.
+
+=over 1
+
+=item INPUTS: $install_dir, $domain
+
+=item OUTPUTS: hash of remote path => local backup path
+
+=back
 
 =cut
 
@@ -60,6 +129,10 @@ sub validate {
 
     my $server_name = $opts{server_name};
     die "Must set server_name in [matrix] section of recipes.yaml" unless $server_name;
+
+    # Check for required nginxproxy dependency
+    die "This recipe requires the nginxproxy recipe to function"
+        unless List::Util::any { $_ eq 'nginxproxy' } @{$opts{modules}};
 
     my $admin_user = $opts{admin_user} || 'admin';
     $opts{admin_user} = $admin_user;

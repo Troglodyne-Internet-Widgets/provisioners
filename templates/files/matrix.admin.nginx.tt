@@ -2,13 +2,13 @@ server {
     listen 443 ssl;
     listen [::]:443 ssl;
 
-    server_name admin.[% server_name %];
+    server_name admin.matrix.[% domain %];
     server_tokens off;
 
     ssl_certificate     /etc/ssl/certs/[% domain %].pem;
     ssl_certificate_key /etc/ssl/private/[% domain %].pem;
 
-    root [% install_dir %]/admin.[% domain %]/;
+    root [% install_dir %]/admin.matrix.[% domain %]/;
     index index.html;
 
     location / {
@@ -26,6 +26,6 @@ server {
     listen 80;
     listen [::]:80;
 
-    server_name admin.[% server_name %];
+    server_name admin.matrix.[% domain %];
     return 301 https://$host$request_uri;
 }

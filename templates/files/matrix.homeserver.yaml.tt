@@ -4,10 +4,10 @@
 # each option, go to docs/usage/configuration/config_documentation.md or
 # https://matrix-org.github.io/synapse/latest/usage/configuration/config_documentation.html
 
-server_name: "[% server_name %]"
+server_name: "matrix.[% domain %]"
 pid_file: /var/run/matrix-synapse.pid
 
-public_baseurl: https://[% server_name %]/
+public_baseurl: https://matrix.[% domain %]/
 
 listeners:
   - port: 8008
