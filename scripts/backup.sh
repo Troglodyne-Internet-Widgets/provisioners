@@ -21,7 +21,7 @@ BACKUPDIR=/$BASEDIR/$REMOTE
 logger --stderr "Backing up $REMOTE..."
 logger --stderr "Using $KEYFILE against $REMOTE to backup $TARGETS into $BASEDIR"
 
-for TARGET IN $@; do
+for TARGET in $@; do
 
     LINKDIR="$BACKUPDIR/$YESTERDAY/$TARGET"
     mkdir -p $LINKDIR
