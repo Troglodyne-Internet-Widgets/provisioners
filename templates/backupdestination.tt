@@ -1,2 +1,3 @@
 mv backupdestination.cron /etc/cron.d/backups
-mv backupdestination.logrotate /etc/logrotate.d/backups 
+mv backupdestination.logrotate /etc/logrotate.d/backups
+mkdir -p /var/log/backups; /bin/true

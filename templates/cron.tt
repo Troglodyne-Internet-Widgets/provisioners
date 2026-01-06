@@ -1,5 +1,9 @@
 mv root.crontab /etc/cron.d/default
 mv root.domain.crontab /etc/cron.d/[% domain %]
+chown root:root /etc/cron.d/default
+chown root:root /etc/cron.d/[% domain %]
+chmod 0644 /etc/cron.d/default
+chmod 0644 /etc/cron.d/[% domain %]
 # Obviously, don't use the same service user for each domain!
 [% IF user %]
 crontab -u [% user %] user.crontab
