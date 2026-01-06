@@ -50,7 +50,7 @@ all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% F
 # Be explicit about SSH security
 # You will want to have users setup via ipmap/recipes.
 [% state_dir %]/ssh:
-	echo 'PermitRootLogin no' > /etc/ssh/sshd_config.d/100-security.conf
+	echo 'PermitRootLogin prohibit-password' > /etc/ssh/sshd_config.d/100-security.conf
 	echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config.d/100-security.conf
 	touch $@
 
