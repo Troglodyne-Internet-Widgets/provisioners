@@ -12,5 +12,5 @@ MAILTO="[% s.mailto %]"
 [% ELSE %]
 MAILTO="[% admin_email %]"
 [% END %]
-[% s.interval %] [% s.cmd %]
+[% s.interval %] [% user %] command -v [% s.cmd %]
 [% END %]

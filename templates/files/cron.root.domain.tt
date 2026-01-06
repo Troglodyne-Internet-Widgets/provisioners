@@ -7,7 +7,7 @@ MAILFROM="[% from %]@[% domain %]"
 
 [% IF modules.grep('letsencrypt').size %]
 # SSL
-0 0 * * * dehydrated --config /etc/dehydrated/domains.d/[% domain %].conf --cron >> /var/log/dehydrated.log
+0 0 * * * root command -v dehydrated --config /etc/dehydrated/domains.d/[% domain %].conf --cron >> /var/log/dehydrated.log
 [% END %]
 
 # Site-specific crons
@@ -17,5 +17,5 @@ MAILTO="[% cob.mailto %]"
 [% ELSE %]
 MAILTO="[% admin_email %]"
 [% END %]
-[% cob.interval %] [% cob.cmd %]
+[% cob.interval %] root command -v [% cob.cmd %]
 [% END %]
