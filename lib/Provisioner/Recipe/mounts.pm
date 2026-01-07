@@ -55,6 +55,8 @@ sub validate {
         foreach my $disk (@$disks) {
             $disk->{servicename} = $disk->{mountpoint};
             $disk->{servicename} =~ s|/|_|g;
+            $disk->{pool} = 'raw' if -b $disk->{device};
+            $disk->{pool} //= 'tf_disks';
         }
     }
 
@@ -64,7 +66,7 @@ sub validate {
         foreach my $disk (@$fuse) {
             $disk->{servicename} = $disk->{mountpoint};
             $disk->{servicename} =~ s|/|_|g;
-            $disk->{pool} //= 'file';
+            $disk->{pool} //= 'fuse';
         }
     }
 
