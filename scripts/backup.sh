@@ -8,9 +8,9 @@ touch /root/backup_in_progress
 
 REMOTE=$1
 shift
-BASEDIR=$2
+BASEDIR=$1
 shift
-KEYFILE=$3
+KEYFILE=$1
 shift
 TARGETS="$@"
 DATE=$(date -I)
