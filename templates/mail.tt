@@ -178,3 +178,13 @@ chmod -R 0770 '[% install_dir %]/autodiscover.[% domain %]'
 mv autodiscover_vhost /etc/nginx/sites-enabled/autodiscover.[% domain %].conf
 [% script_dir %]/queue_postrun_task systemctl reload nginx
 [%- END %]
+# Setup mailboxes and sieve scripts for the various users
+[% FOR name IN names.keys() %]
+[[ -f "/mail/[% domain %]/[% name %]/[% name.sieve %]" ]] && ln -s "/mail/[% domain %]/[% name %]/[% name.sieve %]" "/mail/[% domain %]/[% name %]/.dovecot.sieve"
+[[ -f "/mail/[% domain %]/[% name %]/[% name.sieve %]" ]] && sudo -u dovecot sievc "/mail/[% domain %]/[% name %]/.dovecot.sieve"
+[% FOR box IN names.$name.mailboxes %]
+doveadm mailbox create -u [% name %] [% box %]
+[% END -%]
+[% END -%]
+# Set up mail cron to run sa-learn etc
+install -m 0644 -u root -g root mailcron /etc/cron.d/[% domain %]-mailcron

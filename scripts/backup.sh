@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# This backup script runs as root on the remote.  As such, you'll want to authorize the key like so:
-# command="rrsync -ro /holophrastic -ro /mail/mailnames -ro /var/www/vhosts -ro /var/lib/mysql -ro /var/spool/cron -ro /var/lib/psa",no-agent-forwarding,no-port-forwarding,no-pty,no-user-rc,no-X11-forwarding [insert key here]
+# This backup script runs as root on the remote.  As such, you'll want to authorize the key via a mechanism similar to that done in the 'backup' target.
 
 # Semaphore
 [[ -f /root/backup_in_progress ]] && logger --stderr "Another backup in progress, exiting" && exit 1;

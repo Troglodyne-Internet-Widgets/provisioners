@@ -23,6 +23,9 @@ use parent qw{Provisioner::Recipe};
                 you:
                     gecos: "You"
                     password: "@Test_123!"
+                    mailboxes:
+                        - "INBOX.foo"
+                        - "INBOX.bar"
             mail_aliases:
                 - Me: you
                 - You: me
@@ -34,7 +37,10 @@ Setup and configure a mailserver (postfix MUA, dovecot LDA, amavis + opendmarc +
 Supports SMTP relaying to other hosts, and in general chooses sane defaults.
 Optionally restrict what hosts you use the relay for sending to.
 
-Sets up the virtual users you specify with the provided passwords.
+Sets up the virtual users you specify with the provided passwords, and mailboxes.
+
+If you have existing mailboxes, they ought be in $data_dir/mailnames/
+If a sieve script in the $data_dir/mailnames/$USER/$USER.sieve exists, we will run sievec on it, and link it as .dovecot.sieve.
 
 TODO: gather this data from something secure, such as keepass or vault.
 
@@ -104,6 +110,7 @@ sub template_files {
         'mail.amavis.tt'                 => '50-user',
         'mail.autodiscover.tt'           => 'autodiscover.xml',
         'mail.autodiscover_vhost.tt'     => 'autodiscover_vhost',
+        'mail.cron.tt'                   => 'mailcron',
     );
 }
 
