@@ -23,17 +23,11 @@ Base class for provisioner recipes. Provides framework for building deployment m
 
 =cut
 
-=head3 new
+=head2 STATIC METHODS
+
+=head3 $class->new(%opts)
 
 Create new recipe instance.
-
-=over 1
-
-=item INPUTS: %opts hash containing template_dirs
-
-=item OUTPUTS: blessed recipe object
-
-=back
 
 =cut
 
@@ -57,17 +51,11 @@ sub new {
     return bless( \%opts, $class );
 }
 
-=head3 formatters
+=head2 METHODS (you will possibly want to override)
 
-Define custom template formatters. Override in subclasses.
+=head3 @fmts = $recipe->formatters()
 
-=over 1
-
-=item INPUTS: none
-
-=item OUTPUTS: list of formatter key-value pairs
-
-=back
+Define custom template formatters available both in makefile fragments and generated files.
 
 =cut
 
@@ -75,35 +63,11 @@ sub formatters {
     return ();
 }
 
-=head3 vars
+=head3 @pkgs = $recipe->deps()
 
-Define default template variables.
-
-=over 1
-
-=item INPUTS: none
-
-=item OUTPUTS: list of variable key-value pairs
-
-=back
-
-=cut
-
-sub vars {
-    return ();
-}
-
-=head3 deps
-
-Define system package dependencies.
+Define system package dependencies.  SHOULD die in the event of an unsupported platform.
 
 =over 1
-
-=item INPUTS: none
-
-=item OUTPUTS: list of package names
-
-=back
 
 =cut
 
@@ -111,17 +75,9 @@ sub deps {
     return ();
 }
 
-=head3 validate
+=head3 %opts = $recipe->validate(%opts)
 
-Validate recipe configuration.
-
-=over 1
-
-=item INPUTS: %opts configuration hash
-
-=item OUTPUTS: validated %opts hash
-
-=back
+Validate recipe configuration, optionally enriching it.
 
 =cut
 
@@ -130,17 +86,9 @@ sub validate {
     return @_;
 }
 
-=head3 datadirs
+=head3 @dirs = $recipe->datadirs()
 
 Define data directories to create.
-
-=over 1
-
-=item INPUTS: none
-
-=item OUTPUTS: list of directory names
-
-=back
 
 =cut
 
@@ -148,17 +96,9 @@ sub datadirs {
     return ();
 }
 
-=head3 remote_files
+=head3 %path_map = $recipe->remote_files($install_dir, $domain)
 
 Define files to backup/restore between deployments.
-
-=over 1
-
-=item INPUTS: none
-
-=item OUTPUTS: hash of remote_path => local_path
-
-=back
 
 =cut
 
@@ -167,17 +107,9 @@ sub remote_files {
     return ();
 }
 
-=head3 template_files
+=head3 @files = $recipe->template_files(@loaded_recipes)
 
 Define template files to process.
-
-=over 1
-
-=item INPUTS: @recipes list of enabled recipes
-
-=item OUTPUTS: hash of template => output_filename
-
-=back
 
 =cut
 
@@ -186,17 +118,10 @@ sub template_files {
     return ();
 }
 
-=head3 makefile_vars
+=head3 %vars = $recipe->makefile_vars()
 
-Define makefile variables.
-
-=over 1
-
-=item INPUTS: none
-
-=item OUTPUTS: hash of variable_name => value
-
-=back
+Define global makefile variables.
+You should override this if you need makefile vars in your recipe's makefile fragment.
 
 =cut
 
@@ -210,17 +135,11 @@ my $validate = sub {
     return %params;
 };
 
-=head3 render
+=head2 Methods you probably won't want to override
 
-Render recipe's main template.
+=head3 $output = $recipe->render(%template_vars)
 
-=over 1
-
-=item INPUTS: @_ template variables
-
-=item OUTPUTS: rendered template string
-
-=back
+Render recipe's makefile template.
 
 =cut
 
@@ -229,17 +148,9 @@ sub render {
     return $self->render_file( $self->{template}, @_ );
 }
 
-=head3 render_file
+=head3 $output = render_file($file, %template_vars)
 
 Render specified template file.
-
-=over 1
-
-=item INPUTS: $file template filename, @_ template variables
-
-=item OUTPUTS: rendered template string
-
-=back
 
 =cut
 
