@@ -12,7 +12,7 @@ use Text::Xslate::Bridge::TT2;
 
     package Provisioner::Recipe::example;
     use parent qw{Provisioner::Recipe};
-    
+
     sub deps { qw{nginx-full} }
     sub validate { my ($self, %opts) = @_; return %opts; }
     sub template_files { ('example.conf.tt' => 'example.conf') }

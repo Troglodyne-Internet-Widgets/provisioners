@@ -21,7 +21,8 @@ In recipes.yaml:
                 - mail
                 ...
             hosts:
-                - "some.domain.name"
+                - "some.domain.name:2222"
+                - "some.other.domain"
             key_file: "path/to/private_key_in_the_datadir"
 
 Would result in the rsync module 'database' being backed up to /backup/some.domain.name/mysql/$DAY, and so on for each target/domain.
@@ -63,6 +64,17 @@ sub validate {
     my $hosts = $opts{hosts};
     die "Must define hosts in [backupdestination] section of recipes.yaml" unless $hosts;
     die "hosts in [backupdestination] must be ARRAY" unless ref $hosts eq 'ARRAY';
+
+    my %host_port_map;
+    @$hosts = map {
+        my $host = $_;
+        my $port;
+        ($host, $port) = split(/:/, $host);
+        $port ||= 22;
+        $host_port_map{$host} = $port;
+        $host
+    } @$hosts;
+    $opts{host_port_map} = \%host_port_map;
 
     # Gather all the remote_files
     my @default_targets;

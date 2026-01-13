@@ -334,11 +334,11 @@ sub handle_domain {
     $global_config->{packager_remove_invocation} = $pkgr_rm;
 
     # Figure out whether the remote host is actually up
-    my $target_is_up = 1;
+    my $target_is_up = 0;
     my $ssh;
     if (!$skip_ssh) {
         my $ssh          = Net::SFTP::Foreign->new( host => $static_ip, user => $admin_user, more => [-o => "StrictHostKeyChecking=no"] );
-        $ssh->error and $target_is_up = 0;
+        $ssh->error or $target_is_up = 1;
     }
 
     # Build a makefile based on our configured recipes

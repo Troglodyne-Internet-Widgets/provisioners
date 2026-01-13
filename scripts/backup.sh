@@ -14,6 +14,8 @@ BASEDIR=$1
 shift
 KEYFILE=$1
 shift
+PORT=$1
+shift
 TARGETS="$@"
 DATE=$(date -I)
 YESTERDAY=$(date -I --date '-1 day')
@@ -32,8 +34,8 @@ for TARGET in $@; do
     mkdir -p $DESTDIR
 
     logger --stderr "Copying $TARGET data to $DESTDIR with hardlinking to $LINKDIR..."
-    logger --stderr "rsync -a --delete --fuzzy --fuzzy -e \"ssh -i $KEYFILE -p2222 -o 'StrictHostKeyChecking no'\" rsync://root@$REMOTE/$TARGET --link-dest $LINKDIR $DESTDIR"
-    rsync -a --delete --fuzzy --fuzzy -e "ssh -i $KEYFILE -p2222 -o 'StrictHostKeyChecking no'" rsync://root@$REMOTE/$TARGET --link-dest $LINKDIR $DESTDIR
+    logger --stderr "rsync -a --delete --fuzzy --fuzzy -e \"ssh -i $KEYFILE -p$PORT -o 'StrictHostKeyChecking no'\" rsync://root@$REMOTE/$TARGET --link-dest $LINKDIR $DESTDIR"
+    rsync -a --delete --fuzzy --fuzzy -e "ssh -i $KEYFILE -p$PORT -o 'StrictHostKeyChecking no'" rsync://root@$REMOTE/$TARGET --link-dest $LINKDIR $DESTDIR
     CHANGED_FILES=$(find $DESTDIR -type f -links 1 | wc -l)
     logger --stderr "$CHANGED_FILES changed files in $TARGET"
     USAGE=$(df -h $BASEDIR | awk '{print $5}' | tail -n1)
