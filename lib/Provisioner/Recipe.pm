@@ -67,8 +67,6 @@ sub formatters {
 
 Define system package dependencies.  SHOULD die in the event of an unsupported platform.
 
-=over 1
-
 =cut
 
 sub deps {
