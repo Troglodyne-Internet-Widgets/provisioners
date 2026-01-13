@@ -17,6 +17,8 @@ In recipes.yaml:
                 database: "/var/lib/mysql"
                 mail: "/mail"
                 ...
+            excludes:
+                database: "foobase/ barbase/"
             key_file: "path/to/key_file_in_datadir"
 
 =head2 DESCRIPTION

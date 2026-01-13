@@ -17,6 +17,11 @@ all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% F
 	mkdir -p [% state_dir %]
 	touch $@
 
+# Fix default sendmail configuration DAEMON_SETIF
+[% state_dir %]/sendmail:
+	[[ -f /etc/mail/sendmail.conf ]] && sed -i -e "s/eth0/lo/g" /etc/mail/sendmail.conf
+	[[ -f /etc/mail/sendmail.conf ]] && systemctl restart sendmail
+
 [% state_dir %]/packages:
 	# We have to account for broken packages that depend on apache or some other incompatible sofware for no reason
 	# Or forgets to list a dependency, or relies on a curses UI to install

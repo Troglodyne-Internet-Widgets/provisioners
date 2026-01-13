@@ -1,4 +1,4 @@
-0 0 * * * root command -v apt-get update && apt-get upgrade -y && apt-get autoremove -y &> /var/log/autoupdate.log
+0 0 * * * root command apt-get update && apt-get upgrade -y && apt-get autoremove -y &> /var/log/autoupdate.log
 [% IF autorestart %]
-*/5 * * * * root command -v [% script_dir %]/reboot_if_needed [% autorestart %]
+*/5 * * * * root command [% script_dir %]/reboot_if_needed [% autorestart %]
 [% END %]

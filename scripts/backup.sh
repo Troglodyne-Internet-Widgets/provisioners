@@ -4,6 +4,8 @@
 # command="rrsync -ro /holophrastic -ro /mail/mailnames -ro /var/www/vhosts -ro /var/lib/mysql -ro /var/spool/cron -ro /var/lib/psa",no-agent-forwarding,no-port-forwarding,no-pty,no-user-rc,no-X11-forwarding [insert key here]
 
 # Semaphore
+[[ -f /root/backup_in_progress ]] && logger --stderr "Another backup in progress, exiting" && exit 1;
+
 touch /root/backup_in_progress
 
 REMOTE=$1
@@ -30,7 +32,12 @@ for TARGET in $@; do
     mkdir -p $DESTDIR
 
     logger --stderr "Copying $TARGET data to $DESTDIR with hardlinking to $LINKDIR..."
-    rsync -a -e "ssh -i $KEYFILE -o 'StrictHostKeyChecking no'" rsync://root@$REMOTE/$TARGET --link-dest $LINKDIR $DESTDIR
+    logger --stderr "rsync -a --delete --fuzzy --fuzzy -e \"ssh -i $KEYFILE -p2222 -o 'StrictHostKeyChecking no'\" rsync://root@$REMOTE/$TARGET --link-dest $LINKDIR $DESTDIR"
+    rsync -a --delete --fuzzy --fuzzy -e "ssh -i $KEYFILE -p2222 -o 'StrictHostKeyChecking no'" rsync://root@$REMOTE/$TARGET --link-dest $LINKDIR $DESTDIR
+    CHANGED_FILES=$(find $DESTDIR -type f -links 1 | wc -l)
+    logger --stderr "$CHANGED_FILES changed files in $TARGET"
+    USAGE=$(df -h $BASEDIR | awk '{print $5}' | tail -n1)
+    logger --stderr "Disk usage at $USAGE"
 
 done
 
