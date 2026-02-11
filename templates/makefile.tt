@@ -2,7 +2,7 @@
 [% var %] := [% vars.$var | mark_raw %]
 [% END -%]
 
-[% global_targets = ['packages', 'scripts', 'data', 'ssl', 'ssh', 'sendmail', 'testdeps'] -%]
+[% global_targets = ['packages', 'scripts', 'data', 'ssl', 'ssh', 'testdeps'] -%]
 [% IF user -%]
 [% global_targets.unshift('service_user') -%]
 [% END -%]
@@ -16,12 +16,6 @@ all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% F
 [% state_dir %]/state:
 	mkdir -p [% state_dir %]
 	touch $@
-
-# Fix default sendmail configuration DAEMON_SETIF
-# We *only* want localhost touching sendmail
-[% state_dir %]/sendmail:
-       [[ -f /etc/mail/sendmail.conf ]] && sed -i -e "s/eth0/lo/g" /etc/mail/sendmail.conf
-       [[ -f /etc/mail/sendmail.conf ]] && systemctl restart sendmail
 
 [% state_dir %]/packages:
 	# We have to account for broken packages that depend on apache or some other incompatible sofware for no reason
