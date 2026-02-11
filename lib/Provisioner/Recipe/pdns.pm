@@ -25,6 +25,8 @@ Uses the sqlite backend.
 
 Appends arbitrary records specified as extra_records.
 
+Sets up the recursor in the event you want to point your resolver at it for fast resolves and to mitigate DNS rate-limiting by RBLs.
+
 =cut
 
 use Text::Xslate;
@@ -34,7 +36,7 @@ use File::Slurper;
 sub deps {
     my ($self) = @_;
     if ( $self->{target_packager} eq 'deb' ) {
-        return qw{pdns-server pdns-tools pdns-backend-sqlite3 sqlite3 libconfig-simple-perl libnet-dns-perl libjson-perl python3-requests-unixsocket};
+        return qw{pdns-server pdns-recursor pdns-tools pdns-backend-sqlite3 sqlite3 libconfig-simple-perl libnet-dns-perl libjson-perl python3-requests-unixsocket};
     }
     die "Unsupported packager";
 }
@@ -59,6 +61,8 @@ sub template_files {
     return (
         'pdns.zone.tt'                                 => 'zonefile',
         'pdns.domain.tt'                               => 'pdns-domain.conf',
+        'pdns.global.tt'                               => 'pdns-global.conf',
+        'pdns.recursor.tt'                             => 'pdns-recursor-domain.conf',
         'pdns.rsyslog.tt'                              => '10-powerdns.conf',
         'pdns.api.tt'                                  => 'pdns-api.conf',
         'pdns.synczones.tt'                            => 'synczones.conf',

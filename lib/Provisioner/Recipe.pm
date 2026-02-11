@@ -190,4 +190,14 @@ sub render_file {
     return $self->{tt}->render( $file, \%vars );
 }
 
+=head3 %vars = vars()
+
+Default variables for the recipe.
+
+=cut
+
+sub vars {
+    return ();
+}
+
 1;
