@@ -2,14 +2,14 @@
 [% var %] := [% vars.$var | mark_raw %]
 [% END -%]
 
-[% global_targets = ['packages', 'scripts', 'data', 'ssl', 'ssh'] -%]
+[% global_targets = ['packages', 'scripts', 'data', 'ssl', 'ssh', 'sendmail', 'testdeps'] -%]
 [% IF user -%]
 [% global_targets.unshift('service_user') -%]
 [% END -%]
 [% global_targets.unshift('state') -%]
 
 .PHONY: all
-all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% FOR module IN modules_ordered %] [% state_dir %]/[% module %][% END %]
+all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% FOR module IN modules_ordered %] [% state_dir %]/[% module %][% END %] [% state_dir %]/test
 	[% script_dir %]/post_install
 	touch /root/install_complete
 
@@ -18,9 +18,10 @@ all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% F
 	touch $@
 
 # Fix default sendmail configuration DAEMON_SETIF
+# We *only* want localhost touching sendmail
 [% state_dir %]/sendmail:
-	[[ -f /etc/mail/sendmail.conf ]] && sed -i -e "s/eth0/lo/g" /etc/mail/sendmail.conf
-	[[ -f /etc/mail/sendmail.conf ]] && systemctl restart sendmail
+       [[ -f /etc/mail/sendmail.conf ]] && sed -i -e "s/eth0/lo/g" /etc/mail/sendmail.conf
+       [[ -f /etc/mail/sendmail.conf ]] && systemctl restart sendmail
 
 [% state_dir %]/packages:
 	# We have to account for broken packages that depend on apache or some other incompatible sofware for no reason
@@ -30,6 +31,12 @@ all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% F
 	#[% packager_invocation | mark_raw %] [% FOR pkg IN packages %][% pkg %] [% END %]; /bin/true
 	#[% packager_invocation | mark_raw %] [% FOR pkg IN packages %][% pkg %] [% END %]; /bin/true
 	touch $@
+
+[% state_dir %]/testdeps:
+	cpanm [% testdeps.join(' ') %]
+
+[% state_dir %]/test:
+	prove -vm
 
 [% IF user %]
 [% state_dir %]/service_user:

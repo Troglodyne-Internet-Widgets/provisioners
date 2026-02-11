@@ -63,7 +63,7 @@ sub formatters {
     return ();
 }
 
-=head3 @pkgs = $recipe->deps()
+=head3 @pkgs = $recipe->deps(%recipe_config)
 
 Define system package dependencies.  SHOULD die in the event of an unsupported platform.
 
@@ -132,6 +132,30 @@ my $validate = sub {
     my %params = @_;
     return %params;
 };
+
+=head3 @tests = $recipe->tests(@modules)
+
+Array of (templated) tests to run on the remote when finished provisioning.
+
+The list of loaded recipes is passed so you might correctly select relevant component integration tests.
+
+=cut
+
+sub tests {
+    my @modules = @_;
+    return ();
+}
+
+=head3 @pms = $recipe->testdeps(@modules)
+
+Perl dependencies for your tests.
+
+=cut
+
+sub testdeps {
+    my @modules = @_;
+    return ();
+}
 
 =head2 Methods you probably won't want to override
 

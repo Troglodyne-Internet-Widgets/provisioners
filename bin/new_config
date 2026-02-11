@@ -49,6 +49,16 @@ We use the libdir as 'base' for L<FindBin::libs> to search for the named directo
 
 These directories ought to have both a lib/ and templates/ dir therein, structured basically the same as we do normally.
 
+=head2 TESTS
+
+Each recipe can define a list of tests to run after provisioning.
+This is useful for the various things you need to work which aren't easily caught by a makefile failure, or that you'd like to report elsewhere.
+See L<Provisioner::Recipe>'s tests() and testdeps() method for more details.
+
+Reporter configuration as might be passed to L<prove> is accepted as a _global var (reporter) in recipe configuration.
+
+The tests themselves are run on the remote host.
+
 =cut
 
 #TODO chdir to bin loc/ ..
@@ -344,6 +354,7 @@ sub handle_domain {
     # Build a makefile based on our configured recipes
     my @modules = sort { ( $rconf->{$domain}{$a}{order} // 'ZZZ' ) cmp( $rconf->{$domain}{$b}{order} // 'ZZZ' ) } sort keys( %{ $rconf->{$domain} } );
     my %mf_vars;
+    my @testdeps;
     foreach my $module (@modules) {
         require "Provisioner/Recipe/$module.pm" or die "Could not load provisioner recipe $module";
         my $builder      = "Provisioner::Recipe::$module"->new(%provisioner_opts);
@@ -390,7 +401,23 @@ sub handle_domain {
             File::Slurper::write_binary( $destination, $rendered );
             push( @generated, $tf{$template} );
         }
+
+        # Write tests if any exist
+        my @tests = $builder->tests(@modules);
+        mkdir "$cfg_dir/t";
+        foreach my $test (@tests) {
+            my $tname = $test;
+            $tname =~ s/tt$/t/;
+            my $rendered = $builder->render_file("tests/$test", %$global_config, %$pconf, full_aliases => $full_aliases, modules => \@modules );
+            print "Writing $test as $tname\n";
+            File::Slurper::write_binary( "$cfg_dir/t/$tname", $rendered);
+        }
+
+        # Build test deps
+        push(@testdeps, ($builder->testdeps(@modules)));
     }
+    @testdeps = uniq @testdeps;
+    push(@pkgs, 'cpanminus') if @testdeps;
 
     @pkgs = sort { $a cmp $b } uniq @pkgs;
 
@@ -406,6 +433,7 @@ sub handle_domain {
             vars            => \%mf_vars,
             packages        => \@pkgs,
             state_dir       => "/etc/provisioner/state/$fqdn",
+            testdeps        => \@testdeps,
         }
     );
 
@@ -437,7 +465,7 @@ sub handle_domain {
     # Gzip the Makefile & generated configs
     print "Tarring up Makefile and generated configuration\n";
     unlink "$cfg_dir/data.tar.gz";
-    system( qw{tar -cz -C}, $cfg_dir, '-f', "$cfg_dir/data.tar.gz", "./Makefile", @generated, 'openssl.conf' );
+    system( qw{tar -cz -C}, $cfg_dir, '-f', "$cfg_dir/data.tar.gz", "./Makefile", @generated, 'openssl.conf', 't/' );
     print "Done.\n";
     return 0;
 }
