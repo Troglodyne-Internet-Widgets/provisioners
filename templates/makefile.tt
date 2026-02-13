@@ -27,7 +27,10 @@ all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% F
 	touch $@
 
 [% state_dir %]/testdeps:
+	/bin/true;
+	[% IF testdeps.size %]
 	cpanm [% testdeps.join(' ') %]
+	[% END %]
 
 [% state_dir %]/test:
 	prove -vm

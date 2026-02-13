@@ -344,12 +344,8 @@ sub handle_domain {
     $global_config->{packager_remove_invocation} = $pkgr_rm;
 
     # Figure out whether the remote host is actually up
-    my $target_is_up = 0;
-    my $ssh;
-    if (!$skip_ssh) {
-        my $ssh          = Net::SFTP::Foreign->new( host => $static_ip, user => $admin_user, more => [-o => "StrictHostKeyChecking=no"] );
-        $ssh->error or $target_is_up = 1;
-    }
+    my ($ssh, $target_is_up);
+    ($ssh, $target_is_up) = _get_sftp($static_ip, $admin_user) unless $skip_ssh;
 
     # Build a makefile based on our configured recipes
     my @modules = sort { ( $rconf->{$domain}{$a}{order} // 'ZZZ' ) cmp( $rconf->{$domain}{$b}{order} // 'ZZZ' ) } sort keys( %{ $rconf->{$domain} } );
@@ -378,6 +374,8 @@ sub handle_domain {
             my %tg = $builder->remote_files( $data_config->{to}, $fqdn );
             foreach my $to_fetch ( sort keys(%tg) ) {
                 print "Writing remote file $to_fetch as $data_config->{from}/$fqdn/$tg{$to_fetch}\n";
+                # XXX deal with connection drops
+                ($ssh) = _get_sftp($static_ip, $admin_user) unless $ssh;
                 my $num_copied = $ssh->rget(
                     $to_fetch,
                     "$data_config->{from}/$fqdn/$tg{$to_fetch}",
@@ -468,6 +466,14 @@ sub handle_domain {
     system( qw{tar -cz -C}, $cfg_dir, '-f', "$cfg_dir/data.tar.gz", "./Makefile", @generated, 'openssl.conf', 't/' );
     print "Done.\n";
     return 0;
+}
+
+sub _get_sftp {
+    my ($static_ip, $admin_user) = @_;
+    my $target_is_up = 0;
+    my $ssh          = Net::SFTP::Foreign->new( host => $static_ip, user => $admin_user, more => [-o => "StrictHostKeyChecking=no"] );
+    $ssh->error or $target_is_up = 1;
+    return ($ssh, $target_is_up)
 }
 
 sub get_hv_internal_ip {
