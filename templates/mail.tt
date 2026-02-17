@@ -180,8 +180,8 @@ mv autodiscover_vhost /etc/nginx/sites-enabled/autodiscover.[% domain %].conf
 [%- END %]
 # Setup mailboxes and sieve scripts for the various users
 [% FOR name IN names.keys() %]
-[[ -f "/mail/[% domain %]/[% name %]/[% name.sieve %]" ]] && ln -s "/mail/[% domain %]/[% name %]/[% name.sieve %]" "/mail/[% domain %]/[% name %]/.dovecot.sieve"
-[[ -f "/mail/[% domain %]/[% name %]/[% name.sieve %]" ]] && sudo -u dovecot sievc "/mail/[% domain %]/[% name %]/.dovecot.sieve"
+test -f "/mail/[% domain %]/[% name %]/[% name.sieve %]" && ln -s "/mail/[% domain %]/[% name %]/[% name.sieve %]" "/mail/[% domain %]/[% name %]/.dovecot.sieve"; /bin/true
+test -f "/mail/[% domain %]/[% name %]/[% name.sieve %]" && sudo -u dovecot sievc "/mail/[% domain %]/[% name %]/.dovecot.sieve"; /bin/true
 [% FOR box IN names.$name.mailboxes %]
 doveadm mailbox create -u [% name %] [% box %]
 [% END -%]

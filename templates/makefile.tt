@@ -2,7 +2,7 @@
 [% var %] := [% vars.$var | mark_raw %]
 [% END -%]
 
-[% global_targets = ['packages', 'scripts', 'data', 'ssl', 'ssh', 'testdeps'] -%]
+[% global_targets = ['packages', 'scripts', 'data', 'ssl', 'ssh', 'sendmail', 'testdeps'] -%]
 [% IF user -%]
 [% global_targets.unshift('service_user') -%]
 [% END -%]
@@ -35,6 +35,16 @@ all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% F
 [% state_dir %]/test:
 	prove -vm
 
+[% state_dir %]/sendmail:
+	# Make sure mailing works by forcing send-only lo and enabling starttls
+	! grep starttls.m4 /etc/mail/sendmail.mc && echo "include(\`/etc/mail/tls/starttls.m4')dnl\n" >> /etc/mail/sendmail.mc
+	! grep starttls.m4 /etc/mail/submit.mc && echo "include(\`/etc/mail/tls/starttls.m4')dnl\n" >> /etc/mail/submit.mc
+	test -f /etc/mail/sendmail.conf && sed -i -e "s/eth0/lo/gm" /etc/mail/sendmail.conf
+	#XXX something mangles this later
+	test -f /etc/mail/sendmail.conf && chattr +ie /etc/mail/sendmail.conf
+	test -f /etc/mail/sendmail.conf && systemctl restart sendmail
+	newaliases
+
 [% IF user %]
 [% state_dir %]/service_user:
 	useradd -s /usr/sbin/nologin -d [% install_dir %]/[% domain %] [% user %]
@@ -44,7 +54,7 @@ all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% F
 [% END -%]
 
 [% state_dir %]/scripts:
-	mkdir -p [% script_dir %]; rsync -av [% hv_ip %]:[% provisioner_dir %]/scripts/* [% script_dir %]
+	mkdir -p [% script_dir %]; rsync -av [% transfer_user %]@[% hv_ip %]:[% provisioner_dir %]/scripts/* [% script_dir %]
 	touch $@
 
 # Make a self-signed cert FIRST, because everybody and their mama needs a damn cert

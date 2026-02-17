@@ -18,6 +18,10 @@ In recipes.yaml:
            - from: /foo/bar
              to: /baz
 
+In ipmap.cfg:
+
+    transfer_user=whoever_runs_trog_provisioner
+
 =head2 DESCRIPTION
 
 Schlep data from the hypervisor onto the guest.

@@ -169,6 +169,9 @@ sub handle_domain {
     my $dhcp_devname = $global_conf->{dhcp_devname};
     die "Must set dhcp_devname for $tld in global section of $cfile" unless $dhcp_devname;
 
+    my $transfer_user = $global_conf->{transfer_user};
+    die "Must set transfer_user in global section of ipmap.cfg.  This is the user which runs trog-provisioner on the HV." unless $transfer_user;
+
     my $fqdn = "$domain.$tld";
 
     # Override fqdn for addons
@@ -311,6 +314,7 @@ sub handle_domain {
     $global_config->{nameservers}     = $ns_conf;
     $global_config->{main_ip}         = $static_ip;
     $global_config->{tld_ip}          = $tld_ip;
+    $global_config->{transfer_user}   = $transfer_user;
 
     require Provisioner::Recipe::data;
     my $do            = Provisioner::Recipe::data->new(%provisioner_opts);
@@ -330,7 +334,7 @@ sub handle_domain {
     # Regrettably, we may be running this on an existing system so we gotta install pkgs anyways.
     my ( $pkgr_invoc, $pkgr_up, $pkgr_rm );
     if ( $provisioner_opts{target_packager} eq 'deb' ) {
-        push( @pkgs, qw{openssl openssh-server openssh-client rsync retry} );
+        push( @pkgs, qw{openssl openssh-server openssh-client rsync retry sendmail} );
         $pkgr_invoc = 'DEBIAN_FRONTEND="noninteractive" apt-get install -Uy -o Acquire::Retries=3 -o Dpkg::Options=--force-confdef -o Dpkg::Options=--force-confold -o Dpkg::Options=--force-overwrite --autoremove';
         $pkgr_up    = 'DEBIAN_FRONTEND="noninteractive" apt-get upgrade -Uy';
         $pkgr_rm    = 'DEBIAN_FRONTEND="noninteractive" apt-get remove -y';
