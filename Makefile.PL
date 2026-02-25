@@ -31,6 +31,7 @@ WriteMakefile(
     'Getopt::Long'              => 0,
     'File::Copy'                => 0,
     'Hash::Merge'               => 0,
+    'Net::IP'                   => 0,
   },
   test => {TESTS => 't/*.t'}
 );
