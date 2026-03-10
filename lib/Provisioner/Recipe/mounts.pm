@@ -13,7 +13,7 @@ use warnings;
                 - type: "reiser2"
                   options: "noatime,noexec"
                   mountpoint: "/mountpoint_on_guest"
-                  device: "device_or_file_on_HV"
+                  device: "device_dir_or_file_on_HV"
                   partition: 2
                   pool: tf_disks
             fuse:
@@ -56,6 +56,7 @@ sub validate {
             $disk->{servicename} = $disk->{mountpoint};
             $disk->{servicename} =~ s|/|_|g;
             $disk->{pool} = 'raw' if -b $disk->{device};
+            $disk->{pool} = 'dir' if -d $disk->{device};
             $disk->{pool} //= 'tf_disks';
         }
     }
