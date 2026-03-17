@@ -8,6 +8,7 @@ PARTITION=$5
 
 ACTUAL_TARGET=$(grep "^$TARGET" /root/devices.map | awk -F "=" '{print $2}')
 [[ -z $PARTITION ]] && PARTITION=1
+[[ $PARTITION = 'NONE' ]] && PARTITION=''
 ACTUAL_TARGET="$ACTUAL_TARGET$PARTITION"
 
 # Mount things inside a chroot

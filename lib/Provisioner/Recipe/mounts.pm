@@ -58,6 +58,12 @@ sub validate {
             $disk->{pool} = 'raw' if -b $disk->{device};
             $disk->{pool} = 'dir' if -d $disk->{device};
             $disk->{pool} //= 'tf_disks';
+
+            if (-d $disk->{device}) {
+                $disk->{type} = 'virtiofs';
+                $disk->{partition} = 'NONE';
+                $disk->{options} = 'default';
+            }
         }
     }
 

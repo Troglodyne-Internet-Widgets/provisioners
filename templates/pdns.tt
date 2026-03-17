@@ -12,6 +12,8 @@ cd / && git apply /tmp/domainsetup_[% domain %]/lexicon-arbitrary-record-types.p
 mv pdns-domain.conf /etc/powerdns/pdns.d/sqlite.conf
 # Run on port 2500 so the recursor can run
 mv pdns-global.conf /etc/powerdns/pdns.d/00-global.conf
+# Make sure additions to recursing actually work
+echo "forward-zones=test.test=192.168.1.1" >> /etc/powerdns/recursor.conf
 # Configure the recursor to answer for our domain
 mv pdns-recursor-domain.conf /etc/powerdns/recursor.d/[% domain %].conf
 # Set up the API so we can use lexicon
@@ -48,7 +50,7 @@ systemctl start pdns-recursor
 systemctl restart pdns
 systemctl restart pdns-recursor
 # Setup lexicon shortcuts
-mkdir -p /opt/lexicon; /bin/true
+mkdir -p /opt/lexicon/[% domain %]; /bin/true
 mv lexicon-pdns.sh /opt/lexicon/[% domain %]/pdns
 chmod -R 0700 /opt/lexicon/[% domain %]
 chown -R root:root /opt/lexicon/[% domain %]
