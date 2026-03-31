@@ -174,8 +174,9 @@ sub handle_domain {
 
     my $hv_ssh_port = qx#grep '^Port' /etc/ssh/sshd_config | awk '{print \$2}'#;
     chomp $hv_ssh_port;
-    die "Could not determine HV ssh port!" unless $hv_ssh_port;
+    warn "Could not determine HV ssh port, assuming 22" unless $hv_ssh_port;
 
+    $hv_ssh_port ||= 22;
     my $fqdn = "$domain.$tld";
 
     # Override fqdn for addons

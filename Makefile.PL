@@ -32,6 +32,8 @@ WriteMakefile(
     'File::Copy'                => 0,
     'Hash::Merge'               => 0,
     'Net::IP'                   => 0,
+    'UUID'                      => 0,
+    'Crypt::Digest::SHA512'     => 0,
   },
   test => {TESTS => 't/*.t'}
 );
