@@ -20,7 +20,7 @@ use Clone qw{clone};
 
 use Text::Xslate;
 use Text::Xslate::Bridge::TT2;
-use List::Util qw{uniq};
+use List::Util qw{uniq any};
 use Net::SFTP::Foreign;
 use File::Path qw{make_path remove_tree};
 use Getopt::Long qw{GetOptionsFromArray};
@@ -361,6 +361,7 @@ sub handle_domain {
     my @modules = sort { ( $rconf->{$domain}{$a}{order} // 'ZZZ' ) cmp( $rconf->{$domain}{$b}{order} // 'ZZZ' ) } sort keys( %{ $rconf->{$domain} } );
     my %mf_vars;
     my @testdeps;
+    my @conflicts;
     foreach my $module (@modules) {
         require "Provisioner/Recipe/$module.pm" or die "Could not load provisioner recipe $module";
         my $builder      = "Provisioner::Recipe::$module"->new(%provisioner_opts);
@@ -369,6 +370,7 @@ sub handle_domain {
         my $full_aliases = [ map { "$_.$tld" } @$aliases ];
         $fragments{$module} = $builder->render( %$global_config, %$pconf, full_aliases => $full_aliases, modules => \@modules );
         push( @pkgs, ( $builder->deps(%$pconf) ) );
+        push( @conflicts, ( $builder->dep_conflicts(%$pconf) ) );
 
         # Grab the relevant makefile vars for the target
         my %t_vars = $builder->makefile_vars();
@@ -428,6 +430,13 @@ sub handle_domain {
     push(@pkgs, 'cpanminus') if @testdeps;
 
     @pkgs = sort { $a cmp $b } uniq @pkgs;
+    @conflicts = uniq @conflicts;
+
+    # Eject any conflicting deps identified by recipes.
+    @pkgs = grep {
+        my $pkg = $_;
+        !any { $_ eq $pkg } @conflicts;
+    } @pkgs if @conflicts;
 
     my $extra_packages = join( ', ', @pkgs );
 

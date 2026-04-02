@@ -73,6 +73,18 @@ sub deps {
     return ();
 }
 
+=head3 @pkgs = $recipe->dep_conflicts(%recipe_config)
+
+Sometimes a recipe conflicts with a package from another recipe, or installed by default (postfix vs sendmail, for example).
+
+All packages returned hereby will be removed from the dep list.
+
+=cut
+
+sub dep_conflicts {
+    return ();
+}
+
 =head3 %opts = $recipe->validate(%opts)
 
 Validate recipe configuration, optionally enriching it.

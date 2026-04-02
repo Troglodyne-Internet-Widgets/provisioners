@@ -58,6 +58,14 @@ sub deps {
     die "Unsupported packager";
 }
 
+sub dep_conflicts {
+    my ($self) = @_;
+    if ( $self->{target_packager} eq 'deb' ) {
+        return qw{sendmail};
+    }
+    die "Unsupported packager";
+}
+
 sub validate {
     my ( $self, %vars ) = @_;
 

@@ -37,8 +37,8 @@ all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% F
 
 [% state_dir %]/sendmail:
 	# Make sure mailing works by forcing send-only lo and enabling starttls
-	! grep starttls.m4 /etc/mail/sendmail.mc && echo "include(\`/etc/mail/tls/starttls.m4')dnl\n" >> /etc/mail/sendmail.mc
-	! grep starttls.m4 /etc/mail/submit.mc && echo "include(\`/etc/mail/tls/starttls.m4')dnl\n" >> /etc/mail/submit.mc
+	! grep starttls.m4 /etc/mail/sendmail.mc && echo "include(\`/etc/mail/tls/starttls.m4')dnl\n" >> /etc/mail/sendmail.mc; /bin/true
+	! grep starttls.m4 /etc/mail/submit.mc && echo "include(\`/etc/mail/tls/starttls.m4')dnl\n" >> /etc/mail/submit.mc; /bin/true
 	test -f /etc/mail/sendmail.conf && sed -i -e "s/eth0/lo/gm" /etc/mail/sendmail.conf
 	#XXX something mangles this later
 	test -f /etc/mail/sendmail.conf && chattr +ie /etc/mail/sendmail.conf
