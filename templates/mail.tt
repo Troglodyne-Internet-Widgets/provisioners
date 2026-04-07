@@ -187,4 +187,4 @@ doveadm mailbox create -u [% name %] [% box %]
 [% END -%]
 [% END -%]
 # Set up mail cron to run sa-learn etc
-install -m 0644 -u root -g root mailcron /etc/cron.d/[% domain %]-mailcron
+install -m 0644 -o root -g root mailcron /etc/cron.d/[% domain %]-mailcron
