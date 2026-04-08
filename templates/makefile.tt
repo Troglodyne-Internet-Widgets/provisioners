@@ -42,6 +42,7 @@ all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% F
 	test -f /etc/mail/sendmail.conf && sed -i -e "s/eth0/lo/gm" /etc/mail/sendmail.conf; /bin/true
 	#XXX something mangles this later
 	test -f /etc/mail/sendmail.conf && chattr +ie /etc/mail/sendmail.conf; /bin/true
+	test -f /etc/mail/sendmail.conf && systemctl enable sendmail; /bin/true
 	test -f /etc/mail/sendmail.conf && systemctl restart sendmail; /bin/true
 	newaliases
 
