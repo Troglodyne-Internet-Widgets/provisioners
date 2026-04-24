@@ -6,7 +6,7 @@ install fpm.ini /etc/php/$(PHP_VER)/fpm/pool.d/roundcube-[% domain %].ini
 install config.inc.php [% install_dir %]/webmail.[% domain %]/config/config.inc.php
 systemctl restart php$(PHP_VER)-fpm
 # Initialize the roundcube database, because autocreate is beyond them
-sqlite3 [% install_dir %]/webmail.[% domain %]_data/roundcube.db < [% install_dir %]/webmail.[% domain %]/SQL/sqlite.initial.sql
+[ -s '[% install_dir %]/webmail.[% domain %]_data/roundcube.db' ] || sqlite3 [% install_dir %]/webmail.[% domain %]_data/roundcube.db < [% install_dir %]/webmail.[% domain %]/SQL/sqlite.initial.sql
 chown -R www-data:www-data [% install_dir %]/webmail.[% domain %]_data
 chown -R www-data:www-data [% install_dir %]/webmail.[% domain %]
 # Setup the vhost

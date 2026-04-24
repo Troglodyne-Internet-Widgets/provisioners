@@ -13,7 +13,7 @@ mv pdns-domain.conf /etc/powerdns/pdns.d/sqlite.conf
 # Run on port 2500 so the recursor can run
 mv pdns-global.conf /etc/powerdns/pdns.d/00-global.conf
 # Make sure additions to recursing actually work
-echo "forward-zones=test.test=192.168.1.1" >> /etc/powerdns/recursor.conf
+grep -qF "forward-zones=test.test=192.168.1.1" /etc/powerdns/recursor.conf 2>/dev/null || echo "forward-zones=test.test=192.168.1.1" >> /etc/powerdns/recursor.conf
 # Configure the recursor to answer for our domain
 mv pdns-recursor-domain.conf /etc/powerdns/recursor.d/[% domain %].conf
 # Set up the API so we can use lexicon
@@ -28,7 +28,7 @@ sqlite3 /var/spool/powerdns/zones.db < /usr/share/pdns-backend-sqlite3/schema/sc
 # TODO do this via lexicon instead
 cp zonefile /var/spool/powerdns/[% domain %]/bind.zone
 zone2sql --gsqlite --zone=zonefile --zone-name=[% domain %] > /var/spool/powerdns/[% domain %]/zone.sql
-sqlite3 /var/spool/powerdns/zones.db < /var/spool/powerdns/[% domain %]/zone.sql
+sqlite3 /var/spool/powerdns/zones.db < /var/spool/powerdns/[% domain %]/zone.sql; /bin/true
 chown -R pdns:pdns /var/spool/powerdns
 chmod -R 0775 /var/spool/powerdns
 # Don't need no bind
