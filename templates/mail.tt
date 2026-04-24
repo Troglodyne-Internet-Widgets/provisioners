@@ -10,7 +10,7 @@ mv TrustedHosts /etc/opendkim
 mv SigningTable /etc/opendkim
 mv KeyTable /etc/opendkim
 mv InternalHosts /etc/opendkim
-mv /etc/opendkim.conf /etc/opendkim.conf.orig
+[ -f /etc/opendkim.conf.orig ] || mv /etc/opendkim.conf /etc/opendkim.conf.orig
 mv opendkim.conf /etc/opendkim.conf
 chown opendkim:opendkim /etc/opendkim.conf
 # Generate the key if it does not exist, otherwise use the one you got.
@@ -22,26 +22,26 @@ sudo chmod 0600 /etc/opendkim/keys/[% domain %]/*
 # Stash a copy in /mail owned by the admin for schlepping.
 cp -r /etc/opendkim/keys /mail/keys
 chown -R [% admin_user %]:[% admin_user %] /mail/keys
-mkdir /var/spool/postfix/opendkim
+mkdir -p /var/spool/postfix/opendkim
 chown opendkim:postfix /var/spool/postfix/opendkim
 chmod 0770 /var/spool/postfix/opendkim
 systemctl restart opendkim
 # opendmarc
 mkdir -p /etc/opendmarc
-mv /etc/opendmarc.conf /etc/opendmarc.conf.orig
+[ -f /etc/opendmarc.conf.orig ] || mv /etc/opendmarc.conf /etc/opendmarc.conf.orig
 mv opendmarc.conf /etc/opendmarc.conf
 mv ignore.hosts /etc/opendmarc
 chown -R opendmarc:opendmarc /etc/opendmarc/
 chown opendmarc:opendmarc /etc/opendmarc.conf
-mkdir /var/spool/postfix/opendmarc
+mkdir -p /var/spool/postfix/opendmarc
 chown opendmarc:postfix /var/spool/postfix/opendmarc
 chmod 0770 /var/spool/postfix/opendmarc
 systemctl restart opendmarc
 # update DNS records IFF we have a dns server locally
 [% script_dir %]/queue_postrun_task [% script_dir %]/install_dkim_records [% domain %] /mail/[% domain %]/default.private
 # dovecot
-# First, remove all the worse-than-useless foo in conf.d
-mv /etc/dovecot/conf.d /etc/dovecot/conf-available
+# First, remove all the worse-than-useless foo in conf.d (only on initial deploy)
+[ -d /etc/dovecot/conf-available ] || mv /etc/dovecot/conf.d /etc/dovecot/conf-available
 mkdir -p /etc/dovecot/conf.d
 mv dovecot.conf /etc/dovecot/conf.d/00-dovecot.conf
 mv dovecot.domain.conf /etc/dovecot/conf.d/10-[% domain %].conf
@@ -157,7 +157,7 @@ postconf -e -- "smtpd_sasl_security_options= noanonymous"
 postconf -e -- "smtpd_sasl_local_domain=$$myhostname"
 postconf -e -- "smtpd_relay_restrictions = permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination"
 # master.cf shenanigans
-mv /etc/postfix/master.cf /etc/postfix/master.cf.orig
+[ -f /etc/postfix/master.cf.orig ] || mv /etc/postfix/master.cf /etc/postfix/master.cf.orig
 mv master.cf /etc/postfix
 chown root:root /etc/postfix/master.cf
 chmod 0600 /etc/postfix/master.cf
