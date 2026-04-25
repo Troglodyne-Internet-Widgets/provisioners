@@ -378,7 +378,7 @@ sub handle_domain {
 
         # Make dirs in the DATADIR needed by ssh
         foreach my $d ( $builder->datadirs() ) {
-            make_path("$data_config->{from}/$fqdn/$d") unless -d $d;
+            make_path("$data_config->{from}/$fqdn/$d") unless -d "$data_config->{from}/$fqdn/$d";
         }
 
         # Schlep over stuff from existing deployments
@@ -387,7 +387,7 @@ sub handle_domain {
             foreach my $to_fetch ( sort keys(%tg) ) {
                 print "Writing remote file $to_fetch as $data_config->{from}/$fqdn/$tg{$to_fetch}\n";
                 # XXX deal with connection drops
-                ($ssh) = _get_sftp($static_ip, $admin_user) unless $ssh;
+                ($ssh) = _get_sftp($static_ip, $admin_user, $cfg_dir) unless $ssh;
                 my $num_copied = $ssh->rget(
                     $to_fetch,
                     "$data_config->{from}/$fqdn/$tg{$to_fetch}",
@@ -501,7 +501,7 @@ sub _get_sftp {
         host => $static_ip,
         user => $admin_user,
         more => [-o => "StrictHostKeyChecking=no", -o => 'UserKnownHostsFile=/dev/null'],
-        key_path => "$cfg_dir/key.rsa"
+        key_path => $key2use
     );
     $ssh->error or $target_is_up = 1;
     return ($ssh, $target_is_up)
