@@ -31,7 +31,7 @@ Optionally add in packages for the administrator to use on the provisioned host.
 sub deps {
     my ( $self, %opts ) = @_;
     if ( $self->{target_packager} eq 'deb' ) {
-        return @{ $opts{pkgs} } if ref $opts{pkgs} eq 'ARRAY';
+        return ref $opts{pkgs} eq 'ARRAY' ? @{ $opts{pkgs} } : ();
     }
     die "Unsupported packager";
 }
