@@ -54,12 +54,11 @@ sub deps {
 
 sub template_files {
     my ( $class, @modules ) = @_;
-    my %f = (
+    return (
         'roundcube.config.inc.php.tt' => 'config.inc.php',
         'roundcube.fpm.ini.tt'        => 'fpm.ini',
+        'roundcube.nginx.tt'          => 'webmail_nginx.conf',
     );
-    $f{'roundcube.nginx.tt'} = 'webmail_nginx.conf' if any { $_ eq 'nginxproxy' } @modules;
-    return %f;
 }
 
 sub makefile_vars {
@@ -70,6 +69,10 @@ sub makefile_vars {
 
 sub validate {
     my ( $self, %opts ) = @_;
+
+    die "This recipe requires the nginxproxy recipe to function"
+        unless any { $_ eq 'nginxproxy' } @{ $opts{modules} };
+
     $opts{'des_key'} = 'rcube-' . UUID::uuid();
 
     my $ver = $opts{version};
