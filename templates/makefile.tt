@@ -48,7 +48,7 @@ all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% F
 
 [% IF user %]
 [% state_dir %]/service_user:
-	useradd -s /usr/sbin/nologin -d [% install_dir %]/[% domain %] [% user %]
+	id [% user %] &>/dev/null || useradd -s /usr/sbin/nologin -d [% install_dir %]/[% domain %] [% user %]
 	mkdir -p [% install_dir %]/[% domain %]; /bin/true
 	chown [% user %]:[% admin_user %] [% install_dir %]/[% domain %]
 	touch $@
@@ -63,8 +63,8 @@ all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% F
 	mkdir -p '/etc/letsencrypt/live/[% domain %]'
 	openssl req -x509 -config openssl.conf -nodes -newkey rsa:4096 -subj '/CN=[% domain %]' -addext 'subjectAltName=DNS:www.[% domain %],DNS:mail.[% domain %][% full_aliases.join(',DNS:') %]' -keyout '/etc/letsencrypt/live/[% domain %]/privkey.pem' -out '/etc/letsencrypt/live/[% domain %]/fullchain.pem' -days 365
 	# Setup the link to LE certs
-	ln -s /etc/letsencrypt/live/[% domain %]/fullchain.pem /etc/ssl/certs/[% domain %].pem
-	ln -s /etc/letsencrypt/live/[% domain %]/privkey.pem /etc/ssl/private/[% domain %].pem
+	[ -L /etc/ssl/certs/[% domain %].pem ] || ln -s /etc/letsencrypt/live/[% domain %]/fullchain.pem /etc/ssl/certs/[% domain %].pem
+	[ -L /etc/ssl/private/[% domain %].pem ] || ln -s /etc/letsencrypt/live/[% domain %]/privkey.pem /etc/ssl/private/[% domain %].pem
 	touch $@
 
 # Be explicit about SSH security
