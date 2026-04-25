@@ -7,17 +7,19 @@ CUTOFF=$(date -d"-1 months" +%s)
 
 declare DIRS=("$BASE_DIR/$BACKUP_HOST");
 
+shopt -s nullglob
 for dir in "${DIRS[@]}"
 do
     logger --stderr "Pruning $dir..."
-    for subdir in $dir/*
+    for subdir in "$dir"/*
     do
-        CUR_DATE=$(basename $subdir)
-        CUR_TIME=$(date -d"$CUR_DATE" +%s)
-        if [ $CUR_TIME -lt $CUTOFF ]
+        CUR_DATE=$(basename "$subdir")
+        CUR_TIME=$(date -d"$CUR_DATE" +%s 2>/dev/null)
+        [ -z "$CUR_TIME" ] && continue
+        if [ "$CUR_TIME" -lt "$CUTOFF" ]
         then
             logger --stderr "Deleting $subdir"
-            rm -rf $subdir
+            rm -rf "$subdir"
         fi
     done
 done
