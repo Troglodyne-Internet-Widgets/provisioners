@@ -17,21 +17,26 @@ Configure UFW firewall rules based on available applications.
 
 my $DRY_RUN = $ARGV[0] ? 1 : 0;
 
+my $active = (qx{ufw status} =~ /Status: active/);
+
 # Enable every available service.
 my $list = qx{ufw app list};
 my @apps = split(/\n/, $list);
 shift @apps;
 @apps = map { s/^\s+//; $_ } @apps;
 
-# Sane defaults
-my @rules = (
-    [qw{reset}],
-    [qw{enable}],
-    [qw{default deny outgoing}],
-    [qw{default deny incoming}],
-);
+# Only reset and re-enable when UFW is not already active — reset briefly drops
+# the firewall which is disruptive on a running system.
+my @rules;
+unless ($active) {
+    push @rules,
+        [qw{reset}],
+        [qw{enable}],
+        [qw{default deny outgoing}],
+        [qw{default deny incoming}];
+}
 
-# Allow, but rate limit
+# Allow, but rate limit — these are idempotent and safe to reapply.
 foreach my $app (@apps) {
     push(@rules,
         ["allow", "out", $app],
