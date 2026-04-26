@@ -10,7 +10,7 @@
 csplit --suppress-matched --quiet --digits 1 --prefix mount -- fusemounts.txt "/--SEPARATOR--/" "{*}"
 [% END -%]
 [% FOREACH mount IN fuse %]
-mv mount[% loop.index %] /etc/systemd/service/[% mount.servicename %].service
+mv mount[% loop.index %] /etc/systemd/system/[% mount.servicename %].service
 sudo -u [% user %] systemctl --user enable [% mount.servicename %].service
 sudo -u [% user %] systemctl --user start  [% mount.servicename %]
 [% END -%]
