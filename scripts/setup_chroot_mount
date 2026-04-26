@@ -9,6 +9,6 @@ cp /etc/fstab /tmp/fstab.new
 echo "$TARGET $LINK_NAME none defaults,bind 0 0" >> /tmp/fstab.new
 sort < /tmp/fstab.new | uniq | grep -o '^[^#]*' > /tmp/fstab.newer
 chown root:root /tmp/fstab.newer
-mv /etc/fstab /etc/fstab.bak
+[ -f /etc/fstab.bak ] || mv /etc/fstab /etc/fstab.bak
 mv /tmp/fstab.newer /etc/fstab
-mount $TARGET
+mountpoint -q "$LINK_NAME" || mount $TARGET
