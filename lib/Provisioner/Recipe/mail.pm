@@ -27,8 +27,10 @@ use parent qw{Provisioner::Recipe};
                         - "INBOX.foo"
                         - "INBOX.bar"
             mail_aliases:
-                - Me: you
-                - You: me
+                - from: Me
+                  to: you
+                - from: You
+                  to: me
 
 =head2 DESCRIPTION
 
@@ -68,10 +70,6 @@ sub dep_conflicts {
 
 sub validate {
     my ( $self, %vars ) = @_;
-
-    if ( $vars{forwarders} ) {
-        die "aliases must be ARRAY" unless ref $vars{aliases} eq 'ARRAY';
-    }
 
     if ( $vars{names} ) {
         die "names must be HASH" unless ref $vars{names} eq 'HASH';

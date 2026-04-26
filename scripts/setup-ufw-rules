@@ -13,9 +13,15 @@ use warnings;
 
 Configure UFW firewall rules based on available applications.
 
+On first run (UFW inactive), resets to a known-clean state before applying rules.
+On subsequent runs (UFW already active), skips the destructive reset and only
+adds missing rules — safe for shared environments and redeployment.
+
 =cut
 
 my $DRY_RUN = $ARGV[0] ? 1 : 0;
+
+my $ufw_active = (qx{ufw status} =~ /Status: active/);
 
 # Enable every available service.
 my $list = qx{ufw app list};
@@ -23,13 +29,18 @@ my @apps = split(/\n/, $list);
 shift @apps;
 @apps = map { s/^\s+//; $_ } @apps;
 
-# Sane defaults
-my @rules = (
-    [qw{reset}],
-    [qw{enable}],
-    [qw{default deny outgoing}],
-    [qw{default deny incoming}],
-);
+# On first run only: reset to clean slate, then enable with sane defaults.
+# Skip reset on subsequent runs to avoid disrupting established connections
+# and dropping any manually-added rules on shared systems.
+my @rules;
+unless ($ufw_active) {
+    push @rules, (
+        [qw{--force reset}],
+        [qw{enable}],
+        [qw{default deny outgoing}],
+        [qw{default deny incoming}],
+    );
+}
 
 # Allow, but rate limit
 foreach my $app (@apps) {
