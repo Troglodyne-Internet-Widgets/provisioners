@@ -171,11 +171,12 @@ sub template_files {
     my ($self) = @_;
 
     return (
-        'matrix.homeserver.yaml.tt' => 'homeserver.yaml',
-        'matrix.log.yaml.tt'        => 'log.yaml',
-        'matrix.nginx.tt'           => 'matrix.nginx.conf',
-        'matrix.admin.nginx.tt'     => 'matrix-admin.nginx.conf',
-        'matrix.synapse.service.tt' => 'matrix-synapse.service',
+        'matrix.homeserver.yaml.tt'      => 'homeserver.yaml',
+        'matrix.log.yaml.tt'             => 'log.yaml',
+        'matrix.nginx.tt'                => 'matrix.nginx.conf',
+        'matrix.admin.nginx.tt'          => 'matrix-admin.nginx.conf',
+        'matrix.synapse.service.tt'      => 'matrix-synapse.service',
+        'matrix.register_admin.sh.tt'    => 'matrix_register_admin.sh',
     );
 }
 
