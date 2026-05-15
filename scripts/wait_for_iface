@@ -1,0 +1,18 @@
+#!/bin/bash
+# Usage: wait_for_iface <interface> <timeout_seconds>
+# Waits until the named network interface exists, or exits non-zero on timeout.
+
+IFACE="${1:?Usage: wait_for_iface <interface> <timeout_seconds>}"
+TIMEOUT="${2:-30}"
+
+i=0
+while ! ip link show "$IFACE" > /dev/null 2>&1; do
+    if [ "$i" -ge "$TIMEOUT" ]; then
+        echo "wait_for_iface: timed out waiting for $IFACE after ${TIMEOUT}s" >&2
+        exit 1
+    fi
+    sleep 1
+    i=$((i + 1))
+done
+
+echo "wait_for_iface: $IFACE is up (${i}s)"
