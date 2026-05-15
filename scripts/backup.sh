@@ -2,11 +2,6 @@
 
 # This backup script runs as root on the remote.  As such, you'll want to authorize the key via a mechanism similar to that done in the 'backup' target.
 
-# Semaphore
-[[ -f /root/backup_in_progress ]] && logger --stderr "Another backup in progress, exiting" && exit 1;
-
-touch /root/backup_in_progress
-
 REMOTE=$1
 shift
 BASEDIR=$1
@@ -19,6 +14,12 @@ TARGETS="$@"
 DATE=$(date -I)
 YESTERDAY=$(date -I --date '-1 day')
 BACKUPDIR=/$BASEDIR/$REMOTE
+
+# Semaphore
+[[ -f /root/backup_in_progress_$REMOTE ]] && logger --stderr "Another backup in progress, exiting" && exit 1;
+
+touch /root/backup_in_progress_$REMOTE
+
 
 # Snapshot the host.
 logger --stderr "Backing up $REMOTE..."
@@ -44,4 +45,4 @@ done
 
 logger --stderr "Done."
 
-rm /root/backup_in_progress
+rm /root/backup_in_progress_$REMOTE
