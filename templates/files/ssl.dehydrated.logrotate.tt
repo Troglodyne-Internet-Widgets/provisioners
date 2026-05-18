@@ -2,6 +2,7 @@
      rotate 12
      weekly
      compress
+     copytruncate
      delaycompress
      missingok
      create 640  root adm
