@@ -62,7 +62,8 @@ sub validate {
             if (-d $disk->{device}) {
                 $disk->{type} = 'virtiofs';
                 $disk->{partition} = 'NONE';
-                $disk->{options} = 'default';
+                #XXX It is more important to boot than have this fail
+                $disk->{options} = 'default,nofail';
             }
         }
     }

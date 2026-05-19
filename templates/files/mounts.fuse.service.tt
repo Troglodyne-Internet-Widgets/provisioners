@@ -1,7 +1,8 @@
 [% FOREACH mount IN fuse %]
 [Unit]
 Description=Fuse Mount of [% mount.device %]
-After=network.target
+After=modprobe@fuse.service
+Requires=modprobe@fuse.service
 
 [Mount]
 What=[% mount.device %]
