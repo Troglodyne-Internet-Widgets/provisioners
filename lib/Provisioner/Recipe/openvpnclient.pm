@@ -13,6 +13,7 @@ In recipes.yaml:
 
     somedomain:
         openvpnclient:
+            order: A
             server: vpn.example.com
             cert_dir: /opt/vpn-certs/somedomain
             port: 1194
@@ -28,9 +29,10 @@ pre-generated on the VPN server via easy-rsa and placed in cert_dir on the
 hypervisor.  The recipe rsyncs them to the provisioned host.
 
 Because the VPN tunnel is brought up during provisioning (not deferred to
-postrun), any recipe that needs connectivity through the tunnel should be
-listed after openvpnclient in recipes.yaml so it runs after the tunnel is
-established.
+postrun), any recipe that needs connectivity through the tunnel must run after
+this one.  Recipe execution order is determined by the C<order:> key — set
+this recipe's order to a value that sorts before any recipe depending on the
+tunnel (e.g. C<order: A>).
 
 =cut
 

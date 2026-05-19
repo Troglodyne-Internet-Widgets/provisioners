@@ -3,7 +3,7 @@ dev tun
 proto [% proto %]
 
 remote [% server %] [% port %]
-resolv-retry infinite
+resolv-retry 15
 nobind
 
 persist-key

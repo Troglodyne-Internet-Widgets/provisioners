@@ -1,4 +1,4 @@
-[% state_dir %]/openvpn: [% state_dir %]/scripts [% state_dir %]/packages
+[% state_dir %]/openvpn:
 	# Set up easy-rsa PKI
 	mkdir -p /etc/openvpn/easy-rsa
 	cp -r /usr/share/easy-rsa/* /etc/openvpn/easy-rsa/
@@ -23,7 +23,9 @@
 	echo 'net.ipv4.ip_forward=1' > /etc/sysctl.d/99-openvpn.conf
 	sysctl -p /etc/sysctl.d/99-openvpn.conf
 [% IF interface -%]
-	# NAT for VPN clients
+	# NAT for VPN clients (masquerade VPN subnet out via the named interface).
+	# ufw does not expose masquerade rules directly; they would require hand-editing
+	# /etc/ufw/before.rules, so we use iptables-persistent here instead.
 	iptables -t nat -A POSTROUTING -s [% subnet %]/24 -o [% interface %] -j MASQUERADE
 	iptables-save > /etc/iptables/rules.v4
 [% END -%]

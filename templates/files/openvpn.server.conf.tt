@@ -16,9 +16,13 @@ auth SHA256
 server [% subnet %] [% netmask %]
 ifconfig-pool-persist /var/log/openvpn/ipp.txt
 
+[% IF dns.size() -%]
 [% FOR d IN dns -%]
 push "dhcp-option DNS [% d %]"
 [% END -%]
+[% END -%]
+# Route all client traffic through the VPN gateway.
+# bypass-dhcp ensures local DHCP still reaches the real gateway.
 push "redirect-gateway def1 bypass-dhcp"
 
 keepalive 10 120

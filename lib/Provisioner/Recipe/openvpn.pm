@@ -17,10 +17,8 @@ In recipes.yaml:
             proto: udp
             subnet: 10.8.0.0
             netmask: 255.255.255.0
-            dns:
-                - 1.1.1.1
-                - 1.0.0.1
             cipher: AES-256-GCM
+            # dns is optional; if omitted, no DNS servers are pushed to clients
             interface: eth0
 
 =head2 DESCRIPTION
@@ -55,11 +53,10 @@ sub validate {
     $opts{subnet}  //= '10.8.0.0';
     $opts{netmask} //= '255.255.255.0';
     $opts{cipher}  //= 'AES-256-GCM';
-    $opts{dns}     //= [ '1.1.1.1', '1.0.0.1' ];
 
     die "proto must be 'udp' or 'tcp'" unless $opts{proto} =~ /^(udp|tcp)$/;
     die "port must be numeric"         unless $opts{port}  =~ /^\d+$/;
-    die "dns must be an ARRAY"         unless ref $opts{dns} eq 'ARRAY';
+    die "dns must be an ARRAY"         if $opts{dns} && ref $opts{dns} ne 'ARRAY';
 
     return %opts;
 }
