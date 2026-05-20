@@ -465,8 +465,8 @@ sub handle_domain {
     my $size = $global_config->{size} // 42949672960;
     # Default to 2 cpus
     my $cpus = $global_config->{cpus} // 2;
-    # Default to 4g ram
-    my $mem = $global_config->{mem} // 4294967296
+    # Default to 4g ram (mb)
+    my $mem = $global_config->{mem} // 4092;
 
     my $pconf = qq(
         image=https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
