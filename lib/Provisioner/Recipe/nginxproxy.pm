@@ -13,6 +13,7 @@ use parent qw{Provisioner::Recipe};
         nginxproxy:
             proxy_uri: http://unix:/path/to/socket
             proxy_buffering: 0
+            static_dir: www/static
 
 =head2 DESCRIPTION
 
@@ -34,6 +35,8 @@ sub validate {
     my ( $self, %opts ) = @_;
     my $uri = $opts{proxy_uri};
     die "Must set proxy_uri in [nginxproxy] section of recipes.yaml" unless $uri;
+    my $sd = $opts{static_dir};
+    die "Must set static_dir in [nginxproxy] section of recipes.yaml" unless $sd;
     return %opts;
 }
 

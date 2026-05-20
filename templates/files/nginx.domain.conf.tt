@@ -8,8 +8,8 @@ server {
     ssl_certificate_key /etc/ssl/private/[% domain %].pem;
 
     location / {
-        root [% install_dir %]/[% domain %]/www/;
-        try_files $uri @default;
+        root [% install_dir %]/[% domain %]/[% static_dir %];
+        try_files $uri $uri.html $uri/index.html @default;
     }
 
     location @default {
@@ -28,8 +28,8 @@ server {
     server_name [% domain %] www.[% domain %] [% full_aliases.join(', ') %];
 
     location / {
-        root [% install_dir %]/[% domain %]/www/;
-        try_files $uri @default;
+        root [% install_dir %]/[% domain %]/[% static_dir %];
+        try_files $uri $uri.html $uri/index.html @default;
     }
 
     location @default {
