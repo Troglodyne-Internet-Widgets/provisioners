@@ -13,7 +13,7 @@ use parent qw{Provisioner::Recipe};
         tpsgi:
             routers:
                 - my/lib/Router.pm
-            extra_env: "MY_VAR=foo OTHER_VAR=bar"
+	    basedir: "path/to/tcms/install"
 
 =head2 DESCRIPTION
 
