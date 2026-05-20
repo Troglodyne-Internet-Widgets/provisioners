@@ -70,6 +70,9 @@ tickle:
             type: "cloudflare"
             user: "someGuy"
             key:  "FooBarBaz1"
+        size: disk_size_in_bytes
+        memory: ram_size_in_mb
+        cpus:  num_cpus
     data:
         from: /opt/client-data
         to:   /opt/domains
