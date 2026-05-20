@@ -460,9 +460,19 @@ sub handle_domain {
     my $r_text = join( ', ', @$resolvers );
 
     # Build a provision.conf
+
+    # Default to 40gb
+    my $size = $global_config->{size} // 42949672960;
+    # Default to 2 cpus
+    my $cpus = $global_config->{cpus} // 2;
+    # Default to 4g ram
+    my $mem = $global_config->{mem} // 4294967296
+
     my $pconf = qq(
         image=https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
-        size=42949672960
+        size=$size
+        cpus=$cpus
+        memory=$mem
         packages=$extra_packages
         contact_email=$admin_email
         ips=$static_ip
