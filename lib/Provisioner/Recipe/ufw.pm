@@ -64,6 +64,7 @@ sub template_files {
     my %ret = (
         'ufw.rsyslog.tt' => 'ufw/rsyslog',
         'ufw.http.tt'    => 'ufw/http',
+        'ufw.user.rules.tt' => 'ufw.user.rules',
     );
 
     return %ret unless @recipes;

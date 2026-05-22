@@ -31,21 +31,14 @@ my @rules = (
     [qw{default deny incoming}],
 );
 
-# Allow, but rate limit
+# Allow, but rate limit; control the limit in user.rules
 foreach my $app (@apps) {
     push(@rules,
         ["allow", "out", $app],
     );
-    # HTTP tends to request lots of stuff simultaneously
-    if ($app =~ m/^Nginx|HTTP/i) {
-        push(@rules,
-            ["allow", "in", $app]
-        );
-    } else {
-        push(@rules,
-            ["limit", "in", $app],
-        );
-    }
+    push(@rules,
+        ["limit", "in", $app],
+    );
 }
 
 @rules = map { unshift(@{$_}, '--dry-run'); $_ } @rules if $DRY_RUN;
