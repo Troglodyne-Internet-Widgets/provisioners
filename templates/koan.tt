@@ -1,0 +1,84 @@
+# Kōan — autonomous coding bot
+#
+# Layout:
+#   [% install_dir %]/[% domain %]            koan checkout root (KOAN_ROOT)
+#   [% install_dir %]/[% domain %]/koan/      python package (WorkingDir/PYTHONPATH)
+#   [% install_dir %]/[% domain %]/.env       secrets (0640 root:[% user %])
+#   [% install_dir %]/[% domain %]/instance/  bot memory/journal/missions (persisted)
+#   [% install_dir %]/[% domain %]/.venv      python virtualenv
+#   /etc/systemd/system/koan.service          agent loop
+#   /etc/systemd/system/koan-awake.service    messaging bridge
+
+# Clone (or refresh) the koan repo into install_dir/domain.  The
+# service_user target already owns the dir; we own things back to
+# [% user %]:[% admin_user %] after we're done.
+if [ ! -d '[% install_dir %]/[% domain %]/.git' ]; then \
+    git clone --branch '[% repo_branch %]' '[% repo_url %]' '[% install_dir %]/[% domain %]'; \
+else \
+    cd '[% install_dir %]/[% domain %]' && git fetch origin && git reset --hard 'origin/[% repo_branch %]'; \
+fi
+git config --global --get-all safe.directory 2>/dev/null | grep -qFx '[% install_dir %]/[% domain %]' \
+    || git config --global --add safe.directory '[% install_dir %]/[% domain %]'
+
+# Stage the gitignored instance/ tree from instance.example (first run only).
+# Guarded with `-e "$f"` so an empty instance.example/ doesn't try to cp a literal '*'.
+mkdir -p '[% install_dir %]/[% domain %]/instance'
+mkdir -p '[% install_dir %]/[% domain %]/logs'
+for f in '[% install_dir %]/[% domain %]/instance.example/'*; do \
+    [ -e "$$f" ] || continue; \
+    name="$$(basename "$$f")"; \
+    [ -e "[% install_dir %]/[% domain %]/instance/$$name" ] || cp -r "$$f" "[% install_dir %]/[% domain %]/instance/$$name"; \
+done
+
+# Drop in the rendered configs
+install -o root -g '[% user %]' -m 0640 koan.env             '[% install_dir %]/[% domain %]/.env'
+install -o root -g '[% user %]' -m 0640 koan.config.yaml     '[% install_dir %]/[% domain %]/instance/config.yaml'
+install -o root -g '[% user %]' -m 0640 koan.projects.yaml   '[% install_dir %]/[% domain %]/projects.yaml'
+
+# Build the virtualenv as the service user (no shell required for python -m venv)
+runuser -u '[% user %]' -- python3 -m venv '[% install_dir %]/[% domain %]/.venv'
+runuser -u '[% user %]' -- '[% install_dir %]/[% domain %]/.venv/bin/pip' install --quiet --upgrade pip
+runuser -u '[% user %]' -- '[% install_dir %]/[% domain %]/.venv/bin/pip' install --quiet -r '[% install_dir %]/[% domain %]/koan/requirements.txt'
+
+[% IF cli_provider == 'claude' %]
+# Install Claude Code CLI globally so the koan user can shell out to `claude`.
+# Skip when already on PATH — `npm install -g` round-trips the registry every
+# call.  To force an upgrade, uninstall first or run npm update manually.
+command -v claude >/dev/null 2>&1 || npm install -g --silent @anthropic-ai/claude-code
+[% END %]
+
+[% IF messaging_provider == 'matrix' && matrix_e2ee && matrix_password && !matrix_access_token %]
+# Matrix E2EE bootstrap — runs once.  Mints a brand-new device for the bot
+# (reusing a device_id silently breaks Megolm), captures the access token,
+# writes everything to instance/matrix/credentials.env (0600).  The systemd
+# units load that file via a second EnvironmentFile=.
+# Re-provisions skip this block because of the `[ ! -f ... ]` guard, so the
+# one-shot password never lives on disk and never re-runs.
+if [ ! -f '[% install_dir %]/[% domain %]/instance/matrix/credentials.env' ]; then \
+    install -d -o '[% user %]' -g '[% user %]' -m 0700 '[% install_dir %]/[% domain %]/instance/matrix'; \
+    KOAN_ROOT='[% install_dir %]/[% domain %]' \
+    KOAN_MATRIX_HOMESERVER='[% matrix_homeserver %]' \
+    KOAN_MATRIX_USER_ID='[% matrix_user_id %]' \
+    KOAN_MATRIX_PASSWORD='[% matrix_password %]' \
+    KOAN_MATRIX_PICKLE_KEY='[% matrix_pickle_key %]' \
+    PYTHONPATH='[% install_dir %]/[% domain %]/koan' \
+    runuser -u '[% user %]' -- '[% install_dir %]/[% domain %]/.venv/bin/python' -m app.matrix_login; \
+fi
+[% END %]
+
+# Reset ownership on everything we just dropped in.  .env and config.yaml
+# stay 0640 root:[% user %] (read-only to the bot, invisible to others).
+chown -R '[% user %]:[% admin_user %]' '[% install_dir %]/[% domain %]'
+chown root:'[% user %]' '[% install_dir %]/[% domain %]/.env' '[% install_dir %]/[% domain %]/instance/config.yaml'
+chmod 0640 '[% install_dir %]/[% domain %]/.env' '[% install_dir %]/[% domain %]/instance/config.yaml'
+find '[% install_dir %]/[% domain %]/.venv' -type d -exec chmod 0750 {} +
+
+# systemd units
+install -o root -g root -m 0644 koan.service       /etc/systemd/system/koan.service
+install -o root -g root -m 0644 koan-awake.service /etc/systemd/system/koan-awake.service
+systemctl daemon-reload
+systemctl enable koan-awake.service
+systemctl enable koan.service
+
+# Defer start until everything else has run (cron, nginx, etc.)
+[% script_dir %]/queue_postrun_task systemctl start koan.service
