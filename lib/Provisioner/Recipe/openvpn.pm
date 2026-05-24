@@ -57,8 +57,19 @@ sub validate {
     die "proto must be 'udp' or 'tcp'" unless $opts{proto} =~ /^(udp|tcp)$/;
     die "port must be numeric"         unless $opts{port}  =~ /^\d+$/;
     die "dns must be an ARRAY"         if $opts{dns} && ref $opts{dns} ne 'ARRAY';
+    die "netmask must be dotted-quad"  unless $opts{netmask} =~ /^\d+\.\d+\.\d+\.\d+$/;
+
+    $opts{cidr} = _netmask_to_cidr( $opts{netmask} );
 
     return %opts;
+}
+
+# Convert a dotted-quad netmask (e.g. 255.255.255.0) into a CIDR prefix length
+# (e.g. 24). Used to render iptables/MASQUERADE source CIDRs.
+sub _netmask_to_cidr {
+    my ($mask) = @_;
+    my $bin = unpack 'B32', pack 'C4', split /\./, $mask;
+    return ( $bin =~ tr/1// );
 }
 
 sub template_files {
