@@ -12,14 +12,27 @@ use parent qw{Provisioner::Recipe};
     somedomain:
         nginxproxy:
             proxy_uri: http://unix:/path/to/socket
-            proxy_buffering: 0
             static_dir: www/static
+            nocache_prefix: /secure
 
 =head2 DESCRIPTION
 
 Sets up reverse proxy rules for the primary application to be deployed.
 
-Optionally turn off proxy buffering (if you do things like COMET this is needed).
+The idea here is to support aggressive caching of the outputs of the proxied application.
+This is implemented through a try_files directive:
+
+    try_files $url $url.html $url/index.html @default
+
+You can set the name of the 'uncached' route to your application,
+which is useful if you have necessarily dynamic pages.
+Your application will have to strip that part of the route and then route as normal.
+
+In that case we still serve statics as exact matches, but not .html/.htm versions.
+This way all your routes (e.g. /foo) can be dynamic while static assets (e.g. styles/foo.css) will
+still be served by nginx.
+
+It is up to your application to cull/regenerate/never generate .html versions of your routes when appropriate.
 
 =cut
 

@@ -8,9 +8,22 @@ server {
     ssl_certificate_key /etc/ssl/private/[% domain %].pem;
 
     location / {
+        sendfile on;
+        sendfile_max_chunk 1m;
+        tcp_nopush on;
         root [% install_dir %]/[% domain %]/[% static_dir %];
         try_files $uri $uri.html $uri/index.html @default;
     }
+
+    [% IF nocache_prefix %]
+    location [% nocache_prefix %] {
+        sendfile on;
+        sendfile_max_chunk 1m;
+        tcp_nopush on;
+        root [% install_dir %]/[% domain %]/[% static_dir %];
+        try_files $uri @default;
+    }
+    [% END %]
 
     location @default {
         proxy_pass [% proxy_uri %];
@@ -18,7 +31,6 @@ server {
         proxy_set_header Host            $host;
         proxy_set_header X-Forwarded-For $remote_addr;
     }
-
 }
 
 server {
@@ -28,9 +40,23 @@ server {
     server_name [% domain %] www.[% domain %] [% full_aliases.join(', ') %];
 
     location / {
+        sendfile on;
+        tcp_nopush on;
+        sendfile_max_chunk 1m;
         root [% install_dir %]/[% domain %]/[% static_dir %];
         try_files $uri $uri.html $uri/index.html @default;
     }
+
+    [% IF nocache_prefix %]
+    location [% nocache_prefix %] {
+        sendfile on;
+        sendfile_max_chunk 1m;
+        tcp_nopush on;
+        root [% install_dir %]/[% domain %]/[% static_dir %];
+        try_files $uri @default;
+    }
+    [% END %]
+
 
     location @default {
         proxy_pass [% proxy_uri %];
