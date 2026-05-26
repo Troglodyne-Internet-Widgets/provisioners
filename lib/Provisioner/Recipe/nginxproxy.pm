@@ -11,7 +11,7 @@ use parent qw{Provisioner::Recipe};
 
     somedomain:
         nginxproxy:
-            proxy_uri: http://unix:/path/to/socket
+            proxy_uri: path/to/socket/in/install_dir
             static_dir: www/static
             nocache_prefix: /secure
 
