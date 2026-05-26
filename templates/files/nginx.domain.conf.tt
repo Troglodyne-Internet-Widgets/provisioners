@@ -8,12 +8,33 @@ server {
     ssl_certificate_key /etc/ssl/private/[% domain %].pem;
 
     location / {
+        gzip on;
+        etag on;
+        expires 1d;
         sendfile on;
         sendfile_max_chunk 1m;
         tcp_nopush on;
         root [% install_dir %]/[% domain %]/[% static_dir %];
         try_files $uri $uri.html $uri/index.html @default;
     }
+
+    [% IF auth_statics AND auth_uri %]
+    location /[% auth_statics %] {
+        auth_request [% auth_uri %];
+        sendfile on;
+        tcp_nopush on;
+        sendfile_max_chunk 1m;
+        root [% install_dir %]/[% domain %]/[% static_dir %]/[% auth_statics %];
+    }
+    location = [% auth_uri %] {
+        internal;
+        proxy_pass              [% proxy_uri %];
+        proxy_pass_request_body off;
+        proxy_set_header        Content-Length "";
+        proxy_set_header        X-Original-URI  $request_uri;
+        proxy_set_header        X-Forwarded-For $remote_addr;
+    }
+    [% END %]
 
     [% IF nocache_prefix %]
     location [% nocache_prefix %] {
@@ -40,12 +61,31 @@ server {
     server_name [% domain %] www.[% domain %] [% full_aliases.join(', ') %];
 
     location / {
+        gzip on;
         sendfile on;
         tcp_nopush on;
         sendfile_max_chunk 1m;
         root [% install_dir %]/[% domain %]/[% static_dir %];
         try_files $uri $uri.html $uri/index.html @default;
     }
+
+    [% IF auth_statics AND auth_uri %]
+    location /[% auth_statics %] {
+        auth_request [% auth_uri %];
+        sendfile_on;
+        tcp_nopush on;
+        sendfile_max_chunk 1m;
+        root [% install_dir %]/[% domain %]/[% static_dir %];
+    }
+    location = [% auth_uri %] {
+        internal;
+        proxy_pass              [% proxy_uri %];
+        proxy_pass_request_body off;
+        proxy_set_header        Content-Length "";
+        proxy_set_header        X-Original-URI  $request_uri;
+        proxy_set_header        X-Forwarded-For $remote_addr;
+    }
+    [% END %]
 
     [% IF nocache_prefix %]
     location [% nocache_prefix %] {
