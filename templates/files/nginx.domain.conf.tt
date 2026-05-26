@@ -21,10 +21,12 @@ server {
     [% IF auth_statics AND auth_uri %]
     location /[% auth_statics %] {
         auth_request [% auth_uri %];
+        etag on;
+        expires 1d;
         sendfile on;
         tcp_nopush on;
         sendfile_max_chunk 1m;
-        root [% install_dir %]/[% domain %]/[% static_dir %]/[% auth_statics %];
+        root [% install_dir %]/[% domain %]/[% static_dir %];
     }
     location = [% auth_uri %] {
         internal;
