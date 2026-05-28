@@ -50,7 +50,7 @@ _smtps._tcp        IN SRV 0 0 465 mail.[% domain %].
 _submission.tcp    IN SRV 0 0 564 mail.[% domain %].
 _autodiscover._tcp IN SRV 0 0 80  mail.[% domain %].
 
-[% IF modules.grep('matrix').size %]
+[% IF modules.grep('matrix').size() %]
 ; Matrix subdomains
 matrix       IN CNAME @
 admin.matrix IN CNAME @

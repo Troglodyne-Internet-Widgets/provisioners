@@ -5,7 +5,7 @@ MAILTO="[% admin_email %]"
 MAILFROM="[% from %]@[% domain %]"
 [% END %]
 
-[% IF modules.grep('letsencrypt').size %]
+[% IF modules.grep('letsencrypt').size() %]
 # SSL
 0 0 * * * root command dehydrated --config /etc/dehydrated/domains.d/[% domain %].conf --cron >> /var/log/dehydrated.log
 [% END %]
