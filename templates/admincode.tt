@@ -1,9 +1,12 @@
 mkdir -p [% install_dir %]/[% domain %]/[% basedir %]
+mkdir -p /home/[% admin_user %]/bin
+chown [% admin_user %]:[% admin_user %] /home/[% admin_user %]/bin
 chown [% admin_user %]:[% admin_user %] [% install_dir %]/[% domain %]/[% basedir %]
-sudo -u [% admin_user %] ln -s [% install_dir %]/[% domain %]/[% basedir %] ~/[% basedir %]
+sudo -u [% admin_user %] ln -s [% install_dir %]/[% domain %]/[% basedir %] /home/[% admin_user %]/[% basedir %]
+cp [% script_dir %]/repos_for /home/[% admin_user %]/bin/repos_for
 [% FOR repo in repos_from %]
 [% FOR entity in repo.repos_for %]
-cd [% install_dir %]/[% domain %]/[% basedir %] && sudo -u [% admin_user %] [% script_dir %]/repos_for [% repo.api_url %] '[% repo.token %]' [% entity %]
+cd [% install_dir %]/[% domain %]/[% basedir %] && sudo -u [% admin_user %] /home/[% admin_user %]/bin/repos_for [% repo.api_url %] '[% repo.token %]' [% entity %]
 [% END -%]
 [% END -%]
 [% IF modules.grep('perl').size() %]
