@@ -16,4 +16,5 @@ MAILFROM="[% from %]@[% domain %]"
 */5  * * * *  root command oomdetect.sh
 */5  * * * *  root command newusers.sh
 */5  * * * *  root command logdrops.sh
+*/5  * * * *  root command outgoing_blocks.sh
 */30 * * * *  root command changes_in_packaged_files.sh
