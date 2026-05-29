@@ -47,3 +47,11 @@ foreach my $app (@apps) {
 foreach my $rule (@rules) {
     system(@$rule);
 }
+
+# Allow outgoing ports for userspace so we can ssh outgoing etc
+system(qw{ufw allow out 32768:61000/tcp});
+# Allow dhcp v4/v6
+system(qw{ufw allow out 67:68/tcp});
+system(qw{ufw allow in 67:68/tcp});
+system(qw{ufw allow out 546:547/tcp});
+system(qw{ufw allow in 546:547/tcp});
