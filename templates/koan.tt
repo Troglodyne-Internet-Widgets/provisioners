@@ -17,13 +17,19 @@
 # Clone (or refresh) the koan repo into KOAN_ROOT.  Target dir must NOT
 # exist for `git clone`, hence the subdir — service_user already created
 # the parent, which would block a top-level clone.
+# Explicit per-command HOME= prefix because setup.tmpl runs us out of
+# atd which doesn't seed $HOME; git/npm/gh as root crash without it.
+# Convention matches tcms.tt — HOME points at the service user's dir
+# so any global config written here ends up where the bot will read it.
 if [ ! -d '[% install_dir %]/[% domain %]/koan/.git' ]; then \
-    git clone --branch '[% repo_branch %]' '[% repo_url %]' '[% install_dir %]/[% domain %]/koan'; \
+    HOME='[% install_dir %]/[% domain %]' git clone --branch '[% repo_branch %]' '[% repo_url %]' '[% install_dir %]/[% domain %]/koan'; \
 else \
-    cd '[% install_dir %]/[% domain %]/koan' && git fetch origin && git reset --hard 'origin/[% repo_branch %]'; \
+    cd '[% install_dir %]/[% domain %]/koan' \
+        && HOME='[% install_dir %]/[% domain %]' git fetch origin \
+        && HOME='[% install_dir %]/[% domain %]' git reset --hard 'origin/[% repo_branch %]'; \
 fi
-git config --global --get-all safe.directory 2>/dev/null | grep -qFx '[% install_dir %]/[% domain %]/koan' \
-    || git config --global --add safe.directory '[% install_dir %]/[% domain %]/koan'
+HOME='[% install_dir %]/[% domain %]' git config --global --get-all safe.directory 2>/dev/null | grep -qFx '[% install_dir %]/[% domain %]/koan' \
+    || HOME='[% install_dir %]/[% domain %]' git config --global --add safe.directory '[% install_dir %]/[% domain %]/koan'
 
 # Stage the gitignored instance/ tree from instance.example (first run only).
 # Guarded with `-e "$f"` so an empty instance.example/ doesn't try to cp a literal '*'.
@@ -51,7 +57,7 @@ runuser -u '[% user %]' -- '[% install_dir %]/[% domain %]/.venv/bin/pip' instal
 # Install Claude Code CLI globally so the koan user can shell out to `claude`.
 # Skip when already on PATH — `npm install -g` round-trips the registry every
 # call.  To force an upgrade, uninstall first or run npm update manually.
-command -v claude >/dev/null 2>&1 || npm install -g --silent @anthropic-ai/claude-code
+command -v claude >/dev/null 2>&1 || HOME='[% install_dir %]/[% domain %]' npm install -g --silent @anthropic-ai/claude-code
 [% END %]
 
 [% IF messaging_provider == 'matrix' && matrix_e2ee && matrix_password && !matrix_access_token %]
