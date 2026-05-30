@@ -29,31 +29,8 @@ use Hash::Merge();
 use File::Find();
 use FindBin::libs;
 
-# Right-precedent, but arrays REPLACE instead of concatenating.
-# Hash::Merge's stock behaviours all concat arrays, which silently
-# duplicates per-domain config when the same array key is present in
-# both _base and a recipes.d/ file (e.g. cron.root_scripts) — and that
-# in turn caused each cron job to fire twice on the deployed guest.
-Hash::Merge::specify_behavior(
-    {
-        SCALAR => {
-            SCALAR => sub { $_[1] },
-            ARRAY  => sub { $_[1] },
-            HASH   => sub { $_[1] },
-        },
-        ARRAY => {
-            SCALAR => sub { $_[1] },
-            ARRAY  => sub { $_[1] },
-            HASH   => sub { $_[1] },
-        },
-        HASH => {
-            SCALAR => sub { $_[1] },
-            ARRAY  => sub { $_[1] },
-            HASH   => sub { Hash::Merge::_merge_hashes( $_[0], $_[1] ) },
-        },
-    },
-    'RIGHT_PRECEDENT_ARRAYS_REPLACE',
-);
+Hash::Merge::set_behavior('RIGHT_PRECEDENT');
+Hash::Merge::set_behavior('STORAGE_PRECEDENT');
 
 =head1 USAGE
 
