@@ -134,10 +134,26 @@ brand-new device must be acquired.  The recipe handles this two ways:
 
 =back
 
-The Olm/Megolm store lives at C<instance/matrix-store/> and is
+Filesystem layout on the guest:
+
+    [install_dir]/[domain]/           koan user $HOME (.ssh, .gitconfig, .venv)
+    [install_dir]/[domain]/koan/      repo checkout — KOAN_ROOT
+    [install_dir]/[domain]/koan/koan/ python package (PYTHONPATH, WorkingDir)
+    [install_dir]/[domain]/koan/.env  secrets
+    [install_dir]/[domain]/koan/instance/  bot state (preserved)
+    [install_dir]/[domain]/koan/logs/      service log files (preserved)
+    [install_dir]/[domain]/.venv/     python virtualenv (outside repo so
+                                      git reset --hard doesn't blow it away)
+
+KOAN_ROOT is a subdir of the user's home rather than the home itself
+because the C<service_user> target creates C<install_dir/domain/>
+before the recipe runs, and C<git clone> won't drop a repo into an
+existing non-empty directory.
+
+The Olm/Megolm store lives at C<koan/instance/matrix-store/> and is
 preserved across re-deploys by L</remote_files> alongside the rest of
-C<instance/>.  Losing it means losing the ability to decrypt past room
-sessions, so don't C<rm -rf> the data dir.
+C<koan/instance/>.  Losing it means losing the ability to decrypt past
+room sessions, so don't C<rm -rf> the data dir.
 
 The recipe:
 
@@ -357,8 +373,8 @@ sub datadirs {
 sub remote_files {
     my ( $self, $install_dir, $domain ) = @_;
     return (
-        "$install_dir/$domain/instance/" => 'koan/instance/',
-        "$install_dir/$domain/logs/"     => 'koan/logs/',
+        "$install_dir/$domain/koan/instance/" => 'koan/instance/',
+        "$install_dir/$domain/koan/logs/"     => 'koan/logs/',
     );
 }
 

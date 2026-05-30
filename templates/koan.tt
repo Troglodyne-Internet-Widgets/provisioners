@@ -1,44 +1,51 @@
 # Kōan — autonomous coding bot
 #
-# Layout:
-#   [% install_dir %]/[% domain %]            koan checkout root (KOAN_ROOT)
-#   [% install_dir %]/[% domain %]/koan/      python package (WorkingDir/PYTHONPATH)
-#   [% install_dir %]/[% domain %]/.env       secrets (0640 root:[% user %])
-#   [% install_dir %]/[% domain %]/instance/  bot memory/journal/missions (persisted)
-#   [% install_dir %]/[% domain %]/.venv      python virtualenv
-#   /etc/systemd/system/koan.service          agent loop
-#   /etc/systemd/system/koan-awake.service    messaging bridge
+# Layout (KOAN_ROOT is a subdir of the koan user's home so we can clone
+# into a fresh dir; the parent already exists from the service_user
+# target which would otherwise break `git clone`):
+#
+#   [% install_dir %]/[% domain %]/             koan user $HOME (.ssh, .gitconfig, .venv)
+#   [% install_dir %]/[% domain %]/koan/        repo checkout — KOAN_ROOT
+#   [% install_dir %]/[% domain %]/koan/koan/   python package — PYTHONPATH/WorkingDir
+#   [% install_dir %]/[% domain %]/koan/.env    secrets (0640 root:[% user %])
+#   [% install_dir %]/[% domain %]/koan/instance/  bot memory/journal/missions (persisted)
+#   [% install_dir %]/[% domain %]/koan/logs/      service log files (persisted)
+#   [% install_dir %]/[% domain %]/.venv        python virtualenv (outside repo)
+#   /etc/systemd/system/koan.service            agent loop
+#   /etc/systemd/system/koan-awake.service      messaging bridge
 
-# Clone (or refresh) the koan repo into install_dir/domain.  The
-# service_user target already owns the dir; we own things back to
-# [% user %]:[% admin_user %] after we're done.
-if [ ! -d '[% install_dir %]/[% domain %]/.git' ]; then \
-    git clone --branch '[% repo_branch %]' '[% repo_url %]' '[% install_dir %]/[% domain %]'; \
+# Clone (or refresh) the koan repo into KOAN_ROOT.  Target dir must NOT
+# exist for `git clone`, hence the subdir — service_user already created
+# the parent, which would block a top-level clone.
+if [ ! -d '[% install_dir %]/[% domain %]/koan/.git' ]; then \
+    git clone --branch '[% repo_branch %]' '[% repo_url %]' '[% install_dir %]/[% domain %]/koan'; \
 else \
-    cd '[% install_dir %]/[% domain %]' && git fetch origin && git reset --hard 'origin/[% repo_branch %]'; \
+    cd '[% install_dir %]/[% domain %]/koan' && git fetch origin && git reset --hard 'origin/[% repo_branch %]'; \
 fi
-git config --global --get-all safe.directory 2>/dev/null | grep -qFx '[% install_dir %]/[% domain %]' \
-    || git config --global --add safe.directory '[% install_dir %]/[% domain %]'
+git config --global --get-all safe.directory 2>/dev/null | grep -qFx '[% install_dir %]/[% domain %]/koan' \
+    || git config --global --add safe.directory '[% install_dir %]/[% domain %]/koan'
 
 # Stage the gitignored instance/ tree from instance.example (first run only).
 # Guarded with `-e "$f"` so an empty instance.example/ doesn't try to cp a literal '*'.
-mkdir -p '[% install_dir %]/[% domain %]/instance'
-mkdir -p '[% install_dir %]/[% domain %]/logs'
-for f in '[% install_dir %]/[% domain %]/instance.example/'*; do \
+mkdir -p '[% install_dir %]/[% domain %]/koan/instance'
+mkdir -p '[% install_dir %]/[% domain %]/koan/logs'
+for f in '[% install_dir %]/[% domain %]/koan/instance.example/'*; do \
     [ -e "$$f" ] || continue; \
     name="$$(basename "$$f")"; \
-    [ -e "[% install_dir %]/[% domain %]/instance/$$name" ] || cp -r "$$f" "[% install_dir %]/[% domain %]/instance/$$name"; \
+    [ -e "[% install_dir %]/[% domain %]/koan/instance/$$name" ] || cp -r "$$f" "[% install_dir %]/[% domain %]/koan/instance/$$name"; \
 done
 
-# Drop in the rendered configs
-install -o root -g '[% user %]' -m 0640 koan.env             '[% install_dir %]/[% domain %]/.env'
-install -o root -g '[% user %]' -m 0640 koan.config.yaml     '[% install_dir %]/[% domain %]/instance/config.yaml'
-install -o root -g '[% user %]' -m 0640 koan.projects.yaml   '[% install_dir %]/[% domain %]/projects.yaml'
+# Drop in the rendered configs.  All three live inside KOAN_ROOT so
+# python-dotenv + koan's instance/ lookup find them with no fuss.
+install -o root -g '[% user %]' -m 0640 koan.env             '[% install_dir %]/[% domain %]/koan/.env'
+install -o root -g '[% user %]' -m 0640 koan.config.yaml     '[% install_dir %]/[% domain %]/koan/instance/config.yaml'
+install -o root -g '[% user %]' -m 0640 koan.projects.yaml   '[% install_dir %]/[% domain %]/koan/projects.yaml'
 
-# Build the virtualenv as the service user (no shell required for python -m venv)
+# Build the virtualenv as the service user (no shell required for python -m venv).
+# Kept outside KOAN_ROOT so `git reset --hard` doesn't blow it away.
 runuser -u '[% user %]' -- python3 -m venv '[% install_dir %]/[% domain %]/.venv'
 runuser -u '[% user %]' -- '[% install_dir %]/[% domain %]/.venv/bin/pip' install --quiet --upgrade pip
-runuser -u '[% user %]' -- '[% install_dir %]/[% domain %]/.venv/bin/pip' install --quiet -r '[% install_dir %]/[% domain %]/koan/requirements.txt'
+runuser -u '[% user %]' -- '[% install_dir %]/[% domain %]/.venv/bin/pip' install --quiet -r '[% install_dir %]/[% domain %]/koan/koan/requirements.txt'
 
 [% IF cli_provider == 'claude' %]
 # Install Claude Code CLI globally so the koan user can shell out to `claude`.
@@ -54,14 +61,14 @@ command -v claude >/dev/null 2>&1 || npm install -g --silent @anthropic-ai/claud
 # units load that file via a second EnvironmentFile=.
 # Re-provisions skip this block because of the `[ ! -f ... ]` guard, so the
 # one-shot password never lives on disk and never re-runs.
-if [ ! -f '[% install_dir %]/[% domain %]/instance/matrix/credentials.env' ]; then \
-    install -d -o '[% user %]' -g '[% user %]' -m 0700 '[% install_dir %]/[% domain %]/instance/matrix'; \
-    KOAN_ROOT='[% install_dir %]/[% domain %]' \
+if [ ! -f '[% install_dir %]/[% domain %]/koan/instance/matrix/credentials.env' ]; then \
+    install -d -o '[% user %]' -g '[% user %]' -m 0700 '[% install_dir %]/[% domain %]/koan/instance/matrix'; \
+    KOAN_ROOT='[% install_dir %]/[% domain %]/koan' \
     KOAN_MATRIX_HOMESERVER='[% matrix_homeserver %]' \
     KOAN_MATRIX_USER_ID='[% matrix_user_id %]' \
     KOAN_MATRIX_PASSWORD='[% matrix_password %]' \
     KOAN_MATRIX_PICKLE_KEY='[% matrix_pickle_key %]' \
-    PYTHONPATH='[% install_dir %]/[% domain %]/koan' \
+    PYTHONPATH='[% install_dir %]/[% domain %]/koan/koan' \
     runuser -u '[% user %]' -- '[% install_dir %]/[% domain %]/.venv/bin/python' -m app.matrix_login; \
 fi
 [% END %]
@@ -69,8 +76,8 @@ fi
 [% IF github_ssh_privkey %]
 # Bot SSH identity — paired pubkey is registered on the bot's GitHub
 # account both as an Auth key (push) and Signing key (commit verify).
-# Lives under ~[% user %]/.ssh and persists across re-provisions because
-# install_dir/domain is the koan user's home and on the persistent disk.
+# Lives under ~[% user %]/.ssh (the user $HOME, NOT KOAN_ROOT) so it
+# survives re-clones of the repo.
 install -d -o '[% user %]' -g '[% user %]' -m 0700 '[% install_dir %]/[% domain %]/.ssh'
 install -o '[% user %]' -g '[% user %]' -m 0600 koan-ssh-privkey '[% install_dir %]/[% domain %]/.ssh/id_koan'
 runuser -u '[% user %]' -- ssh-keygen -y -f '[% install_dir %]/[% domain %]/.ssh/id_koan' > '[% install_dir %]/[% domain %]/.ssh/id_koan.pub'
@@ -132,8 +139,8 @@ fi
 # Reset ownership on everything we just dropped in.  .env and config.yaml
 # stay 0640 root:[% user %] (read-only to the bot, invisible to others).
 chown -R '[% user %]:[% admin_user %]' '[% install_dir %]/[% domain %]'
-chown root:'[% user %]' '[% install_dir %]/[% domain %]/.env' '[% install_dir %]/[% domain %]/instance/config.yaml'
-chmod 0640 '[% install_dir %]/[% domain %]/.env' '[% install_dir %]/[% domain %]/instance/config.yaml'
+chown root:'[% user %]' '[% install_dir %]/[% domain %]/koan/.env' '[% install_dir %]/[% domain %]/koan/instance/config.yaml'
+chmod 0640 '[% install_dir %]/[% domain %]/koan/.env' '[% install_dir %]/[% domain %]/koan/instance/config.yaml'
 find '[% install_dir %]/[% domain %]/.venv' -type d -exec chmod 0750 {} +
 
 # systemd units
