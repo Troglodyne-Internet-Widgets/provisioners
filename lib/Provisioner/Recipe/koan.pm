@@ -34,6 +34,23 @@ use List::Util qw{any};
             github_user:  "yourname-koan"
             github_token: "ghp_..."
 
+            # Optional: OpenSSH private key paired with a key registered on
+            # the bot's GitHub account.  When set, the recipe:
+            #   - drops it at ~koan/.ssh/id_koan (mode 0600)
+            #   - derives the pubkey, populates known_hosts for github.com
+            #   - flips `gh config git_protocol` to ssh (so clones produce
+            #     SSH remotes and push goes through the key, not the PAT)
+            #   - configures `git config --global` for ssh-format commit
+            #     signing using the same key
+            # Register the matching pubkey under the bot's GitHub account
+            # both as an "Authentication key" (for push) AND a "Signing
+            # key" (so signed commits show as Verified in the UI).
+            # Must be passphrase-less — the bot runs unattended.
+            github_ssh_privkey: |
+                -----BEGIN OPENSSH PRIVATE KEY-----
+                ...
+                -----END OPENSSH PRIVATE KEY-----
+
             # Pretty-name for @mentions (defaults to github_user)
             github_nickname: "yourname-koan"
 
@@ -278,6 +295,17 @@ sub validate {
     $opts{github_nickname}         //= $opts{github_user};
     $opts{github_authorized_users} //= [];
 
+    # Optional ssh key for git push + commit signing.  Surface common
+    # mistakes early (wrong format, accidentally pasted a pubkey, an
+    # encrypted privkey we can't unlock unattended).
+    if ( $opts{github_ssh_privkey} ) {
+        die "github_ssh_privkey doesn't look like an OpenSSH private key (expected -----BEGIN ... PRIVATE KEY-----)"
+            unless $opts{github_ssh_privkey} =~ /-----BEGIN [A-Z ]*PRIVATE KEY-----/;
+        die "github_ssh_privkey is passphrase-encrypted; the bot runs unattended, supply a passphrase-less key"
+            if $opts{github_ssh_privkey} =~ /^Proc-Type:.*ENCRYPTED/m
+            || $opts{github_ssh_privkey} =~ /DEK-Info:/m;
+    }
+
     $opts{max_runs_per_day} //= 10;
     $opts{interval_seconds} //= 60;
 
@@ -316,6 +344,9 @@ sub template_files {
         'koan.projects.yaml.tt'   => 'koan.projects.yaml',
         'koan.service.tt'         => 'koan.service',
         'koan-awake.service.tt'   => 'koan-awake.service',
+        # Always rendered; empty when github_ssh_privkey is unset.  The
+        # makefile fragment skips installing it in that case.
+        'koan-ssh-privkey.tt'     => 'koan-ssh-privkey',
     );
 }
 

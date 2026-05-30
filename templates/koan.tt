@@ -66,24 +66,65 @@ if [ ! -f '[% install_dir %]/[% domain %]/instance/matrix/credentials.env' ]; th
 fi
 [% END %]
 
-# Project repos — clone any project with a github_url to its declared
-# path.  Idempotent: `if [ ! -d .git ]` skips on re-provision.  We clone
-# as root (so the makefile can pre-create the parent dir without juggling
-# ownership) and chown -R to [% user %] after each clone.
-#
-# `gh auth setup-git` runs as the bot user so gh's credential helper
-# writes to ~[% user %]/.gitconfig — that's what lets subsequent git push
-# / git fetch from koan authenticate without baking the token into the
-# remote URL.  Both calls use the same GH_TOKEN that ends up in .env.
+[% IF github_ssh_privkey %]
+# Bot SSH identity — paired pubkey is registered on the bot's GitHub
+# account both as an Auth key (push) and Signing key (commit verify).
+# Lives under ~[% user %]/.ssh and persists across re-provisions because
+# install_dir/domain is the koan user's home and on the persistent disk.
+install -d -o '[% user %]' -g '[% user %]' -m 0700 '[% install_dir %]/[% domain %]/.ssh'
+install -o '[% user %]' -g '[% user %]' -m 0600 koan-ssh-privkey '[% install_dir %]/[% domain %]/.ssh/id_koan'
+runuser -u '[% user %]' -- ssh-keygen -y -f '[% install_dir %]/[% domain %]/.ssh/id_koan' > '[% install_dir %]/[% domain %]/.ssh/id_koan.pub'
+chown '[% user %]:[% user %]' '[% install_dir %]/[% domain %]/.ssh/id_koan.pub'
+chmod 0644 '[% install_dir %]/[% domain %]/.ssh/id_koan.pub'
+
+# Trust github.com host keys non-interactively (skip if already present).
+if ! runuser -u '[% user %]' -- ssh-keygen -F github.com -f '[% install_dir %]/[% domain %]/.ssh/known_hosts' >/dev/null 2>&1; then \
+    ssh-keyscan -t ed25519,rsa github.com 2>/dev/null >> '[% install_dir %]/[% domain %]/.ssh/known_hosts'; \
+    chown '[% user %]:[% user %]' '[% install_dir %]/[% domain %]/.ssh/known_hosts'; \
+    chmod 0644 '[% install_dir %]/[% domain %]/.ssh/known_hosts'; \
+fi
+
+# ssh_config: pin github.com to the bot key (no ssh-agent dependence)
+printf 'Host github.com\n    IdentityFile ~/.ssh/id_koan\n    IdentitiesOnly yes\n' > '[% install_dir %]/[% domain %]/.ssh/config'
+chown '[% user %]:[% user %]' '[% install_dir %]/[% domain %]/.ssh/config'
+chmod 0644 '[% install_dir %]/[% domain %]/.ssh/config'
+
+# gh CLI: emit SSH remotes so subsequent clones + bot pushes go through
+# the key rather than the HTTPS+token path.
+runuser -u '[% user %]' -- gh config set git_protocol ssh
+
+# Commit signing with the same key (ssh signature format).  user.name +
+# user.email pin commit authorship to the bot identity; allowed_signers
+# enables local `git log --show-signature` verification.
+runuser -u '[% user %]' -- git config --global user.name        '[% github_user %]'
+runuser -u '[% user %]' -- git config --global user.email       '[% koan_email %]'
+runuser -u '[% user %]' -- git config --global gpg.format       ssh
+runuser -u '[% user %]' -- git config --global user.signingkey  '[% install_dir %]/[% domain %]/.ssh/id_koan.pub'
+runuser -u '[% user %]' -- git config --global commit.gpgsign   true
+runuser -u '[% user %]' -- git config --global tag.gpgsign      true
+install -d -o '[% user %]' -g '[% user %]' -m 0755 '[% install_dir %]/[% domain %]/.config/git'
+printf '%s %s\n' '[% koan_email %]' "$$(cat '[% install_dir %]/[% domain %]/.ssh/id_koan.pub')" > '[% install_dir %]/[% domain %]/.config/git/allowed_signers'
+chown '[% user %]:[% user %]' '[% install_dir %]/[% domain %]/.config/git/allowed_signers'
+runuser -u '[% user %]' -- git config --global gpg.ssh.allowedSignersFile '[% install_dir %]/[% domain %]/.config/git/allowed_signers'
+[% END %]
+
+# gh HTTPS credential helper — harmless when SSH is set up (the SSH
+# remote URLs take precedence), genuinely needed when it isn't.
 GH_TOKEN='[% github_token %]' runuser -u '[% user %]' --preserve-env=GH_TOKEN -- \
     gh auth setup-git -h github.com
+
+# Project repos — clone any project with a github_url to its declared
+# path.  Idempotent: `if [ ! -d .git ]` skips on re-provision.  Runs as
+# [% user %] so the SSH key + ssh-protocol gh config above take effect;
+# parent dir is pre-created koan-owned so the runuser-ed clone can write.
 [% FOR pname IN projects.keys().sort() %]
 [% p = projects.$pname %]
 [% IF p.github_url %]
 if [ ! -d '[% p.path %]/.git' ]; then \
     mkdir -p "$$(dirname '[% p.path %]')"; \
-    GH_TOKEN='[% github_token %]' gh repo clone '[% p.github_url %]' '[% p.path %]'; \
-    chown -R '[% user %]:[% user %]' '[% p.path %]'; \
+    chown '[% user %]:[% user %]' "$$(dirname '[% p.path %]')"; \
+    GH_TOKEN='[% github_token %]' runuser -u '[% user %]' --preserve-env=GH_TOKEN -- \
+        gh repo clone '[% p.github_url %]' '[% p.path %]'; \
 fi
 [% END %]
 [% END %]
