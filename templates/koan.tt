@@ -66,6 +66,28 @@ if [ ! -f '[% install_dir %]/[% domain %]/instance/matrix/credentials.env' ]; th
 fi
 [% END %]
 
+# Project repos — clone any project with a github_url to its declared
+# path.  Idempotent: `if [ ! -d .git ]` skips on re-provision.  We clone
+# as root (so the makefile can pre-create the parent dir without juggling
+# ownership) and chown -R to [% user %] after each clone.
+#
+# `gh auth setup-git` runs as the bot user so gh's credential helper
+# writes to ~[% user %]/.gitconfig — that's what lets subsequent git push
+# / git fetch from koan authenticate without baking the token into the
+# remote URL.  Both calls use the same GH_TOKEN that ends up in .env.
+GH_TOKEN='[% github_token %]' runuser -u '[% user %]' --preserve-env=GH_TOKEN -- \
+    gh auth setup-git -h github.com
+[% FOR pname IN projects.keys().sort() %]
+[% p = projects.$pname %]
+[% IF p.github_url %]
+if [ ! -d '[% p.path %]/.git' ]; then \
+    mkdir -p "$$(dirname '[% p.path %]')"; \
+    GH_TOKEN='[% github_token %]' gh repo clone '[% p.github_url %]' '[% p.path %]'; \
+    chown -R '[% user %]:[% user %]' '[% p.path %]'; \
+fi
+[% END %]
+[% END %]
+
 # Reset ownership on everything we just dropped in.  .env and config.yaml
 # stay 0640 root:[% user %] (read-only to the bot, invisible to others).
 chown -R '[% user %]:[% admin_user %]' '[% install_dir %]/[% domain %]'

@@ -72,15 +72,25 @@ use List::Util qw{any};
             # smtp_password: "..."
             # email_to:      "you@example.com"
 
-            # Projects the bot collaborates on.  Each entry is
-            # path: absolute path on the guest (paired w/ a host bind-mount
-            # or git clone you arrange elsewhere — koan does not clone these).
+            # Projects the bot collaborates on.  Each entry needs an
+            # absolute `path` on the guest.  Optional `github_url`
+            # (either "owner/repo" or a full https:// URL) makes the
+            # recipe clone the repo to that path at first provision via
+            # `gh repo clone`, using the bot's github_token; subsequent
+            # provisions skip clone when .git/ already exists.  Without
+            # github_url the path must be present by other means (a
+            # host bind-mount, a manual clone, or `/add_project` via
+            # the bot's chat at runtime).
             projects:
                 myapp:
                     path: "/opt/projects/myapp"
+                    github_url: "myorg/myapp"          # cloned at provision
                 api:
                     path: "/opt/projects/api"
+                    github_url: "https://github.com/myorg/api.git"
                     cli_provider: "copilot"
+                bind_mounted_thing:
+                    path: "/opt/projects/legacy"        # no github_url — must already exist
 
 =head2 DESCRIPTION
 
