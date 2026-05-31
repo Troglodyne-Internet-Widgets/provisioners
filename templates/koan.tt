@@ -123,8 +123,7 @@ runuser -u '[% user %]' -- git config --global gpg.ssh.allowedSignersFile '[% in
 
 # gh HTTPS credential helper — harmless when SSH is set up (the SSH
 # remote URLs take precedence), genuinely needed when it isn't.
-GH_TOKEN='[% github_token %]' runuser -u '[% user %]' --preserve-env=GH_TOKEN -- \
-    gh auth setup-git -h github.com
+sudo -u [% user %] GH_TOKEN='[% github_token %]' gh auth setup-git -h github.com
 
 # Project repos — clone any project with a github_url to its declared
 # path.  Idempotent: `if [ ! -d .git ]` skips on re-provision.  Runs as
@@ -136,8 +135,7 @@ GH_TOKEN='[% github_token %]' runuser -u '[% user %]' --preserve-env=GH_TOKEN --
 if [ ! -d '[% p.path %]/.git' ]; then \
     mkdir -p "$$(dirname '[% p.path %]')"; \
     chown '[% user %]:[% user %]' "$$(dirname '[% p.path %]')"; \
-    GH_TOKEN='[% github_token %]' runuser -u '[% user %]' --preserve-env=GH_TOKEN -- \
-        gh repo clone '[% p.github_url %]' '[% p.path %]'; \
+    sudo -u [% user %] GH_TOKEN='[% github_token %]' gh repo clone '[% p.github_url %]' '[% p.path %]'; \
 fi
 [% END %]
 [% END %]
