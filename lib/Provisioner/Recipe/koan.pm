@@ -180,6 +180,17 @@ password) live only in the rendered C<.env> file, which is installed
 re-provisions via L</remote_files>, so the bot's memory, journal and
 missions survive a rebuild.
 
+=head3 Host CPU requirements
+
+When C<cli_provider=claude> the recipe drops the C<@anthropic-ai/claude-code>
+CLI into the guest.  Its bundled v8 snapshot probes cpuid at startup and
+SIGILLs on guests whose CPU model lacks AVX (the qemu default C<qemu64>
+is one such model).  The trog-provisioner driver defaults C<cpu_mode> to
+C<host-passthrough> in C<provision.conf>, which exposes the bare-metal
+CPU and resolves this.  If you override C<cpu_mode> for a koan host
+(e.g. for migration to a differently-specced HV) pick a model that
+advertises AVX, otherwise C<claude> will crash on first invocation.
+
 =head3 deps
 
 System packages required to build and run koan on a Debian guest.
