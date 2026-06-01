@@ -4,6 +4,14 @@
 max_runs_per_day: [% max_runs_per_day %]
 interval_seconds: [% interval_seconds %]
 
+# Boot into pause so the bot waits for an explicit /resume before
+# touching anything — useful for scheduled launches and re-provisions.
+start_on_pause: [% start_on_pause ? 'true' : 'false' %]
+
+# Focus mode: when true, only run explicitly queued missions (no
+# autonomous exploration).  Defaults off so the bot acts on its own.
+focus: [% focus ? 'true' : 'false' %]
+
 messaging:
   provider: "[% messaging_provider %]"
 [% IF messaging_provider == 'matrix' %]

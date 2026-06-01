@@ -102,10 +102,6 @@ printf 'Host github.com\n    IdentityFile ~/.ssh/id_koan\n    IdentitiesOnly yes
 chown '[% user %]:[% user %]' '[% install_dir %]/[% domain %]/.ssh/config'
 chmod 0644 '[% install_dir %]/[% domain %]/.ssh/config'
 
-# gh CLI: emit SSH remotes so subsequent clones + bot pushes go through
-# the key rather than the HTTPS+token path.
-runuser -u '[% user %]' -- gh config set git_protocol ssh
-
 # Commit signing with the same key (ssh signature format).  user.name +
 # user.email pin commit authorship to the bot identity; allowed_signers
 # enables local `git log --show-signature` verification.
@@ -120,6 +116,15 @@ printf '%s %s\n' '[% koan_email %]' "$$(cat '[% install_dir %]/[% domain %]/.ssh
 chown '[% user %]:[% user %]' '[% install_dir %]/[% domain %]/.config/git/allowed_signers'
 runuser -u '[% user %]' -- git config --global gpg.ssh.allowedSignersFile '[% install_dir %]/[% domain %]/.config/git/allowed_signers'
 [% END %]
+
+# gh CLI auth — pre-seed hosts.yml so the bot sees itself as already
+# logged in (no interactive `gh auth login` required, no gh subcommands
+# failing with "not logged into github.com").  git_protocol is baked
+# into the file based on whether an ssh key is configured, so subsequent
+# clones + bot pushes go through the right transport.  Always installed
+# regardless of SSH-key presence.
+install -d -o '[% user %]' -g '[% user %]' -m 0700 '[% install_dir %]/[% domain %]/.config/gh'
+install -o '[% user %]' -g '[% user %]' -m 0600 koan-gh-hosts.yml '[% install_dir %]/[% domain %]/.config/gh/hosts.yml'
 
 # gh HTTPS credential helper — harmless when SSH is set up (the SSH
 # remote URLs take precedence), genuinely needed when it isn't.
@@ -153,6 +158,13 @@ install -o root -g root -m 0644 koan-awake.service /etc/systemd/system/koan-awak
 systemctl daemon-reload
 systemctl enable koan-awake.service
 systemctl enable koan.service
+
+[% IF messaging_provider == 'matrix' %]
+# Matrix federation/homeserver port — `default deny outgoing` from the
+# ufw recipe blocks 8448 by default.  Queued post-run so it survives
+# `ufw reset` in the ufw recipe (which runs alphabetically after koan).
+[% script_dir %]/queue_postrun_task ufw allow out 8448
+[% END %]
 
 # Defer start until everything else has run (cron, nginx, etc.)
 [% script_dir %]/queue_postrun_task systemctl start koan.service

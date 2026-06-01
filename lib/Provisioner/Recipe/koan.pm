@@ -325,6 +325,13 @@ sub validate {
     $opts{max_runs_per_day} //= 10;
     $opts{interval_seconds} //= 60;
 
+    # Boot-time behaviour knobs — both coerced to strict booleans so the
+    # template can emit lowercase 'true'/'false' without surprises.
+    $opts{start_on_pause} //= 1;
+    $opts{start_on_pause} = $opts{start_on_pause} ? 1 : 0;
+    $opts{focus}          //= 0;
+    $opts{focus}          = $opts{focus} ? 1 : 0;
+
     $opts{projects} //= {};
     die "projects must be a hash of name => { path => ... }"
         unless ref $opts{projects} eq 'HASH';
@@ -363,6 +370,9 @@ sub template_files {
         # Always rendered; empty when github_ssh_privkey is unset.  The
         # makefile fragment skips installing it in that case.
         'koan-ssh-privkey.tt'     => 'koan-ssh-privkey',
+        # Pre-seeds gh CLI's auth state so the bot can run `gh` without
+        # ever needing an interactive `gh auth login`.
+        'koan-gh-hosts.yml.tt'    => 'koan-gh-hosts.yml',
     );
 }
 
