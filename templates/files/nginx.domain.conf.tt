@@ -1,6 +1,6 @@
 server {
-    listen 443 ssl;
-    listen [::]:443 ssl;
+    listen 443 ssl backlog=[% backlog %];
+    listen [::]:443 ssl backlog=[% backlog %];
 
     server_name [% domain %] www.[% domain %] [% full_aliases.join(', ') %];
 
@@ -57,8 +57,8 @@ server {
 }
 
 server {
-    listen 80;
-    listen [::]:80;
+    listen 80 backlog=[% backlog %];
+    listen [::]:80 backlog=[% backlog %];
 
     server_name [% domain %] www.[% domain %] [% full_aliases.join(', ') %];
 
