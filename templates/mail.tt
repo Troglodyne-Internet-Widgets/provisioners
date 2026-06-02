@@ -97,7 +97,8 @@ chmod 0600 /etc/postfix/sdd_relay_maps
 chmod 0600 /etc/postfix/recipient_access_pcre
 chmod 0600 /etc/postfix/transport_maps
 # configure main.cf -- most of the time the defaults are sane
-# basic stuff
+[% UNLESS ipv6 %]postconf -e -- "inet_protocols=ipv4"
+[% END -%]# basic stuff
 postconf -e -- "mydomain=[% domain %]"
 postconf -e -- "myhostname=mail.[% domain %]"
 postconf -e -- 'myorigin=$$mydomain'

@@ -1,4 +1,5 @@
-mail_home = /mail/%Ld/%Ln
+[% UNLESS ipv6 %]listen = *
+[% END -%]mail_home = /mail/%Ld/%Ln
 mail_location = maildir:/mail/%Ld/%Ln/Maildir:UTF-8
 postmaster_address = postmaster@mail.[% domain %]
 
