@@ -25,7 +25,7 @@ chown -R [% admin_user %]:[% admin_user %] /mail/keys
 mkdir /var/spool/postfix/opendkim
 chown opendkim:postfix /var/spool/postfix/opendkim
 chmod 0770 /var/spool/postfix/opendkim
-[% script_dir %]/queue_postrun_task systemctl restart opendkim
+systemctl restart opendkim
 # opendmarc
 mkdir -p /etc/opendmarc
 mv /etc/opendmarc.conf /etc/opendmarc.conf.orig
@@ -36,7 +36,7 @@ chown opendmarc:opendmarc /etc/opendmarc.conf
 mkdir /var/spool/postfix/opendmarc
 chown opendmarc:postfix /var/spool/postfix/opendmarc
 chmod 0770 /var/spool/postfix/opendmarc
-[% script_dir %]/queue_postrun_task systemctl restart opendmarc
+systemctl restart opendmarc
 # update DNS records IFF we have a dns server locally
 [% script_dir %]/queue_postrun_task [% script_dir %]/install_dkim_records [% domain %] /mail/[% domain %]/default.private
 # dovecot
@@ -47,7 +47,7 @@ mv dovecot.conf /etc/dovecot/conf.d/00-dovecot.conf
 mv dovecot.domain.conf /etc/dovecot/conf.d/10-[% domain %].conf
 sed -i "s/%REPLACEME%/$$(id -u dovecot)/gm" mailpasswd
 mv mailpasswd /mail/[% domain %]/passwd
-[% script_dir %]/queue_postrun_task systemctl restart dovecot
+systemctl restart dovecot
 # Stash a copy of the mailnames, and restore it if necessary
 # TODO make the old one take precedence via configuration
 mv [% install_dir %]/[% domain %]/mailnames/passwd [% install_dir %]/[% domain %]/mailnames/passwd.old; /bin/true
@@ -56,7 +56,7 @@ chown -R dovecot:dovecot /mail/[% domain %]/
 # amvavisd-new
 mv 50-user /etc/amavis/conf.d/
 chown root:root /etc/amavis/conf.d/50-user
-[% script_dir %]/queue_postrun_task systemctl restart amavis
+systemctl restart amavis
 # postfix
 mv aliases /etc/aliases
 chown root:root /etc/aliases
@@ -166,7 +166,7 @@ chmod 0644 /etc/postfix/virtual/*.db
 chmod 0644 /etc/postfix/*.db
 # Fix postfix's dumbass resolver copy grabbing a broken out of the box config (thank you systemd-resolved)
 [% script_dir %]/queue_postrun_task "cat /etc/resolv.conf > /var/spool/postfix/resolv.conf"
-[% script_dir %]/queue_postrun_task systemctl restart postfix
+systemctl restart postfix
 # Setup autodiscover URIs
 mkdir -p '[% install_dir %]/autodiscover.[% domain %]/autodiscover'; /bin/true
 mv autodiscover.xml '[% install_dir %]/autodiscover.[% domain %]/autodiscover/'
@@ -174,7 +174,7 @@ chown -R www-data:www-data  '[% install_dir %]/autodiscover.[% domain %]'
 chmod -R 0770 '[% install_dir %]/autodiscover.[% domain %]'
 [% IF modules.grep('nginxproxy').size() %]
 mv autodiscover_vhost /etc/nginx/sites-enabled/autodiscover.[% domain %].conf
-[% script_dir %]/queue_postrun_task systemctl reload nginx
+systemctl reload nginx
 [%- END %]
 # Setup mailboxes and sieve scripts for the various users
 [% FOR name IN names.keys() %]

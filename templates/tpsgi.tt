@@ -15,4 +15,4 @@ ln -s [% install_dir %]/[% domain %]/service/tpsgi.service /usr/lib/systemd/syst
 [% script_dir %]/queue_postrun_task "[% install_dir %]/[% domain %]/bin/cpanm --installdeps [% install_dir %]/[% domain %]"
 [% script_dir %]/queue_postrun_task systemctl daemon-reload
 [% script_dir %]/queue_postrun_task systemctl enable [% domain %]
-[% script_dir %]/queue_postrun_task systemctl start [% domain %]
+systemctl start [% domain %]

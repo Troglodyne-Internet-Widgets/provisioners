@@ -167,4 +167,4 @@ systemctl enable koan.service
 [% END %]
 
 # Defer start until everything else has run (cron, nginx, etc.)
-[% script_dir %]/queue_postrun_task systemctl start koan.service
+systemctl start koan.service

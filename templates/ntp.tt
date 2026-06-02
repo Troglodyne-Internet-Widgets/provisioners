@@ -10,4 +10,4 @@ mv chrony.conf /etc/chrony/chrony.conf
 chown root:root /etc/chrony/chrony.conf
 chmod 0644 /etc/chrony/chrony.conf
 systemctl enable chrony
-[% script_dir %]/queue_postrun_task systemctl restart chrony
+systemctl restart chrony

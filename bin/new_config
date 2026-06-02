@@ -436,6 +436,9 @@ sub handle_domain {
         my $aliases      = $alias_conf->{$domain};
         my $full_aliases = [ map { "$_.$tld" } @$aliases ];
         $fragments{$module} = $builder->render( %$global_config, %$pconf, full_aliases => $full_aliases, modules => \@modules );
+        unless ( defined $pconf->{order} ) {
+            $fragments{$module} = _defer_systemctl_calls( $fragments{$module}, $root_scripts );
+        }
         push( @pkgs, ( $builder->deps(%$pconf) ) );
         push( @conflicts, ( $builder->dep_conflicts(%$pconf) ) );
 
@@ -603,6 +606,16 @@ sub get_dns_provider_token {
         return $rconf->{$provider}{api_key} if exists $rconf->{$provider} && ( ref( $rconf->{$provider} ) eq 'HASH' );
     }
     return '';
+}
+
+sub _defer_systemctl_calls {
+    my ( $fragment, $script_dir ) = @_;
+    # Wrap bare systemctl restart/start/reload with queue_postrun_task.
+    # Skips lines already deferred (lookbehind on "queue_postrun_task ").
+    # Leaves daemon-reload, enable, stop, disable, mask immediate — template
+    # authors must explicitly queue those when ordering matters (e.g. tpsgi).
+    $fragment =~ s{(?<!queue_postrun_task )systemctl (restart|start|reload)}{$script_dir/queue_postrun_task systemctl $1}g;
+    return $fragment;
 }
 
 main(@ARGV) unless caller;
