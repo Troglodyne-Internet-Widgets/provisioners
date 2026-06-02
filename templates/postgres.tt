@@ -1,3 +1,12 @@
-[% FOR dump_file IN dumps %]
-sudo -u postgres psql < [% install_dir %]/[% domain %]/[% dump_file %]
+# Install postgresql (whatever version the OS provides — no pinning)
+dpkg-query -l 'postgresql' 2>/dev/null | grep -q '^ii' || [% packager_invocation %] postgresql postgresql-client
+# Enable on boot and queue a start so the cluster is up before later targets run
+systemctl enable postgresql
+[% script_dir %]/queue_postrun_task systemctl start postgresql
+# Allow local TCP connections with md5 auth; append once only (idempotent)
+for f in /etc/postgresql/*/main/pg_hba.conf; do grep -qF 'host all all 127.0.0.1/32 md5' "$f" || echo 'host all all 127.0.0.1/32 md5' >> "$f"; done
+[% script_dir %]/queue_postrun_task systemctl reload postgresql
+[% IF dump -%]
+# Load dump exactly once; state file prevents re-import on subsequent provisions
+[ -f [% install_dir %]/[% domain %]/.pg_loaded ] || (sudo -u postgres psql < [% install_dir %]/[% domain %]/[% dump %] && touch [% install_dir %]/[% domain %]/.pg_loaded)
 [% END -%]
