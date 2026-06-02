@@ -8,7 +8,6 @@ use warnings FATAL => 'all';
 use FindBin;
 use FindBin::libs;
 
-use Config::Simple;
 use Text::Xslate;
 use Text::Xslate::Bridge::TT2;
 use Net::IP;
@@ -16,23 +15,28 @@ use List::Util qw{uniq};
 use Getopt::Long qw{GetOptionsFromArray};
 use File::Slurper;
 
+use Provisioner::Config;
+
 =head1 ipmap2zones
 
 =head2 SYNOPSIS
 
-    ipmap2zones [--ipmap=file] [--output-dir=dir] [domain ...]
+    ipmap2zones [--ipmap=file] [--recipes=file] [--output-dir=dir] [domain ...]
 
 =head2 DESCRIPTION
 
-Generate BIND-style zone files from ipmap.cfg, one file per domain.
+Generate BIND-style zone files from ipmap.cfg (or recipes.yaml), one file per domain.
 
-With no domain arguments, generates zone files for every domain in the [ips]
-section of ipmap.cfg.  Output is written to the current directory (or the
+With no domain arguments, generates zone files for every domain in the C<ips>
+configuration.  Output is written to the current directory (or the
 directory specified with --output-dir) as C<domain.zone>.
 
 Zone files are rendered via C<templates/files/pdns.zone.tt> using the same
 variable set that C<new_config> would pass, so the output is identical to what
 the pdns recipe would install at provision time.
+
+IP-map data is read from C<ipmap.cfg> when present.  When that file does not
+exist the C<_base._global> section of C<recipes.yaml> is used as a fallback.
 
 =head2 OPTIONS
 
@@ -41,6 +45,11 @@ the pdns recipe would install at provision time.
 =item --ipmap=FILE
 
 Path to ipmap.cfg.  Defaults to C<ipmap.cfg> in the current directory.
+
+=item --recipes=FILE
+
+Path to recipes.yaml.  Defaults to C<recipes.yaml> in the current directory.
+Used as fallback when C<--ipmap> file is absent.
 
 =item --output-dir=DIR
 
@@ -51,7 +60,7 @@ directory must already exist.
 
 =cut
 
-my ( $cfile, $output_dir );
+my ( $cfile, $pfile, $output_dir );
 
 sub main {
     my @args = @_;
@@ -59,22 +68,26 @@ sub main {
     GetOptionsFromArray(
         \@args,
         'ipmap=s'      => \$cfile,
+        'recipes=s'    => \$pfile,
         'output-dir=s' => \$output_dir,
     );
 
     $cfile      //= 'ipmap.cfg';
+    $pfile      //= 'recipes.yaml';
     $output_dir //= '.';
 
-    die "No ipmap available at $cfile\n"     unless -f $cfile;
+    die "No ipmap.cfg at $cfile and no recipes.yaml at $pfile\n"
+        unless -f $cfile || -f $pfile;
     die "Output directory $output_dir does not exist\n" unless -d $output_dir;
 
-    my $c           = Config::Simple->new($cfile);
-    my $global_conf = $c->param( -block => 'global' );
-    my $ip_conf     = $c->param( -block => 'ips' );
-    my $alias_conf  = $c->param( -block => 'aliases' ) // {};
-    my $ns_conf     = $c->param( -block => 'nameservers' ) // {};
+    my $cfg        = Provisioner::Config->new( ipmap_file => $cfile, recipes_file => $pfile );
+    my $m          = $cfg->ipmap();
+    my $global_conf = $m->{global_conf};
+    my $ip_conf     = $m->{ip_conf};
+    my $alias_conf  = $m->{alias_conf};
+    my $ns_conf     = $m->{ns_conf};
 
-    die "Must set admin_email in global section of $cfile\n"
+    die "Must set admin_email in configuration\n"
         unless $global_conf->{admin_email};
 
     my @domains = @args ? @args : sort keys(%$ip_conf);

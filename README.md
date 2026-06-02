@@ -46,6 +46,53 @@ It would also set up vhost aliases & CNAMEs for the aliases, should you pick the
 
 TODO: support raw keys.
 
+### Consolidating ipmap.cfg into recipes.yaml
+
+Instead of maintaining a separate `ipmap.cfg`, you can place the same data in the
+`_base._global` section of `recipes.yaml`.  When `ipmap.cfg` is absent, `new_config`
+and `ipmap2zones` will read from there automatically.
+
+```yaml
+_base:
+  _global:
+    tld: test.test
+    basedir: /opt/provisioners
+    admin_user: test
+    admin_key: "gh:test"
+    admin_gecos: "Testy Testerson"
+    admin_email: "test@test.test"
+    ip: "203.0.113.1"        # HV/TLD IP
+    gateway: "203.0.113.254"
+    resolvers: ["8.8.8.8"]
+    bridge_devname: virbr0
+    dhcp_devname: eth0
+    transfer_user: provision
+    ips:
+      tickle: "192.168.1.1"
+      hug: "192.168.1.2"
+    aliases:
+      tickle: ["chase", "kiss"]
+    nameservers:
+      ns1: ns1.test.test
+      ns2: ns2.test.test
+    addons: {}
+```
+
+## recipes.d / recipes.yaml.d
+
+To split per-VM config across files, place additional `*.yaml` files in either
+`recipes.d/` or `recipes.yaml.d/` next to `recipes.yaml`.  They are merged on top
+of the base file.  `_base` and `_shared` keys are ignored in drop-in files.
+
+```
+recipes.yaml          # base config, including _base and _shared
+recipes.d/
+  myvm.yaml           # per-host overrides / additions
+  anothervm.yaml
+recipes.yaml.d/
+  secrets.yaml        # split out sensitive keys
+```
+
 ## Domains which are not subdomains of the TLD
 
 Leave tld= blank, or do not set it in the event you wish to specify things by FQDN rather than subdomains.
