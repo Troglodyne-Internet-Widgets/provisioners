@@ -1,0 +1,11 @@
+mkdir -p '[% basedir %]'
+[% FOR repo IN repo_list %]
+if [ ! -d '[% basedir %]/[% repo.name %]/.git' ]; then \
+    git clone '[% repo.url %]' '[% basedir %]/[% repo.name %]'; \
+else \
+    cd '[% basedir %]/[% repo.name %]' && git pull --ff-only; \
+fi
+[% END %]
+CPANM='[% install_dir %]/[% domain %]/bin/cpanm'; \
+[ -x "$$CPANM" ] || CPANM=$$(command -v cpanm || echo cpanm); \
+[% script_dir %]/smoke_perl_modules.pl '[% basedir %]' "$$CPANM"
