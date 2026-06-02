@@ -14,6 +14,7 @@ use parent qw{Provisioner::Recipe};
             proxy_uri: path/to/socket/in/install_dir
             static_dir: www/static
             nocache_prefix: /secure
+            backlog: 32768
 
 =head2 DESCRIPTION
 
@@ -50,6 +51,11 @@ sub validate {
     die "Must set proxy_uri in [nginxproxy] section of recipes.yaml" unless $uri;
     my $sd = $opts{static_dir};
     die "Must set static_dir in [nginxproxy] section of recipes.yaml" unless $sd;
+
+    $opts{backlog} //= 32768;
+    die "nginxproxy.backlog must be a positive integer"
+        unless $opts{backlog} =~ /^\d+$/ && $opts{backlog} > 0;
+
     return %opts;
 }
 
@@ -57,8 +63,9 @@ sub template_files {
     my ($self) = @_;
 
     return (
-        'nginx.global.conf.tt' => 'nginx.global.conf',
-        'nginx.domain.conf.tt' => 'nginx.domain.conf',
+        'nginx.global.conf.tt'  => 'nginx.global.conf',
+        'nginx.domain.conf.tt'  => 'nginx.domain.conf',
+        'nginx.sysctl.conf.tt'  => 'nginx.sysctl.conf',
 
         #XXX TODO this needs to be in the MAIN target, NOT here
         'openssl.tt' => 'openssl.conf',
