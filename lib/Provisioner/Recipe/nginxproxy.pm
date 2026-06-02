@@ -15,6 +15,7 @@ use parent qw{Provisioner::Recipe};
             static_dir: www/static
             nocache_prefix: /secure
             backlog: 32768
+            ipv6: false
 
 =head2 DESCRIPTION
 
@@ -55,6 +56,9 @@ sub validate {
     $opts{backlog} //= 32768;
     die "nginxproxy.backlog must be a positive integer"
         unless $opts{backlog} =~ /^\d+$/ && $opts{backlog} > 0;
+
+    $opts{ipv6} //= 1;
+    $opts{ipv6} = $opts{ipv6} ? 1 : 0;
 
     return %opts;
 }

@@ -90,6 +90,9 @@ sub validate {
         }
     }
 
+    $vars{ipv6} //= 1;
+    $vars{ipv6} = $vars{ipv6} ? 1 : 0;
+
     return %vars;
 }
 

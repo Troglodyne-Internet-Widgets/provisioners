@@ -164,6 +164,9 @@ sub validate {
         $opts{registration_shared_secret} = join '', map { ( 'a' .. 'z', 'A' .. 'Z', 0 .. 9 )[ rand 62 ] } 1 .. 32;
     }
 
+    $opts{ipv6} //= 1;
+    $opts{ipv6} = $opts{ipv6} ? 1 : 0;
+
     return %opts;
 }
 

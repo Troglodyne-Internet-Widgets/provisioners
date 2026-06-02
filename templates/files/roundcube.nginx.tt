@@ -1,7 +1,7 @@
 server {
     listen 443 ssl;
-    listen [::]:443 ssl;
-
+[% IF ipv6 %]    listen [::]:443 ssl;
+[% END -%]
     server_name webmail.[% domain -%];
 	server_tokens off;
 
@@ -34,8 +34,8 @@ server {
 
 server {
 	listen 80;
-	listen [::]:80;
-
+[% IF ipv6 %]	listen [::]:80;
+[% END -%]
 	server_name webmail.[% domain %];
 	return 301 https://$host$request_uri;
 }

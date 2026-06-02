@@ -78,6 +78,9 @@ sub validate {
     my $ver = $opts{version};
     die "Must set version in [roundcube] section of configuration" unless $ver;
 
+    $opts{ipv6} //= 1;
+    $opts{ipv6} = $opts{ipv6} ? 1 : 0;
+
     return %opts;
 }
 
