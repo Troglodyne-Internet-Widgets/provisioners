@@ -51,6 +51,8 @@ foreach my $rule (@rules) {
 # Allow outgoing ports for userspace so we can ssh outgoing etc
 system(qw{ufw allow out 32768:61000/tcp});
 system(qw{ufw allow out 32768:61000/udp});
+system(qw{ufw allow in 32768:61000/tcp});
+system(qw{ufw allow in 32768:61000/udp});
 # Allow dhcp v4/v6
 system(qw{ufw allow out 67:68/udp});
 system(qw{ufw allow in 67:68/udp});
