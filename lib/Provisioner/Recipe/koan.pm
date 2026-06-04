@@ -394,8 +394,10 @@ sub datadirs {
 sub remote_files {
     my ( $self, $install_dir, $domain ) = @_;
     return (
-        "$install_dir/$domain/koan/instance/" => 'koan/instance/',
-        "$install_dir/$domain/koan/logs/"     => 'koan/logs/',
+        "$install_dir/$domain/koan/instance/"     => 'koan/instance/',
+        "$install_dir/$domain/koan/logs/"         => 'koan/logs/',
+        "$install_dir/$domain/koan/workspace/"    => 'koan/workspace/',
+        "$install_dir/$doamin/koan/projects.yaml" => 'koan/projects.yaml',
     );
 }
 
