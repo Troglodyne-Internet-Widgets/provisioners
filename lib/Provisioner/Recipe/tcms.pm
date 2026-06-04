@@ -43,4 +43,16 @@ sub validate {
     return %params;
 }
 
+sub remote_files {
+    my ( $self, $install_dir, $domain ) = @_;
+    return (
+        # tCMS stores some persistent logs in the tpsgi log dir.
+        "$install_dir/$domain/log"              => "log/",
+        "$install_dir/$domain/tCMS/www/assets/" => 'tCMS/www/assets/',
+        "$install_dir/$domain/tCMS/config/"     => 'tCMS/config/',
+        "$install_dir/$domain/tCMS/data/"       => 'tCMS/data',
+    );
+}
+
+
 1;
