@@ -11,7 +11,7 @@ use parent qw{Provisioner::Recipe};
 
     somedomain:
         postgres:
-            dump: path/to/dump/in/datadir
+            dump_file: path/to/dump/in/datadir
 
 =head2 DESCRIPTION
 
@@ -31,8 +31,8 @@ sub deps {
 sub validate {
     my ( $self, %opts ) = @_;
 
-    my $dump = $opts{dump};
-    die "Must define dump in [postgres] section of recipes.yaml" unless $dump;
+    my $dump = $opts{dump_file};
+    die "Must define dump_file in [postgres] section of recipes.yaml" unless $dump;
 
     return %opts;
 }
