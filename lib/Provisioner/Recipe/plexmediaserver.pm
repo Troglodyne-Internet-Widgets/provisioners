@@ -5,16 +5,20 @@ use warnings FATAL => 'all';
 
 use parent qw{Provisioner::Recipe};
 
+use List::Util qw{any};
+
 =head1 Provisioner::Recipe::plexmediaserver
 
 =head2 SYNOPSIS
 
     somedomain:
         plexmediaserver:
+            plex_login_name: myplexusername
+            admin_mail: admin@somedomain.test
             media_dirs:
                 - /mnt/media/movies
                 - /mnt/media/tv
-            claim_token: claim-XXXXXXXXXXXXXXXXXXXX
+            claim_token: claim-XXXXXXXXXXXXXXXXXXXX  # optional
 
 =head2 DESCRIPTION
 
@@ -70,6 +74,15 @@ sub deps {
 
 sub validate {
     my ( $self, %opts ) = @_;
+
+    die "This recipe requires the letsencrypt recipe to function"
+        unless any { $_ eq 'letsencrypt' } @{ $opts{modules} };
+
+    die "Must set plex_login_name in [plexmediaserver] section of recipes.yaml"
+        unless $opts{plex_login_name};
+
+    die "Must set admin_mail in [plexmediaserver] section of recipes.yaml"
+        unless $opts{admin_mail};
 
     if ( $opts{media_dirs} ) {
         die "media_dirs must be an ARRAY" unless ref $opts{media_dirs} eq 'ARRAY';
