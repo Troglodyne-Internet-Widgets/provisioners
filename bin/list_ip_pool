@@ -1,0 +1,114 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings FATAL => 'all';
+
+use FindBin;
+use FindBin::libs;
+
+use Config::Simple;
+use Getopt::Long;
+use Net::IP;
+
+=head1 USAGE
+
+    list_ip_pool [--ipmap=file]
+
+Display static IP pool status: which IPs are assigned to VMs, which are available.
+
+=head2 ipmap.cfg format
+
+Add an [ip_pool] section to your ipmap.cfg:
+
+    [ip_pool]
+    ; Explicit list of all IPs in the pool (space-separated)
+    addresses = 192.168.1.10 192.168.1.11 192.168.1.12 192.168.1.13
+
+    ; OR specify one or more CIDR blocks (space-separated)
+    ; cidr = 192.168.1.0/24 10.0.0.0/28
+
+Both keys may coexist; addresses are merged with CIDR expansion.
+
+Assigned IPs are read from the [ips] section and cross-referenced to show
+which pool IPs are still available for new VMs.
+
+=cut
+
+my $cfile = 'ipmap.cfg';
+GetOptions('ipmap=s' => \$cfile);
+
+die "No ipmap file found at '$cfile'\nUsage: $0 [--ipmap=file]\n" unless -f $cfile;
+
+my $c    = Config::Simple->new($cfile);
+my $ips  = $c->param(-block => 'ips')     // {};
+my $pool = $c->param(-block => 'ip_pool') // {};
+
+unless (keys %$pool) {
+    print STDERR "No [ip_pool] section found in $cfile\n";
+    print STDERR "Add one like:\n\n";
+    print STDERR "  [ip_pool]\n";
+    print STDERR "  addresses = 192.168.1.10 192.168.1.11 192.168.1.12\n\n";
+    print STDERR "  OR\n\n";
+    print STDERR "  [ip_pool]\n";
+    print STDERR "  cidr = 192.168.1.0/24\n\n";
+    exit 1;
+}
+
+# Collect pool IPs from explicit list and/or CIDR expansion
+my %seen_pool;
+my @pool_ips;
+
+if (my $addrs = $pool->{addresses}) {
+    for my $ip (split /\s+/, $addrs) {
+        next unless $ip =~ /\S/;
+        unless ($seen_pool{$ip}++) {
+            push @pool_ips, $ip;
+        }
+    }
+}
+
+if (my $cidrs = $pool->{cidr}) {
+    for my $cidr (split /\s+/, $cidrs) {
+        next unless $cidr =~ /\S/;
+        my $net = Net::IP->new($cidr)
+            or die "Invalid CIDR '$cidr': " . Net::IP::Error() . "\n";
+        do {
+            my $ip = $net->ip();
+            unless ($seen_pool{$ip}++) {
+                push @pool_ips, $ip;
+            }
+        } while (++$net);
+    }
+}
+
+unless (@pool_ips) {
+    print STDERR "ip_pool section found but no IPs could be parsed.\n";
+    exit 1;
+}
+
+# Build assigned-IP lookup from [ips] section (strip CIDR suffix if present)
+my %assigned;
+for my $domain (sort keys %$ips) {
+    my $ip = $ips->{$domain};
+    $ip =~ s|/\d+$||;
+    $assigned{$ip} = $domain;
+}
+
+my @available = grep { !$assigned{$_} } @pool_ips;
+my @used      = grep {  $assigned{$_} } @pool_ips;
+
+printf "IP Pool — %d total, %d assigned, %d available\n\n",
+    scalar(@pool_ips), scalar(@used), scalar(@available);
+
+if (@used) {
+    print "Assigned:\n";
+    printf "  %-20s %s\n", $_, $assigned{$_} for @used;
+    print "\n";
+}
+
+if (@available) {
+    print "Available:\n";
+    printf "  %s\n", $_ for @available;
+} else {
+    print "Pool exhausted — no IPs available.\n";
+}

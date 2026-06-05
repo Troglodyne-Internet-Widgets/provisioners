@@ -103,6 +103,25 @@ and get out configs such that `bin/provision shared.host.name` in trog-provision
 _base and _shared sections in recipes.d/*.yaml are ignored.
 This is to prevent hard to diagnose issues with configuration merging.
 
+=head2 IP POOL
+
+To track which static IPs are available for new VMs, add an C<[ip_pool]> section
+to ipmap.cfg alongside the C<[ips]> section:
+
+    [ip_pool]
+    ; Space-separated list of all IPs in your static pool
+    addresses = 192.168.1.10 192.168.1.11 192.168.1.12 192.168.1.13
+
+    ; OR expand a CIDR block (both keys may coexist; IPs are merged)
+    ; cidr = 192.168.1.0/24
+
+Then use C<bin/list_ip_pool> to see assignment status:
+
+    bin/list_ip_pool [--ipmap=ipmap.cfg]
+
+Output shows the full pool, which IPs are assigned to which VMs (from the C<[ips]>
+section), and which IPs remain available for new allocations.
+
 =head2 TESTS
 
 Each recipe can define a list of tests to run after provisioning.
