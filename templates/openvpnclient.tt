@@ -1,4 +1,3 @@
-[% state_dir %]/openvpnclient:
 	# Sync client certificates from hypervisor
 	mkdir -p /etc/openvpn/client
 	rsync -av [% hv_ip %]:[% cert_dir %]/ /etc/openvpn/client/
