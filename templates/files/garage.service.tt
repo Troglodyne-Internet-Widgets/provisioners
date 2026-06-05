@@ -10,7 +10,7 @@ Group=garage
 ExecStart=/usr/local/bin/garage -c /etc/garage.toml server
 Restart=on-failure
 RestartSec=5
-LimitNOFILE=65536
+LimitNOFILE=[% nofile_limit %]
 
 [Install]
 WantedBy=multi-user.target

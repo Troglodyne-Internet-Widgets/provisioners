@@ -5,13 +5,15 @@ use warnings FATAL => 'all';
 
 use parent qw{Provisioner::Recipe};
 
+use HTTP::Tiny;
+use JSON::PP;
+
 =head1 Provisioner::Recipe::garage
 
 =head2 SYNOPSIS
 
     somedomain:
         garage:
-            rpc_secret: "your-64-hex-char-secret-here"
             version: v1.0.1
             data_dir: /var/lib/garage/data
             metadata_dir: /var/lib/garage/meta
@@ -46,10 +48,11 @@ Validates the recipe configuration:
 
 =over 4
 
-=item C<rpc_secret> (required) — 64-character hex string used as the shared
-RPC secret between cluster nodes.  Generate with C<openssl rand -hex 32>.
+=item C<rpc_secret> (optional) — 64-character hex string used as the shared
+RPC secret between cluster nodes.  Auto-generated with C<openssl rand -hex 32>
+on first run and persisted to C<rpc_secret.txt> in the domain output directory.
 
-=item C<version> (optional, default C<v1.0.1>) — Garage release tag to download.
+=item C<version> (optional, default: latest GitHub release) — Garage release tag to download.
 
 =item C<data_dir> (optional, default C</var/lib/garage/data>)
 
@@ -71,6 +74,8 @@ RPC secret between cluster nodes.  Generate with C<openssl rand -hex 32>.
 
 =item C<capacity> (optional, default C<1G>) — Storage capacity hint for layout.
 
+=item C<nofile_limit> (optional, default C<65536>) — C<LimitNOFILE> value for the systemd unit.
+
 =item C<buckets> (optional) — List of bucket names to create after startup.
 
 =back
@@ -80,18 +85,47 @@ RPC secret between cluster nodes.  Generate with C<openssl rand -hex 32>.
 sub deps {
     my ($self) = @_;
     if ( $self->{target_packager} eq 'deb' ) {
-        return qw{curl};
+        return qw{curl liblmdb0};
     }
     die "Unsupported packager";
+}
+
+sub _latest_garage_version {
+    my $res = HTTP::Tiny->new( timeout => 10 )->get(
+        'https://api.github.com/repos/deuxfleurs-org/garage/releases/latest',
+        { headers => { 'Accept' => 'application/vnd.github+json' } },
+    );
+    if ( $res->{success} ) {
+        my $data = eval { JSON::PP::decode_json( $res->{content} ) };
+        return $data->{tag_name} if $data && $data->{tag_name};
+    }
+    warn "garage: could not fetch latest release version from GitHub, falling back to v1.0.1\n";
+    return 'v1.0.1';
+}
+
+sub _rpc_secret {
+    my ($self) = @_;
+    my $secret_file = "$self->{output_dir}/rpc_secret.txt";
+    if ( -f $secret_file ) {
+        open( my $fh, '<', $secret_file ) or die "Cannot read $secret_file: $!";
+        chomp( my $secret = <$fh> );
+        return $secret;
+    }
+    my $secret = qx{openssl rand -hex 32};
+    chomp $secret;
+    die "openssl rand failed" unless $secret =~ /^[0-9a-f]{64}$/;
+    open( my $fh, '>', $secret_file ) or die "Cannot write $secret_file: $!";
+    print $fh "$secret\n";
+    close $fh;
+    chmod 0600, $secret_file;
+    return $secret;
 }
 
 sub validate {
     my ( $self, %opts ) = @_;
 
-    die "Must set rpc_secret in [garage] section of recipes.yaml (generate with: openssl rand -hex 32)"
-        unless $opts{rpc_secret};
-
-    $opts{version}            //= 'v1.0.1';
+    $opts{rpc_secret}         //= $self->_rpc_secret();
+    $opts{version}            //= _latest_garage_version();
     $opts{data_dir}           //= '/var/lib/garage/data';
     $opts{metadata_dir}       //= '/var/lib/garage/meta';
     $opts{replication_factor} //= 1;
@@ -102,6 +136,7 @@ sub validate {
     $opts{admin_port}         //= 3903;
     $opts{zone}               //= 'dc1';
     $opts{capacity}           //= '1G';
+    $opts{nofile_limit}       //= 65536;
     $opts{buckets}            //= [];
 
     $opts{buckets} = [ $opts{buckets} ]
