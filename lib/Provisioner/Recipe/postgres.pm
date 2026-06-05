@@ -31,8 +31,8 @@ sub deps {
 sub validate {
     my ( $self, %opts ) = @_;
 
-    my $dump = $opts{dump_file};
-    die "Must define dump_file in [postgres] section of recipes.yaml" unless $dump;
+    my $dump = $opts{dumps};
+    die "Must define dumps in [postgres] section of recipes.yaml" if !$dump || ref $dump ne 'ARRAY';
 
     return %opts;
 }
