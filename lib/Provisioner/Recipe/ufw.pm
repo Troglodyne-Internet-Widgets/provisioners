@@ -48,8 +48,9 @@ sub validate {
 }
 
 my %template2rule = (
-    'ufw.pdns.tt' => 'ufw/pdns',
-    'ufw.mail.tt' => 'ufw/mail',
+    'ufw.pdns.tt'            => 'ufw/pdns',
+    'ufw.mail.tt'            => 'ufw/mail',
+    'ufw.plexmediaserver.tt' => 'ufw/plexmediaserver',
 );
 
 sub template_files {
