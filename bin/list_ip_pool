@@ -24,8 +24,8 @@ Add an [ip_pool] section to your ipmap.cfg:
     ; Explicit list of all IPs in the pool (space-separated)
     addresses = 192.168.1.10 192.168.1.11 192.168.1.12 192.168.1.13
 
-    ; OR specify a CIDR block
-    ; cidr = 192.168.1.0/24
+    ; OR specify one or more CIDR blocks (space-separated)
+    ; cidr = 192.168.1.0/24 10.0.0.0/28
 
 Both keys may coexist; addresses are merged with CIDR expansion.
 
@@ -67,15 +67,18 @@ if (my $addrs = $pool->{addresses}) {
     }
 }
 
-if (my $cidr = $pool->{cidr}) {
-    my $net = Net::IP->new($cidr)
-        or die "Invalid CIDR '$cidr': " . Net::IP::Error() . "\n";
-    do {
-        my $ip = $net->ip();
-        unless ($seen_pool{$ip}++) {
-            push @pool_ips, $ip;
-        }
-    } while (++$net);
+if (my $cidrs = $pool->{cidr}) {
+    for my $cidr (split /\s+/, $cidrs) {
+        next unless $cidr =~ /\S/;
+        my $net = Net::IP->new($cidr)
+            or die "Invalid CIDR '$cidr': " . Net::IP::Error() . "\n";
+        do {
+            my $ip = $net->ip();
+            unless ($seen_pool{$ip}++) {
+                push @pool_ips, $ip;
+            }
+        } while (++$net);
+    }
 }
 
 unless (@pool_ips) {
