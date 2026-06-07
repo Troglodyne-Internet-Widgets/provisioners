@@ -37,8 +37,8 @@ chmod 0644 /etc/nginx/sites-enabled/*.conf
 systemctl daemon-reload
 systemctl enable matrix-synapse
 # Queue service start for postrun
-[% script_dir %]/queue_postrun_task systemctl start matrix-synapse
-[% script_dir %]/queue_postrun_task systemctl reload nginx
+systemctl start matrix-synapse
+systemctl reload nginx
 # Create script to register admin user after service is running
 cat > [% script_dir %]/matrix_register_admin.sh <<'EOF'
 #!/bin/bash

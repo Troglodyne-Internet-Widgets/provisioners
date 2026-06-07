@@ -24,4 +24,4 @@ chown [% user %]:[% user %] [% install_dir %]/[% domain %]/.cache
 # Initialize rkhunter stuff
 mv rkhunter.conf /etc/rkhunter.conf
 [% script_dir %]/queue_postrun_task rkhunter --propupd
-[% script_dir %]/queue_postrun_task systemctl restart cronie
+systemctl restart cronie

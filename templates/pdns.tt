@@ -40,12 +40,12 @@ mv /etc/powerdns/pdns.d/bind.conf /etc/powerdns/config-available/bind.conf; /bin
 mkdir -p /var/spool/powerdns/run/pdns/; /bin/true
 chown -R pdns:pdns /var/spool/powerdns/run
 mv 10-powerdns.conf /etc/rsyslog.d/10-powerdns.conf
-[% script_dir %]/queue_postrun_task systemctl daemon-reload
-[% script_dir %]/queue_postrun_task systemctl restart rsyslog
-[% script_dir %]/queue_postrun_task systemctl enable pdns
-[% script_dir %]/queue_postrun_task systemctl restart pdns
-[% script_dir %]/queue_postrun_task systemctl enable pdns-recursor
-[% script_dir %]/queue_postrun_task systemctl restart pdns-recursor
+systemctl daemon-reload
+systemctl restart rsyslog
+systemctl enable pdns
+systemctl restart pdns
+systemctl enable pdns-recursor
+systemctl restart pdns-recursor
 # Setup lexicon shortcuts
 mkdir -p /opt/lexicon/[% domain %]; /bin/true
 mv lexicon-pdns.sh /opt/lexicon/[% domain %]/pdns
