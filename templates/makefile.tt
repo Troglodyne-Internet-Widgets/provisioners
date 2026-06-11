@@ -2,7 +2,7 @@
 [% var %] := [% vars.$var | mark_raw %]
 [% END -%]
 
-[% global_targets = ['packages', 'scripts', 'data', 'ssl', 'ssh', 'sendmail', 'testdeps'] -%]
+[% global_targets = ['sysctl', 'packages', 'scripts', 'data', 'ssl', 'ssh', 'sendmail', 'testdeps'] -%]
 [% IF user -%]
 [% global_targets.unshift('service_user') -%]
 [% END -%]
@@ -15,6 +15,11 @@ all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% F
 
 [% state_dir %]/state:
 	mkdir -p [% state_dir %]
+	touch $@
+
+[% state_dir %]/sysctl:
+	echo "net.ipv4.conf.all.arp_announce=1" > /etc/sysctl.d/10-arp-flux.conf
+	echo "net.ipv4.conf.all.arp_ignore=2" >> /etc/sysctl.d/10-arp-flux.conf
 	touch $@
 
 [% state_dir %]/packages:
