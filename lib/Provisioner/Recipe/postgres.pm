@@ -23,7 +23,7 @@ It is your responsibility to make sure the dump file has CREATE DATABSE statemen
 sub deps {
     my ($self) = @_;
     if ( $self->{target_packager} eq 'deb' ) {
-        return qw{postgresql-common};
+        return qw{postgresql-common postgresql-common-dev};
     }
     die "Unsupported packager";
 }
