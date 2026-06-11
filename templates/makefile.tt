@@ -20,6 +20,7 @@ all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% F
 [% state_dir %]/sysctl:
 	echo "net.ipv4.conf.all.arp_announce=1" > /etc/sysctl.d/10-arp-flux.conf
 	echo "net.ipv4.conf.all.arp_ignore=2" >> /etc/sysctl.d/10-arp-flux.conf
+	sysctl -p
 	touch $@
 
 [% state_dir %]/packages:
