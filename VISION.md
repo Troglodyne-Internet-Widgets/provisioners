@@ -18,10 +18,14 @@ it's one less thing you have to do.
 
 In many ways our approach with trog-provisioner leans heavily on this.
 Cloud-init, Make and atd are nearly all of the 'secret sauce' that makes
-this all work.
+this all work. (as an aside, cloud-init is reimplementing Make with a recipe bag-on-the-side,
+e.g. much of what I'm doing here, but in python! why do we keep doing this to ourselves)
 
 So, in that spirit, the long term goal of this project is to leverage existing
 OS facilities to build the kind of auto-scaling control plane you want.
+
+If it doesn't make me think "pootie done did it again" (search it on youtube) RE the simplicity
+it's probably not good.
 
 ## What needs to change
 
@@ -40,14 +44,15 @@ test suite, which means we'll dogfood our own control plane here.
 
 3. We can radically simplify the provision process via leaning on RPM/Deb.  We are already
 building makefiles and setting up the HV as a deb mirror, may as well "make it a fish" and
-just make the *entire* deploy process save data schlepping managed by clown-init.
+just make the *entire* deploy process save data schlepping managed by clown-init's
+"install-packages" recipe.
 
 4. We need to control individual VMs via systemctl files.
 Reload rebuilds the VM, while start/stop does what you expect.
 Implement healthchecks w/timers.
 
 5. The actual control plane needs to be something like a preforking PSGI server
-but that has the ability to scale up/down workers via the min_spare_servers mechanism
+but that has the ability to scale up/down workers via the min\_spare\_servers mechanism
 in Net::Server::PreFork.  Each 'request' does something with a VM, be it forwarding a req
 or managing the VM itself.  These requests 'lock' the VM from being used by other workers
 IFF it's a VM state change or said VM fails a health check.
@@ -59,3 +64,7 @@ It needs to know what guests are under it's control, and have strict quotas.
 
 7. From there any frontend management interface is largely a recipes.d config builder,
 and intermediator with the control plane.
+It needs to treat everything it needs done as a queue of jobs that it polls for status,
+optionally specifying what can be done in parallell at each step.
+at / atq and each job being a makefile and having its own log largely handles this, but
+perl w/ log::dispatch::db may make more sense.
