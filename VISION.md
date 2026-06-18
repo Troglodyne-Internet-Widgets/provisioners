@@ -45,7 +45,10 @@ test suite, which means we'll dogfood our own control plane here.
 3. We can radically simplify the provision process via leaning on RPM/Deb.  We are already
 building makefiles and setting up the HV as a deb mirror, may as well "make it a fish" and
 just make the *entire* deploy process save data schlepping managed by clown-init's
-"install-packages" recipe.
+"install-packages" recipe.  Provisioning the target need be as simple as adding $domain
+to the list of needed packages, as it's a metapackage that brings in all the needed pkgs.
+Thankfully, this won't be that hard because both of these are already makefile-pilled to
+the max; we can then pawn off the actual package building to OBS!
 
 4. We need to control individual VMs via systemctl files.
 Reload rebuilds the VM, while start/stop does what you expect.
