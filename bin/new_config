@@ -469,6 +469,7 @@ sub handle_domain {
 
         # Schlep over stuff from existing deployments
         if ($target_is_up) {
+            print "Backing up $module files from $fqdn\n";
             my %tg = $builder->remote_files( $data_config->{to}, $fqdn );
             foreach my $to_fetch ( sort keys(%tg) ) {
                 print "Writing remote file $to_fetch as $data_config->{from}/$fqdn/$tg{$to_fetch}\n";
@@ -492,9 +493,17 @@ sub handle_domain {
         my %tf = $builder->template_files(@modules);
         foreach my $template ( sort keys(%tf) ) {
             my $destination = "$cfg_dir/$tf{$template}";
-            my $rendered    = $builder->render_file( "files/$template", %$global_config, %$pconf, full_aliases => $full_aliases, modules => \@modules );
-            print "Writing $template as $destination\n";
-            File::Slurper::write_binary( $destination, $rendered );
+            # If it's a template, render it.  Otherwise just copy it over.
+            if ($template =~ m/\.tt$/) {
+                print "Rendering $template...\n";
+                my $rendered    = $builder->render_file( "files/$template", %$global_config, %$pconf, full_aliases => $full_aliases, modules => \@modules );
+                print "Writing $template as $destination\n";
+                File::Slurper::write_binary( $destination, $rendered );
+            } else {
+                print "Copying $template to $destination\n";
+                my $tloc = resolve_template_loc($global_config->{libdir},"files/$template");
+                copy($tloc, $destination) or die "Could not copy static file $tloc to $destination";
+            }
             push( @generated, $tf{$template} );
         }
 
@@ -622,6 +631,15 @@ sub get_dns_provider_token {
         return $rconf->{$provider}{api_key} if exists $rconf->{$provider} && ( ref( $rconf->{$provider} ) eq 'HASH' );
     }
     return '';
+}
+
+sub resolve_template_loc {
+    my ($libdirs, $template) = @_;
+    foreach my $libdir ('.',@$libdirs) {
+        my $possibiru = "$libdir/templates/$template";
+        return $possibiru if -f $possibiru;
+    }
+    die "Could not find relevant template $template!";
 }
 
 main(@ARGV) unless caller;
