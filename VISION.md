@@ -27,6 +27,10 @@ OS facilities to build the kind of auto-scaling control plane you want.
 If it doesn't make me think "pootie done did it again" (search it on youtube) RE the simplicity
 it's probably not good.
 
+At the end of the day, what a contracting house needs is similar to how houses are built.
+COTS, interchangeable parts so simple nearly anyone (or llm 'agent') can use it safely.
+This way you can focus on actually important things, e.g. profitable capital allocation.
+
 ## What needs to change
 
 1. We need to eliminate terraform usage in trog-provisioner entirely in favor of libvirt
@@ -71,3 +75,33 @@ It needs to treat everything it needs done as a queue of jobs that it polls for 
 optionally specifying what can be done in parallell at each step.
 at / atq and each job being a makefile and having its own log largely handles this, but
 perl w/ log::dispatch::db may make more sense.
+
+## Good design principles to follow & things that fall out of that
+
+0. Force the user to fall into good patterns.
+Like weapons systems used by soliders, if you can be "holding it wrong", it's bad.
+
+1. Data sources can't ever get out of sync. Like with RAID, this means you always need a replicated spare.
+If you have one, you have none.  May as well make all recipes explicitly follow this pattern.
+This way backup is stupid-simple.
+
+2. Secrets should be protected.  This is why things like vault exist, but this is overkill versus keepassxc.
+We need something like a bone-simple keepassxc server for secret management.
+Maybe that's even overwrought versus simply encrypting data in a DB.
+OpenSSL is good enough for the rest of the world, it's good enough for you.
+
+3. chroot and unshare everything possible.  If you don't need it, get rid of it.
+Don't open ports you don't need.  The firewall and fail2ban recipes need extreme scrutiny.
+Testing these should be an integral part of deploys.
+
+4. Actions that change anything at all thru web-accessible interfaces should generally happen with this workflow:
+Plan of action presented -> User consents -> one-time token(s) to do thing issued -> thing done.
+This makes things all very well auditable & minimizes shenanigans from agents & social engineering.
+
+5. Ruthless focus on the Deming insights into the production process.
+Any time we see outliers in provision time, defect rate, etc it needs to be easily identified and proactively notify
+
+6. Long-running processes need to be able to notify you when something is ready in a low-noise, high signal channel.
+This way you can go and do something else until things are ready.
+Ideally we simply have an RSS feed we can subscribe to on a phone or other device to keep you on track.
+Your OODA Loop has to be tight!
