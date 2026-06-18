@@ -31,6 +31,12 @@ At the end of the day, what a contracting house needs is similar to how houses a
 COTS, interchangeable parts so simple nearly anyone (or llm 'agent') can use it safely.
 This way you can focus on actually important things, e.g. profitable capital allocation.
 
+We have to have a process powerful enough that it enables us to:
+
+* Be effective at being a microISV enough you have a shot at scaling without debt/equity issue
+* Be effective as a 'hired gun' slanging for clients
+* Be effective in corporate no matter how dysfunctional their existing process is
+
 ## What needs to change
 
 1. We need to eliminate terraform usage in trog-provisioner entirely in favor of libvirt
