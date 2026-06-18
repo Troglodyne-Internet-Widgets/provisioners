@@ -49,7 +49,13 @@ Implement healthchecks w/timers.
 5. The actual control plane needs to be something like a preforking PSGI server
 but that has the ability to scale up/down workers via the min_spare_servers mechanism
 in Net::Server::PreFork.  Each 'request' does something with a VM, be it forwarding a req
-or managing the VM itself.
+or managing the VM itself.  These requests 'lock' the VM from being used by other workers
+IFF it's a VM state change or said VM fails a health check.
+After a grace period (or it has no known active jobs, but is still failing health)
+we either unlock it for use or respawn it.
 
-6. From there any frontend management interface is largely a recipes.d config builder,
+6. Control plane has to coexist with static infrastructure.  Not everything can or should autoscale.
+It needs to know what guests are under it's control, and have strict quotas.
+
+7. From there any frontend management interface is largely a recipes.d config builder,
 and intermediator with the control plane.
