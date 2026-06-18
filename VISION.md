@@ -111,3 +111,6 @@ Any time we see outliers in provision time, defect rate, etc it needs to be easi
 This way you can go and do something else until things are ready.
 Ideally we simply have an RSS feed we can subscribe to on a phone or other device to keep you on track.
 Your OODA Loop has to be tight!
+
+7. Don't ever forget that what makes LLMs work well with your projects is the same thing that makes working with other people easy.
+Your documentation is far more important than the code, so do it first, and keep it up-to-date.
