@@ -121,14 +121,14 @@ sub zonediff {
         my $raw = $to_sync->plain;
         my $update_id = undef;
 
-        # Build plain form(s)
+        # Build plain form(s) — normalise remote content for comparison
         @$zones_actual = map {
             my $s = $_;
-            my $dquot = $_->{content} =~ s/"//g;
-            $s->{plain} = "$_->{name}. $_->{ttl} IN $_->{type} $_->{content}";
+            (my $dequoted = $_->{content}) =~ s/"//g;
+            $s->{plain} = "$_->{name}. $_->{ttl} IN $_->{type} $dequoted";
             $s->{pdot}  = "$s->{plain}.";
-            $s->{pquot} = qq|$_->{name}. $_->{ttl} IN $_->{type} "$_->{content}"|;
-            $s->{dquot} = qq|$_->{name}. $_->{ttl} IN $_->{type} $dquot|;
+            $s->{pquot} = qq|$_->{name}. $_->{ttl} IN $_->{type} "$dequoted"|;
+            $s->{dquot} = qq|$_->{name}. $_->{ttl} IN $_->{type} $dequoted|;
             $s
         } @$zones_actual;
 
