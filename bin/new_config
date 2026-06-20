@@ -29,6 +29,8 @@ use Hash::Merge();
 use File::Find();
 use FindBin::libs;
 
+use Provisioner::IPPool;
+
 Hash::Merge::set_behavior('RIGHT_PRECEDENT');
 Hash::Merge::set_behavior('STORAGE_PRECEDENT');
 
@@ -147,7 +149,8 @@ sub get_config {
     my $alias_conf  = $c->param( -block => 'aliases' );
     my $ns_conf     = $c->param( -block => 'nameservers' );
     my $addons      = $c->param( -block => 'addons' );
-    return ( $global_conf, $ip_conf, $alias_conf, $ns_conf, $addons );
+    my $pool_conf   = $c->param( -block => 'ip_pool' ) // {};
+    return ( $global_conf, $ip_conf, $alias_conf, $ns_conf, $addons, $pool_conf );
 }
 
 sub get_recipe_config {
@@ -218,7 +221,7 @@ sub handle_domain {
 
     die "Must pass domain" unless $domain;
 
-    my ( $global_conf, $ip_conf, $alias_conf, $ns_conf, $addons ) = get_config();
+    my ( $global_conf, $ip_conf, $alias_conf, $ns_conf, $addons, $pool_conf ) = get_config();
 
     my $basedir = $global_conf->{basedir};
     die "Must have basedir defined in global section of $cfile" unless $basedir;
@@ -236,7 +239,10 @@ sub handle_domain {
     die "Must set admin_email in global section of $cfile" unless $admin_email;
 
     my $static_ip = $ip_conf->{$domain};
-    die "Must set ip for $domain in ips section of $cfile" unless $static_ip;
+    unless ($static_ip) {
+        $static_ip = Provisioner::IPPool::auto_assign($cfile, $domain, $pool_conf, $ip_conf);
+        $ip_conf->{$domain} = $static_ip;
+    }
 
     my $tld = $global_conf->{tld};
     die "Must set tld for $domain in global section of $cfile" unless $tld;
