@@ -7,10 +7,9 @@ sysctl -p /etc/sysctl.d/60-nginx-backlog.conf
 sed -i -E 's/worker_connections\s+[0-9]+/worker_connections [% backlog %]/' /etc/nginx/nginx.conf
 # Setup global configuration
 mv nginx.global.conf /etc/nginx/conf.d/global.conf
-systemctl restart nginx
 # Setup the domain and its aliases
 mv nginx.domain.conf /etc/nginx/sites-enabled/[% domain %].conf
-systemctl restart nginx
+[% script_dir %]/queue_postrun_task systemctl restart nginx
 # Get ready for ACME
 mkdir -p [% install_dir %]/[% domain %]/www/.well_known; /bin/true
 chown [% user %]:www-data [% install_dir %]/[% domain %]/www/.well_known
