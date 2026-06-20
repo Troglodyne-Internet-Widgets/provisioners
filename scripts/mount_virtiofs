@@ -5,33 +5,40 @@ LINK_NAME=$2
 TYPE=$3
 
 ACTUAL_TARGET=$(grep "^$TARGET" /root/devices.map | awk -F "=" '{print $2}')
-LINK_NAME_REPLACED=$(echo "$LINK_NAME" | sed -e "s|^/||" | sed -e "s|/|-|")
-mkdir -p $LINK_NAME
+if [ -z "$ACTUAL_TARGET" ]; then
+    echo "Error: no device found for $TARGET in /root/devices.map" >&2
+    exit 1
+fi
 
-# Actually mount it
-MNTFILE="/usr/lib/systemd/system/$LINK_NAME_REPLACED.mount"
+LINK_NAME_REPLACED=$(echo "$LINK_NAME" | sed -e "s|^/||" -e "s|/|-|g")
+mkdir -p "$LINK_NAME"
 
-echo "[Unit]" >> $MNTFILE
-echo "Description=Shared dir from HV" >> $MNTFILE
-echo "After=multi-user.target" >> $MNTFILE
-echo "[Mount]" >> $MNTFILE
-echo "What=$ACTUAL_TARGET" >> $MNTFILE
-echo "Where=$LINK_NAME" >> $MNTFILE
-echo "Type=virtiofs" >> $MNTFILE
-echo "[Install]" >> $MNTFILE
-echo "WantedBy=multi-user.target" >> $MNTFILE
+MNTFILE="/usr/lib/systemd/system/${LINK_NAME_REPLACED}.mount"
+AUTOMNTFILE="/usr/lib/systemd/system/${LINK_NAME_REPLACED}.automount"
 
-AUTOMNTFILE="/usr/lib/systemd/system/$LINK_NAME_REPLACED.automount"
-echo "[Unit]" >> $AUTOMNTFILE
-echo "Description=Automount $LINK_NAME" >> $AUTOMNTFILE
-echo "ConditionPathExists=$LINK_NAME" >> $AUTOMNTFILE
-echo "[Automount]" >> $AUTOMNTFILE
-echo "Where=$LINK_NAME" >> $AUTOMNTFILE
-echo "TimeoutIdleSec=10" >> $AUTOMNTFILE
-echo "[Install]" >> $AUTOMNTFILE
-echo "WantedBy=multi-user.target" >> $AUTOMNTFILE
+cat > "$MNTFILE" << EOF
+[Unit]
+Description=Shared dir from HV
+After=multi-user.target
+[Mount]
+What=$ACTUAL_TARGET
+Where=$LINK_NAME
+Type=virtiofs
+[Install]
+WantedBy=multi-user.target
+EOF
+
+cat > "$AUTOMNTFILE" << EOF
+[Unit]
+Description=Automount $LINK_NAME
+ConditionPathExists=$LINK_NAME
+[Automount]
+Where=$LINK_NAME
+TimeoutIdleSec=10
+[Install]
+WantedBy=multi-user.target
+EOF
 
 systemctl daemon-reload
-systemctl enable $LINK_NAME_REPLACED.mount
-systemctl start $LINK_NAME_REPLACED.mount
-#mount -t virtiofs $ACTUAL_TARGET $LINK_NAME
+systemctl enable "${LINK_NAME_REPLACED}.mount"
+systemctl start "${LINK_NAME_REPLACED}.mount"
