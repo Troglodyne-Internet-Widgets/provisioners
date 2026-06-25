@@ -85,8 +85,19 @@ all:[% FOR target IN global_targets %] [% state_dir %]/[% target %][% END %][% F
 [% data_fragment | tabinate -%]
 	touch $@
 
+[% IF global_fragments.keys().size() %]
+[% global_state_dir %]/state:
+	mkdir -p [% global_state_dir %]
+	touch $@
+
+[% FOR module IN global_fragments.keys().sort() %]
+[% global_state_dir %]/[% module %]: [% global_state_dir %]/state
+[% global_fragments.$module | tabinate -%]
+	touch $@
+[% END -%]
+[% END -%]
 [% FOR module IN fragments.keys().sort() %]
-[% state_dir %]/[% module %]:
+[% state_dir %]/[% module %]:[% IF global_fragments.$module %] [% global_state_dir %]/[% module %][% END %]
 [% fragments.$module | tabinate -%]
 	touch $@
 [% END -%]
