@@ -3,6 +3,7 @@ package Provisioner::Recipe;
 use strict;
 use warnings FATAL => 'all';
 
+use List::Util qw{any};
 use Text::Xslate;
 use Text::Xslate::Bridge::TT2;
 
@@ -191,12 +192,20 @@ Returns true if a C<$recipe.global.tt> exists in any configured template directo
 
 sub has_global_template {
     my ($self) = @_;
-    my $name = $self->{global_template};
-    for my $dir ( @{ $self->{template_dirs} } ) {
-        return 1 if -f "$dir/$name";
-    }
-    return 0;
+    return !!any { -f "$_/$self->{global_template}" } @{ $self->{template_dirs} };
 }
+
+=head3 $bool = $recipe->has_template()
+
+Returns true if a C<$recipe.tt> exists in any configured template directory.
+
+=cut
+
+sub has_template {
+    my ($self) = @_;
+    return !!any { -f "$_/$self->{template}" } @{ $self->{template_dirs} };
+}
+
 
 =head3 $output = $recipe->render_global(%template_vars)
 
