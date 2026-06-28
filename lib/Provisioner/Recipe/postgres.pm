@@ -14,20 +14,21 @@ Minimal — just install and configure postgres:
     somedomain:
         postgres:
 
-Load an existing dump on first provision:
+Pin a specific version and load an existing dump on first provision:
 
     somedomain:
         postgres:
-            dump_file: path/to/dump/in/datadir
+            version: 16
+            dump: path/to/dump/in/datadir
 
 =head2 DESCRIPTION
 
-Installs the latest PostgreSQL available from the OS package manager and
-configures it for local TCP access with md5 authentication.
+Adds the PGDG apt repository and installs the latest PostgreSQL available
+from it (or the version specified via C<version>), then configures it for
+local TCP access with md5 authentication.
 
 C<dump> is optional.  When specified, the path is relative to the domain's
-data directory (C<install_dir/domain>).  The dump is loaded exactly once;
-subsequent provisions skip it via a state file.
+data directory (C<install_dir/domain>).
 
 The C<pg_hba.conf> entry added is:
 
@@ -42,7 +43,7 @@ once (idempotent).
 sub deps {
     my ($self) = @_;
     if ( $self->{target_packager} eq 'deb' ) {
-        return qw{postgresql postgresql-client};
+        return qw{postgresql-common};
     }
     die "Unsupported packager";
 }
