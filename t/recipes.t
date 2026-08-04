@@ -111,8 +111,17 @@ my %required_config = (
         basedir    => 'Code',
     },
     nginxproxy => {
-        proxy_uri  => 'run/app.sock',
-        static_dir => 'www/static',
+        vhosts => {
+            80 => {
+                proxy_uri  => 'run/app.sock',
+                static_dir => 'www/static',
+            },
+            443 => {
+                proxy_uri  => 'run/app.sock',
+                static_dir => 'www/static',
+                ssl        => 1,
+            },
+        },
     },
     letsencrypt => {
         registrar => { type => 'route53', user => 'foo', key => 'bar' },
@@ -125,11 +134,9 @@ my %required_config = (
         smtp_user      => 'notify@test.test',
         smtp_pass      => 'smtp-pass',
         smtp_domain    => 'test.test',
-        modules        => ['nginxproxy'],
     },
     roundcube => {
         version => '1.6.0',
-        modules => ['nginxproxy'],
     },
     koan => {
         user               => 'koan',
@@ -184,8 +191,17 @@ rejects_missing( 'mariadb', { dumpfile => 'd.sql', version => '10' }, 'root_pw' 
 rejects_missing( 'mariadb', { root_pw => 'x', version => '10'     }, 'dumpfile' );
 rejects_missing( 'mariadb', { root_pw => 'x', dumpfile => 'd.sql' }, 'version'  );
 
-rejects_missing( 'nginxproxy', { static_dir => 'www/static' }, 'proxy_uri' );
-rejects_missing( 'nginxproxy', { proxy_uri  => 'run/app.sock' }, 'static_dir' );
+subtest 'nginxproxy rejects vhost without proxy_uri' => sub {
+    my $r = Provisioner::Recipe::nginxproxy->new(%PROV);
+    eval { $r->render( %G, vhosts => { 80 => { static_dir => 'www/static' } } ) };
+    ok( $@, 'render() dies when vhost lacks proxy_uri' );
+};
+
+subtest 'nginxproxy rejects vhost without static_dir' => sub {
+    my $r = Provisioner::Recipe::nginxproxy->new(%PROV);
+    eval { $r->render( %G, vhosts => { 80 => { proxy_uri => 'run/app.sock' } } ) };
+    ok( $@, 'render() dies when vhost lacks static_dir' );
+};
 
 rejects_missing( 'adminconfig', {},                              'skel'    );
 rejects_missing( 'tcms',        {},                              'tcms_dir' );
@@ -208,7 +224,6 @@ rejects_missing( 'matrix', {
     smtp_user   => 'n@test.test',
     smtp_pass   => 'p',
     smtp_domain => 'test.test',
-    modules     => ['nginxproxy'],
 }, 'admin_password', 'matrix rejects missing admin_password' );
 
 # ----------------------------------------------------------------

@@ -91,7 +91,6 @@ Returns remote file mappings for backup/restore.
 
 =cut
 
-# XXX this probably does not work in isolation!
 sub required_recipes {
     return ( nginxproxy => sub { () } );
 }

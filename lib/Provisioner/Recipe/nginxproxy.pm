@@ -53,8 +53,10 @@ sub required_recipes {
 sub validate {
     my ( $self, %opts ) = @_;
 
-    #Per-domain stuff
-    die "nginxproxy.vhosts must be HASH" unless $opts{vhosts} && ref $opts{vhosts} eq 'HASH';
+    # vhosts is optional — if omitted, nginx-full is installed but no main-domain server block is generated.
+    # Recipes that manage their own subdomain nginx configs (gogs, deluged, matrix, roundcube) use this mode.
+    $opts{vhosts} //= {};
+    die "nginxproxy.vhosts must be HASH" unless ref $opts{vhosts} eq 'HASH';
     foreach my $key (keys(%{$opts{vhosts}})) {
         next unless $key =~ m/\d+/;
         my $vopts = $opts{vhosts}{$key};

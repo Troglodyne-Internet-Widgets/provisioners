@@ -3,7 +3,6 @@ package Provisioner::Recipe::deluged;
 use strict;
 use warnings FATAL => 'all';
 
-use List::Util qw{any};
 use parent qw{Provisioner::Recipe};
 
 =head1 Provisioner::Recipe::deluged
@@ -33,7 +32,6 @@ so that C<files.[domain]> is covered by the SSL certificate.
 
 =cut
 
-#XXX probably won't work in isolation
 sub required_recipes {
     return ( nginxproxy => sub { () } );
 }
@@ -48,9 +46,6 @@ sub deps {
 
 sub validate {
     my ( $self, %opts ) = @_;
-
-    die "This recipe requires the nginxproxy recipe to function"
-        unless any { $_ eq 'nginxproxy' } @{ $opts{modules} };
 
     $opts{web_port} //= 8112;
     die "deluged.web_port must be a positive integer"

@@ -115,11 +115,9 @@ my %recipes_raw = (
         smtp_user      => 'notify@test.test',
         smtp_pass      => 'smtp-pass',
         smtp_domain    => 'test.test',
-        modules        => ['nginxproxy'],
     },
     roundcube => {
         version => '1.6.0',
-        modules => ['nginxproxy'],
     },
     koan => {
         user               => 'koan',
@@ -152,27 +150,10 @@ my %recipes_raw = (
         admin_mail => 'bogus@test.test',
     },
     gogs => {
-        version => 'bogus',
+        version        => 'bogus',
         admin_password => 'bogus',
-        nginxproxy => {
-            vhosts => {
-                8080 => {
-                    proxy_uri => '/bogus/bogus',
-                    static_dir => '/bogus/bogus',
-                },
-            },
-        },
     },
-    deluged => {
-        nginxproxy => {
-            vhosts => {
-                8080 => {
-                    proxy_uri => '/bogus/bogus',
-                    static_dir => '/bogus/bogus',
-                },
-            },
-        },
-    },
+    deluged => {},
     openvpnclient => {
         server => 'bogus.test',
         cert_dir => '/bogus',
